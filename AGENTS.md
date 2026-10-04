@@ -8,10 +8,8 @@ a public repository, so nothing committed here may name a customer, an account i
 ## Task tracker
 
 Backlog.md in `backlog/`, prefix `AIO`. `backlog task list --plain --exclude-status Done` is the
-queue. Drive it through the CLI only; `backlog/config.yml` is the one file edited by hand.
+queue.
 
-- **Never use `--notes`, `--plan` or `--final-summary` bare**, because they replace the whole
-  section. Use `--append-notes`, `--append-plan`, `--append-final-summary` or `--comment`.
 - Statuses are `To Do`, `In Progress`, `Parked`, `Done`. `Parked` means attempted and blocked,
   with a concrete resume boundary.
 - This public board deliberately does not carry the fan-out protocol (doc-0001 says why). Never
