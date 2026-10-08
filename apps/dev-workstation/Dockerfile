@@ -7,7 +7,7 @@
 # Base images are pinned by tag and multi-arch index digest; bump both together.
 # Dockerfile.dockerignore next to this file limits what the context sends.
 
-FROM ghcr.io/astral-sh/uv:0.12.23@sha256:61d393e44e249f2e4b526b6c7ddcecce245946826e608e11c93ad4f5bba55b21 AS uv
+FROM ghcr.io/astral-sh/uv:0.12.24@sha256:3af4716e991d6956a41e573eab705d0ee08500cd829ed30293eb8472f372c65a AS uv
 
 FROM debian:bookworm-slim@sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587 AS release-key
 ARG RELEASE_SIGNER_URL=https://downloads.claude.ai/keys/claude-code.asc
