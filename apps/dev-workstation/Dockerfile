@@ -30,7 +30,7 @@ RUN set -eu; \
 # per-architecture archive checksums to keep in step. Cross-compiled on the build platform; the
 # flags match the release's .goreleaser.yaml.
 FROM --platform=$BUILDPLATFORM golang:1.27.2-bookworm@sha256:5cf287a799e6b94384bad13d16b14904c531f51ba65792237e122ce42b392f61 AS agento11y
-ARG AGENTO11Y_VERSION=0.48.0
+ARG AGENTO11Y_VERSION=0.49.0
 ARG TARGETOS
 ARG TARGETARCH
 ENV CGO_ENABLED=0 GOWORK=off GOTOOLCHAIN=auto GOFLAGS=-trimpath
