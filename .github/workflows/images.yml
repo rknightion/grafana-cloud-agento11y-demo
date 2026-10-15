@@ -35,7 +35,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: agents, context: apps, dockerfile: agents/Dockerfile }
+          - { name: agents, context: apps, dockerfile: agents/Dockerfile, trivy-ignore-file: apps/agents/.trivyignore.yaml }
           - { name: site, context: apps, dockerfile: site/Dockerfile }
           # site-browser and dev-workstation carry Playwright's/apt's debian OS packages: every
           # remaining HIGH/CRITICAL there has no fixed version yet (verified against the live
@@ -62,4 +62,5 @@ jobs:
       # Keep failed scan findings visible in this public repository's Security tab.
       trivy-upload-sarif: true
       trivy-ignore-unfixed: ${{ matrix.trivy-ignore-unfixed || false }}
+      trivy-ignore-file: ${{ matrix.trivy-ignore-file || '' }}
       provenance: false

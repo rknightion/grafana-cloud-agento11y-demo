@@ -1,0 +1,10 @@
+vulnerabilities:
+  - id: CVE-2026-93687
+    paths:
+      - app/agents/node_modules/braces/package.json
+    statement: >-
+      Maintainer-approved 2026-10-15 exception. braces 3.0.3 has no patched release.
+      It is installed through the SDK's unused Google ADK integration; the demo's
+      SDK root and experiments import graph does not load this dependency chain.
+      Track the upstream fix in AIO-0007 (braces dependency advisory).
+    expired_at: 2026-11-15
