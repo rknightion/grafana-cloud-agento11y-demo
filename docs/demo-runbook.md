@@ -118,8 +118,9 @@ Open **Coding agents compared** for completed sessions, developer coverage, repo
 output tokens across all three runtimes. Follow its **Codex** and **pi** links for runtime-specific
 tools, guards, tokens and recent sessions. Reported costs include local model estimates and are
 not the gateway billing ledger. Token panels show observed per-session counter peaks; interrupted
-exports and partial time windows can undercount. Codex native latency needs positive observed
-counter increments and shows insufficient samples otherwise. Use **Gateway** for the shared
+exports and partial time windows can undercount. The dedicated dashboards share Overview, Cost & tokens and Tools & guards tabs with
+Claude-style stat colors, developer counts, team attribution and tool/guard breakdowns. Native
+Codex latency is omitted because the available samples do not support a reliable mean. Use **Gateway** for the shared
 audit/spend tabs; they are no longer copied into Claude Code. All dashboards preserve the selected
 time range when navigating between them.
 

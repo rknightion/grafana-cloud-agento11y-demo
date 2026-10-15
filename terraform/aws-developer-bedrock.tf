@@ -42,6 +42,11 @@ locals {
     for pair in values(local.developer_pi_profiles) : data.aws_bedrock_inference_profile.source[pair.model].models[*].model_arn
   ]))
 
+  developer_pi_inline_policy = contains(local.developer_bedrock_agents, "pi") ? jsonencode({
+    Version   = "2012-10-17"
+    Statement = [for statement in jsondecode(data.aws_iam_policy_document.developer_pi_bedrock[0].json).Statement : statement if statement.Sid == "InvokeSelectedPiProfiles"]
+  }) : null
+
   # Root integrates this map into the existing agent-host secret. No value belongs in user data,
   # compose environment, an output or a generated documentation artifact.
   developer_bedrock_credentials = {
@@ -125,15 +130,46 @@ data "aws_iam_policy_document" "developer_pi_bedrock" {
   }
 }
 
+# Pi's full team/profile union exceeds IAM's inline-user policy limit. Retain
+# its existing inline resource with only the small profile statement, updating it
+# after the full managed policy is attached so upgrades do not lose permissions.
 resource "aws_iam_user_policy" "developer_bedrock" {
   for_each = local.developer_bedrock_agents
 
-  name = "${local.prefix}-developer-${each.key}-bedrock"
-  user = aws_iam_user.developer_bedrock[each.key].name
-  policy = (
-    each.key == "codex" ? data.aws_iam_policy_document.developer_codex_bedrock[0].json :
-    data.aws_iam_policy_document.developer_pi_bedrock[0].json
-  )
+  name   = "${local.prefix}-developer-${each.key}-bedrock"
+  user   = aws_iam_user.developer_bedrock[each.key].name
+  policy = each.key == "codex" ? data.aws_iam_policy_document.developer_codex_bedrock[0].json : local.developer_pi_inline_policy
+
+  depends_on = [aws_iam_user_policy_attachment.developer_pi_bedrock]
+
+  lifecycle {
+    precondition {
+      condition     = each.key != "pi" ? true : length(local.developer_pi_inline_policy) <= 2048
+      error_message = "The pi inline profile statement exceeds the IAM user policy size limit. Reduce the pi team/profile allowlist."
+    }
+  }
+}
+
+resource "aws_iam_policy" "developer_pi_bedrock" {
+  count = contains(local.developer_bedrock_agents, "pi") ? 1 : 0
+
+  name   = "${local.prefix}-developer-pi-bedrock"
+  policy = data.aws_iam_policy_document.developer_pi_bedrock[0].json
+  tags   = var.tags
+
+  lifecycle {
+    precondition {
+      condition     = length(data.aws_iam_policy_document.developer_pi_bedrock[0].minified_json) <= 6144
+      error_message = "The pi team/profile allowlist exceeds the IAM managed policy size limit. Reduce its scope."
+    }
+  }
+}
+
+resource "aws_iam_user_policy_attachment" "developer_pi_bedrock" {
+  count = contains(local.developer_bedrock_agents, "pi") ? 1 : 0
+
+  user       = aws_iam_user.developer_bedrock["pi"].name
+  policy_arn = aws_iam_policy.developer_pi_bedrock[0].arn
 }
 
 resource "aws_iam_access_key" "developer_bedrock" {
@@ -145,5 +181,5 @@ resource "aws_iam_access_key" "developer_bedrock" {
     create_before_destroy = true
   }
 
-  depends_on = [aws_iam_user_policy.developer_bedrock]
+  depends_on = [aws_iam_user_policy.developer_bedrock, aws_iam_user_policy_attachment.developer_pi_bedrock]
 }

@@ -110,3 +110,7 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
 - Loki instant metric results need all-values bar-gauge rendering for multi-agent comparisons;
   retain label-based display names. Session-log panels set both `level` and `detected_level`
   from `is_error`, because ingestion can misclassify the literal `is_error=false` as an error.
+
+- Pi uses a managed IAM policy for its explicit team/profile union: three teams exceed IAM
+  users’ 2,048-character inline-policy limit. Keep the 6,144-character managed-policy check and
+  exact profile/model restrictions; never widen ARN patterns to work around policy size.

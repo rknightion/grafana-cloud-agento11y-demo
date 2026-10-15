@@ -166,7 +166,7 @@
             "spec": {
               "options": {
                 "mode": "markdown",
-                "content": "**Codex activity** \u00b7 Session outcomes and estimated costs come from completed runner log records. Plugin totals are observed session peaks, not interval throughput; resumed process resets can undercount. Token types overlap, so cache/reasoning values are not added to input/output. Missing telemetry stays empty. Use **Coding agents** for comparison and **Bedrock** for provider details.",
+                "content": "**codex activity** \u00b7 Completed sessions and estimated costs come from runner logs. Token, generation and tool totals are observed cumulative session peaks: restarts can undercount and peaks can include work before the selected range. Costs are estimates, not billing. Use **Coding agents** for comparison and **Bedrock** for provider detail.",
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -190,7 +190,7 @@
         "kind": "Panel",
         "spec": {
           "id": 2,
-          "title": "Completed session records",
+          "title": "Completed sessions",
           "description": "Runner completion records, including failed sessions. Retries/resumes can emit more than one record per logical session.",
           "links": [],
           "transparent": false,
@@ -238,10 +238,10 @@
                   "fields": "",
                   "values": false
                 },
-                "colorMode": "value",
+                "colorMode": "background",
                 "graphMode": "none",
                 "justifyMode": "center",
-                "textMode": "auto",
+                "textMode": "value",
                 "wideLayout": true,
                 "showPercentChange": false,
                 "orientation": "auto",
@@ -253,7 +253,17 @@
                 "defaults": {
                   "unit": "short",
                   "color": {
-                    "mode": "palette-classic"
+                    "mode": "fixed",
+                    "fixedColor": "blue"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "blue",
+                        "value": null
+                      }
+                    ]
                   },
                   "decimals": 0
                 },
@@ -267,7 +277,7 @@
         "kind": "Panel",
         "spec": {
           "id": 3,
-          "title": "Error session records",
+          "title": "Failed sessions",
           "description": "Completion records marked is_error=true. Empty can mean no error records; it is not proof that telemetry is healthy. Zero is shown only when session records exist in the selected range.",
           "links": [],
           "transparent": false,
@@ -315,10 +325,10 @@
                   "fields": "",
                   "values": false
                 },
-                "colorMode": "value",
+                "colorMode": "background",
                 "graphMode": "none",
                 "justifyMode": "center",
-                "textMode": "auto",
+                "textMode": "value",
                 "wideLayout": true,
                 "showPercentChange": false,
                 "orientation": "auto",
@@ -330,7 +340,17 @@
                 "defaults": {
                   "unit": "short",
                   "color": {
-                    "mode": "palette-classic"
+                    "mode": "fixed",
+                    "fixedColor": "blue"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "blue",
+                        "value": null
+                      }
+                    ]
                   },
                   "decimals": 0
                 },
@@ -344,7 +364,7 @@
         "kind": "Panel",
         "spec": {
           "id": 4,
-          "title": "Reported session cost",
+          "title": "Estimated session cost",
           "description": "Reported session estimate, not billing. Codex uses a soft cumulative estimate; failed or interrupted turns may be omitted.",
           "links": [],
           "transparent": false,
@@ -392,10 +412,10 @@
                   "fields": "",
                   "values": false
                 },
-                "colorMode": "value",
+                "colorMode": "background",
                 "graphMode": "none",
                 "justifyMode": "center",
-                "textMode": "auto",
+                "textMode": "value",
                 "wideLayout": true,
                 "showPercentChange": false,
                 "orientation": "auto",
@@ -407,7 +427,17 @@
                 "defaults": {
                   "unit": "currencyUSD",
                   "color": {
-                    "mode": "palette-classic"
+                    "mode": "fixed",
+                    "fixedColor": "green"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
                   },
                   "decimals": 3
                 },
@@ -470,10 +500,10 @@
                   "fields": "",
                   "values": false
                 },
-                "colorMode": "value",
+                "colorMode": "background",
                 "graphMode": "none",
                 "justifyMode": "center",
-                "textMode": "auto",
+                "textMode": "value",
                 "wideLayout": true,
                 "showPercentChange": false,
                 "orientation": "auto",
@@ -485,7 +515,17 @@
                 "defaults": {
                   "unit": "short",
                   "color": {
-                    "mode": "palette-classic"
+                    "mode": "fixed",
+                    "fixedColor": "purple"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "purple",
+                        "value": null
+                      }
+                    ]
                   },
                   "decimals": 0
                 },
@@ -866,10 +906,10 @@
                   "fields": "",
                   "values": false
                 },
-                "colorMode": "value",
+                "colorMode": "background",
                 "graphMode": "none",
                 "justifyMode": "center",
-                "textMode": "auto",
+                "textMode": "value",
                 "wideLayout": true,
                 "showPercentChange": false,
                 "orientation": "auto",
@@ -881,7 +921,17 @@
                 "defaults": {
                   "unit": "s",
                   "color": {
-                    "mode": "palette-classic"
+                    "mode": "fixed",
+                    "fixedColor": "purple"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "purple",
+                        "value": null
+                      }
+                    ]
                   },
                   "decimals": 3
                 },
@@ -894,7 +944,7 @@
       "guards": {
         "kind": "Panel",
         "spec": {
-          "id": 12,
+          "id": 11,
           "title": "Guard outcome increments",
           "description": "Per-rule outcomes scoped by this agent rule prefix. increase() can miss initial increments of new series; empty means no matching samples, not guaranteed safety.",
           "links": [],
@@ -971,89 +1021,10 @@
           }
         }
       },
-      "ttft": {
-        "kind": "Panel",
-        "spec": {
-          "id": 13,
-          "title": "Native mean time to first token",
-          "description": "Native Codex duration in milliseconds. increase() misses initial samples of short-lived series; no developer/session attribution is available.",
-          "links": [],
-          "transparent": false,
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "refId": "A",
-                    "hidden": false,
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "${ds_prom}"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "sum(increase(codex_turn_ttft_duration_ms_milliseconds_sum{service_namespace=\"${prefix}\"}[$__range])) / (sum(increase(codex_turn_ttft_duration_ms_milliseconds_count{service_namespace=\"${prefix}\"}[$__range])) > 0)",
-                        "refId": "A",
-                        "legendFormat": "",
-                        "range": false,
-                        "instant": true
-                      }
-                    }
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {}
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "stat",
-            "version": "",
-            "spec": {
-              "options": {
-                "reduceOptions": {
-                  "calcs": [
-                    "lastNotNull"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "colorMode": "value",
-                "graphMode": "none",
-                "justifyMode": "center",
-                "textMode": "auto",
-                "wideLayout": true,
-                "showPercentChange": false,
-                "orientation": "auto",
-                "text": {
-                  "valueSize": 34
-                }
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "ms",
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "decimals": 0,
-                  "noValue": "Insufficient samples"
-                },
-                "overrides": []
-              }
-            }
-          }
-        }
-      },
       "hooks": {
         "kind": "Panel",
         "spec": {
-          "id": 14,
+          "id": 12,
           "title": "Native hook outcome increments",
           "description": "Native hook outcomes, not guard decisions. Sparse new series can lose initial increments; metrics have no developer/session attribution.",
           "links": [],
@@ -1133,7 +1104,7 @@
       "recent": {
         "kind": "Panel",
         "spec": {
-          "id": 15,
+          "id": 13,
           "title": "Recent session summaries",
           "description": "Selected runner summary fields only; cost is estimated. Model identifiers and raw log details are omitted.",
           "links": [],
@@ -1193,191 +1164,1104 @@
             }
           }
         }
+      },
+      "developers": {
+        "kind": "Panel",
+        "spec": {
+          "id": 14,
+          "title": "Developers",
+          "description": "Distinct developers with completed session records in the selected range.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_logs}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "count(sum by (developer)(count_over_time({service_namespace=\"${prefix}\",service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=\"codex\" | __error__=\"\" [$__range])))",
+                        "refId": "A",
+                        "legendFormat": "",
+                        "queryType": "instant"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "textMode": "value",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "orientation": "auto",
+                "text": {
+                  "valueSize": 34
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "purple"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "purple",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "avg-cost": {
+        "kind": "Panel",
+        "spec": {
+          "id": 15,
+          "title": "Avg estimated cost per session",
+          "description": "Estimated cost divided by completed session records; not provider billing. Failed and interrupted turns may be omitted.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_logs}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "(sum(sum_over_time({service_namespace=\"${prefix}\",service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=\"codex\" | __error__=\"\" | unwrap cost_usd | __error__=\"\" [$__range]))) / (sum(count_over_time({service_namespace=\"${prefix}\",service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=\"codex\" | __error__=\"\" [$__range])))",
+                        "refId": "A",
+                        "legendFormat": "",
+                        "queryType": "instant"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "textMode": "value",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "orientation": "auto",
+                "text": {
+                  "valueSize": 34
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "currencyUSD",
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "yellow"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "yellow",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 3
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "sessions-dev": {
+        "kind": "Panel",
+        "spec": {
+          "id": 16,
+          "title": "Sessions by developer",
+          "description": "Completed session records attributed to each developer.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_logs}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (developer)(count_over_time({service_namespace=\"${prefix}\",service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=\"codex\" | __error__=\"\" [$__range]))",
+                        "refId": "A",
+                        "legendFormat": "{{developer}}",
+                        "queryType": "instant"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "orientation": "horizontal",
+                "displayMode": "gradient",
+                "showUnfilled": true,
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": true
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "noValue": "No data",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 0,
+                  "min": 0,
+                  "displayName": "$${__field.labels.developer}"
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "cost-team": {
+        "kind": "Panel",
+        "spec": {
+          "id": 17,
+          "title": "Estimated cost by team",
+          "description": "Reported runner cost estimate grouped by team, not gateway ledger or provider billing.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_logs}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (team)(sum_over_time({service_namespace=\"${prefix}\",service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=\"codex\" | __error__=\"\" | unwrap cost_usd | __error__=\"\" [$__range]))",
+                        "refId": "A",
+                        "legendFormat": "{{team}}",
+                        "queryType": "instant"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "orientation": "horizontal",
+                "displayMode": "gradient",
+                "showUnfilled": true,
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": true
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "currencyUSD",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "noValue": "No data",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 2,
+                  "min": 0,
+                  "displayName": "$${__field.labels.team}"
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "input": {
+        "kind": "Panel",
+        "spec": {
+          "id": 18,
+          "title": "Observed input tokens",
+          "description": "Observed cumulative session peaks in the selected range, not interval throughput. Resumed process resets can undercount; a peak may include work before the range. Output only; reasoning is not added. Token classes overlap; this is not an additive total.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum(max_over_time(gen_ai_client_token_usage_sum{gen_ai_agent_name=\"codex-${prefix}\",agento11y_tag_service_namespace=\"${prefix}\",gen_ai_token_type=\"input\"}[$__range]))",
+                        "refId": "A",
+                        "legendFormat": "",
+                        "range": false,
+                        "instant": true
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "textMode": "value",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "orientation": "auto",
+                "text": {
+                  "valueSize": 34
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "blue"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "blue",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "cache_read": {
+        "kind": "Panel",
+        "spec": {
+          "id": 19,
+          "title": "Observed cache read tokens",
+          "description": "Observed cumulative session peaks in the selected range, not interval throughput. Resumed process resets can undercount; a peak may include work before the range. Output only; reasoning is not added. Token classes overlap; this is not an additive total.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum(max_over_time(gen_ai_client_token_usage_sum{gen_ai_agent_name=\"codex-${prefix}\",agento11y_tag_service_namespace=\"${prefix}\",gen_ai_token_type=\"cache_read\"}[$__range]))",
+                        "refId": "A",
+                        "legendFormat": "",
+                        "range": false,
+                        "instant": true
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "textMode": "value",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "orientation": "auto",
+                "text": {
+                  "valueSize": 34
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "green"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "tokens-team": {
+        "kind": "Panel",
+        "spec": {
+          "id": 20,
+          "title": "Observed output tokens by team",
+          "description": "Observed cumulative session peaks in the selected range, not interval throughput. Resumed process resets can undercount; a peak may include work before the range. Output only; reasoning is not added.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (agento11y_tag_team)(max_over_time(gen_ai_client_token_usage_sum{gen_ai_agent_name=\"codex-${prefix}\",agento11y_tag_service_namespace=\"${prefix}\",gen_ai_token_type=\"output\"}[$__range]))",
+                        "refId": "A",
+                        "legendFormat": "{{agento11y_tag_team}}",
+                        "range": false,
+                        "instant": true
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "orientation": "horizontal",
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "top",
+                "showUnfilled": true,
+                "sizing": "manual",
+                "minVizHeight": 16,
+                "maxVizHeight": 36,
+                "legend": {
+                  "showLegend": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "min": 0,
+                  "displayName": "$${__series.name}"
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "generations": {
+        "kind": "Panel",
+        "spec": {
+          "id": 21,
+          "title": "Observed generations",
+          "description": "Completed generation count from cumulative session peaks. Restarts can undercount; peaks may include work before the selected range.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum(max_over_time(gen_ai_client_operation_duration_seconds_count{gen_ai_agent_name=\"codex-${prefix}\",agento11y_tag_service_namespace=\"${prefix}\",gen_ai_operation_name=\"generateText\"}[$__range]))",
+                        "refId": "A",
+                        "legendFormat": "",
+                        "range": false,
+                        "instant": true
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "textMode": "value",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "orientation": "auto",
+                "text": {
+                  "valueSize": 34
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "blue"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "blue",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "tools-total": {
+        "kind": "Panel",
+        "spec": {
+          "id": 22,
+          "title": "Observed tool operations",
+          "description": "Observed cumulative session peaks in the selected range, not interval throughput. Resumed process resets can undercount; a peak may include work before the range. Completed tool operations reported by the plugin.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum(max_over_time(gen_ai_client_operation_duration_seconds_count{gen_ai_agent_name=\"codex-${prefix}\",agento11y_tag_service_namespace=\"${prefix}\",gen_ai_operation_name=\"execute_tool\"}[$__range]))",
+                        "refId": "A",
+                        "legendFormat": "",
+                        "range": false,
+                        "instant": true
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "textMode": "value",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "orientation": "auto",
+                "text": {
+                  "valueSize": 34
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "blue"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "blue",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
       }
     },
     "layout": {
-      "kind": "GridLayout",
+      "kind": "TabsLayout",
       "spec": {
-        "items": [
+        "tabs": [
           {
-            "kind": "GridLayoutItem",
+            "kind": "TabsLayoutTab",
             "spec": {
-              "x": 0,
-              "y": 0,
-              "width": 24,
-              "height": 3,
-              "element": {
-                "kind": "ElementReference",
-                "name": "intro"
+              "title": "Overview",
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 24,
+                        "height": 3,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "intro"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 3,
+                        "width": 4,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "cost"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 4,
+                        "y": 3,
+                        "width": 4,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "sessions"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 8,
+                        "y": 3,
+                        "width": 4,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "developers"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 3,
+                        "width": 4,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "avg-cost"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 16,
+                        "y": 3,
+                        "width": 4,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "output"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 20,
+                        "y": 3,
+                        "width": 4,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "errors"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 7,
+                        "width": 12,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "session-time"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 7,
+                        "width": 12,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "sessions-dev"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 14,
+                        "width": 12,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "cost-dev"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 14,
+                        "width": 12,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "cost-team"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 21,
+                        "width": 24,
+                        "height": 9,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "recent"
+                        }
+                      }
+                    }
+                  ]
+                }
               }
             }
           },
           {
-            "kind": "GridLayoutItem",
+            "kind": "TabsLayoutTab",
             "spec": {
-              "x": 0,
-              "y": 3,
-              "width": 6,
-              "height": 4,
-              "element": {
-                "kind": "ElementReference",
-                "name": "sessions"
+              "title": "Cost & tokens",
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 12,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "input"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 0,
+                        "width": 12,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "cache_read"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 4,
+                        "width": 12,
+                        "height": 8,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "tokens"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 4,
+                        "width": 12,
+                        "height": 8,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "tokens-team"
+                        }
+                      }
+                    }
+                  ]
+                }
               }
             }
           },
           {
-            "kind": "GridLayoutItem",
+            "kind": "TabsLayoutTab",
             "spec": {
-              "x": 6,
-              "y": 3,
-              "width": 6,
-              "height": 4,
-              "element": {
-                "kind": "ElementReference",
-                "name": "errors"
-              }
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "x": 12,
-              "y": 3,
-              "width": 6,
-              "height": 4,
-              "element": {
-                "kind": "ElementReference",
-                "name": "cost"
-              }
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "x": 18,
-              "y": 3,
-              "width": 6,
-              "height": 4,
-              "element": {
-                "kind": "ElementReference",
-                "name": "output"
-              }
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "x": 0,
-              "y": 7,
-              "width": 12,
-              "height": 7,
-              "element": {
-                "kind": "ElementReference",
-                "name": "session-time"
-              }
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "x": 12,
-              "y": 7,
-              "width": 12,
-              "height": 7,
-              "element": {
-                "kind": "ElementReference",
-                "name": "cost-dev"
-              }
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "x": 0,
-              "y": 14,
-              "width": 12,
-              "height": 7,
-              "element": {
-                "kind": "ElementReference",
-                "name": "tokens"
-              }
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "x": 12,
-              "y": 14,
-              "width": 12,
-              "height": 7,
-              "element": {
-                "kind": "ElementReference",
-                "name": "tools"
-              }
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "x": 0,
-              "y": 21,
-              "width": 12,
-              "height": 6,
-              "element": {
-                "kind": "ElementReference",
-                "name": "latency"
-              }
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "x": 12,
-              "y": 21,
-              "width": 12,
-              "height": 6,
-              "element": {
-                "kind": "ElementReference",
-                "name": "guards"
-              }
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "x": 0,
-              "y": 27,
-              "width": 12,
-              "height": 6,
-              "element": {
-                "kind": "ElementReference",
-                "name": "ttft"
-              }
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "x": 12,
-              "y": 27,
-              "width": 12,
-              "height": 6,
-              "element": {
-                "kind": "ElementReference",
-                "name": "hooks"
-              }
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "x": 0,
-              "y": 33,
-              "width": 24,
-              "height": 8,
-              "element": {
-                "kind": "ElementReference",
-                "name": "recent"
+              "title": "Tools & guards",
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 8,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "generations"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 8,
+                        "y": 0,
+                        "width": 8,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "latency"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 16,
+                        "y": 0,
+                        "width": 8,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "tools-total"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 4,
+                        "width": 12,
+                        "height": 8,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "tools"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 4,
+                        "width": 12,
+                        "height": 8,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "guards"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 12,
+                        "width": 24,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "hooks"
+                        }
+                      }
+                    }
+                  ]
+                }
               }
             }
           }
