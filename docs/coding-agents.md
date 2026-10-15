@@ -282,3 +282,8 @@ disabled. A model saying it called an MCP tool is insufficient proof: check the 
 An interrupted pi turn is not guaranteed to export: a live SIGTERM immediately after the first
 `message_update` exited 143 and produced no ingested conversation. Completed generations flush
 normally, but the last in-progress generation can be absent after cancellation.
+
+Pi prompt redaction protects the model context, not the captured original transcript: the live
+synthetic PII probe reached the model as `[REDACTED]`, while the exported generation still
+contained the original synthetic input. Keep real personal data out of this demo; full content
+capture is not a data-loss-prevention boundary. Codex preflight denial produced zero model tokens.

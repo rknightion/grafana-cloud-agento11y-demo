@@ -51,7 +51,8 @@ here would need every consumer (docs, examples, the chart) updated in the same c
 | Variable | Type | Default | Description |
 |---|---|---|---|
 | `teams` | list(string) | `["newsroom", "trading", "platform"]` | Team names. Each becomes a Cognito group (gateway policies, per-group spend caps, `user.groups` in telemetry) and a set of per-team Bedrock application inference profiles. |
-| `developers` | list(object({ name = string, team = string })) | 5 developers across the 3 default teams (see [Coding agents and the gateway](coding-agents.md#developers-and-teams)) | Claude Code developers signed in through the gateway, one container each on the agent host. `name` is a stable key (letters, digits, dots). |
+| `developers` | list(object({ name = string, team = string, agent = optional(string, "claude-code") })) | 5 Claude Code developers across the 3 default teams (see [Coding agents and the gateway](coding-agents.md#developers-and-teams)) | One container per developer. Supported agents are `claude-code`, `codex` and `pi`; only Claude Code uses Cognito and gateway spend caps. `name` is a stable key (letters, digits, dots). |
+| `codex_bedrock` | object({ model = string, region = string }) | `{ model = "openai.gpt-5.6-luna", region = "us-east-1" }` | Exact Mantle model and request region for Codex's separate scoped principal. This first renderer supports the default model/region and its verified prices. |
 | `developer_email_domain` | string | `"touchline.example"` | Email domain for the generated developer identities. |
 | `team_model_allowlist` | map(list(string)) | `{ trading = ["haiku"] }` | Per-team restriction of `gateway_models` for the developers. Teams not listed get every gateway model. |
 | `gateway_models` | list(string) | `["haiku", "sonnet"]` | `bedrock_models` keys the gateway offers to developers. |
