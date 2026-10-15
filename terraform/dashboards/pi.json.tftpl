@@ -621,7 +621,7 @@
                     "lastNotNull"
                   ],
                   "fields": "",
-                  "values": false
+                  "values": true
                 },
                 "orientation": "horizontal",
                 "displayMode": "gradient",
@@ -641,8 +641,7 @@
                   "color": {
                     "mode": "palette-classic"
                   },
-                  "min": 0,
-                  "displayName": "$${__series.name}"
+                  "min": 0
                 },
                 "overrides": []
               }
@@ -994,7 +993,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "{service_namespace=\"${prefix}\",service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=\"pi\" | __error__=\"\" | line_format `developer={{.developer}} scenario={{.scenario}} cost_usd={{.cost_usd}} error={{.is_error}} session={{.session_id}}`",
+                        "expr": "{service_namespace=\"${prefix}\",service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=\"pi\" | __error__=\"\" | label_format level=`{{ if eq .is_error \"true\" }}error{{ else }}info{{ end }}` | drop model | line_format `developer={{.developer}} scenario={{.scenario}} cost_usd={{.cost_usd}} error={{.is_error}} session={{.session_id}}`",
                         "refId": "A",
                         "legendFormat": "",
                         "queryType": "range"
