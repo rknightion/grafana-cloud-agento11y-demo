@@ -1,0 +1,1373 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "${dash_coding_agents}"
+  },
+  "spec": {
+    "editable": true,
+    "liveNow": false,
+    "preload": false,
+    "cursorSync": "Crosshair",
+    "timeSettings": {
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "1m",
+      "timezone": "browser",
+      "autoRefreshIntervals": [
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "1h"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "links": [
+      {
+        "title": "Coding agents",
+        "type": "link",
+        "url": "/d/${dash_coding_agents}",
+        "icon": "external link",
+        "tooltip": "Coding agents dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Claude Code",
+        "type": "link",
+        "url": "/d/${dash_claude_code}",
+        "icon": "external link",
+        "tooltip": "Claude Code dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Codex",
+        "type": "link",
+        "url": "/d/${dash_codex}",
+        "icon": "external link",
+        "tooltip": "Codex dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "pi",
+        "type": "link",
+        "url": "/d/${dash_pi}",
+        "icon": "external link",
+        "tooltip": "pi dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Gateway",
+        "type": "link",
+        "url": "/d/${dash_gateway}",
+        "icon": "external link",
+        "tooltip": "Gateway dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Bedrock",
+        "type": "link",
+        "url": "/d/${dash_bedrock}",
+        "icon": "external link",
+        "tooltip": "Bedrock dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Agentic app",
+        "type": "link",
+        "url": "/d/${dash_agents}",
+        "icon": "external link",
+        "tooltip": "Agentic app dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Agent Observability",
+        "type": "link",
+        "url": "/a/grafana-agento11y-app",
+        "icon": "external link",
+        "tooltip": "Agent conversations, generations, scores and explanations",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": true,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Application Observability",
+        "type": "link",
+        "url": "/a/grafana-app-observability-app",
+        "icon": "external link",
+        "tooltip": "Service RED and dependency graph",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": true,
+        "includeVars": false,
+        "keepTime": true
+      }
+    ],
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true,
+          "legacyOptions": {
+            "type": "dashboard"
+          }
+        }
+      }
+    ],
+    "title": "Coding agents compared (${prefix})",
+    "description": "Compare completed Claude Code, Codex and pi sessions; follow links for native runtime detail, gateway ledger and Bedrock.",
+    "tags": [
+      "${prefix}",
+      "coding-agents",
+      "overview"
+    ],
+    "variables": [],
+    "elements": {
+      "intro": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Three coding agents, one session view",
+          "description": "",
+          "links": [],
+          "transparent": true,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "",
+            "spec": {
+              "options": {
+                "mode": "markdown",
+                "content": "Compare **completed corpus sessions** on the host. Cost is the runner-reported estimate: Claude reported cost, Codex token-price estimate, pi model-catalog estimate. It is **not** the gateway ledger or AWS billing. Token panels show observed per-session peaks and may include bounded validation sessions; cache tokens are not added again. Use the dedicated dashboards above for runtime detail."
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "sessions": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Completed sessions",
+          "description": "One terminal dev_session record per corpus session, including unsuccessful sessions. No duplicate per-turn counting.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_logs}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum(count_over_time({service_namespace=\"${prefix}\", service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=~\"claude-code|codex|pi\" | __error__=\"\"[$__range]))",
+                        "refId": "A",
+                        "legendFormat": "",
+                        "queryType": "instant"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "orientation": "auto",
+                "text": {
+                  "valueSize": 34
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "noValue": "No data",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "errors": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Failed sessions",
+          "description": "Runner result is_error=true. Guard-denied work may be handled normally by an agent and is shown separately. Zero is shown only when session records exist in the selected range.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_logs}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum(count_over_time({service_namespace=\"${prefix}\", service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=~\"claude-code|codex|pi\" | __error__=\"\" | is_error=\"true\" [$__range])) or (0 * sum(count_over_time({service_namespace=\"${prefix}\", service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=~\"claude-code|codex|pi\" | __error__=\"\"[$__range])))",
+                        "refId": "A",
+                        "legendFormat": "",
+                        "queryType": "instant"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "orientation": "auto",
+                "text": {
+                  "valueSize": 34
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "noValue": "No data",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "cost": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Reported session cost",
+          "description": "Sum of one final reported cost per corpus session; estimates differ by agent and are not billed charges.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_logs}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum(sum_over_time({service_namespace=\"${prefix}\", service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=~\"claude-code|codex|pi\" | __error__=\"\" | unwrap cost_usd | __error__=\"\" [$__range]))",
+                        "refId": "A",
+                        "legendFormat": "",
+                        "queryType": "instant"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "orientation": "auto",
+                "text": {
+                  "valueSize": 34
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "currencyUSD",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "noValue": "No data",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 2
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "developers": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Developers with completed sessions",
+          "description": "Distinct developers with a terminal session event inside the picker range.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_logs}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "count(sum by (developer) (count_over_time({service_namespace=\"${prefix}\", service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=~\"claude-code|codex|pi\" | __error__=\"\"[$__range])))",
+                        "refId": "A",
+                        "legendFormat": "",
+                        "queryType": "instant"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "orientation": "auto",
+                "text": {
+                  "valueSize": 34
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "noValue": "No data",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "by-agent": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Sessions by agent",
+          "description": "Same terminal-session boundary across all three runners.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_logs}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (agent) (count_over_time({service_namespace=\"${prefix}\", service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=~\"claude-code|codex|pi\" | __error__=\"\"[$__range]))",
+                        "refId": "A",
+                        "legendFormat": "{{agent}}",
+                        "queryType": "instant"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "orientation": "horizontal",
+                "displayMode": "gradient",
+                "showUnfilled": true,
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "noValue": "No data",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 2,
+                  "min": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "cost-agent": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "Reported cost by agent",
+          "description": "Comparable scope, different estimation methods. Codex does not use gateway spend caps.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_logs}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (agent) (sum_over_time({service_namespace=\"${prefix}\", service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=~\"claude-code|codex|pi\" | __error__=\"\" | unwrap cost_usd | __error__=\"\" [$__range]))",
+                        "refId": "A",
+                        "legendFormat": "{{agent}}",
+                        "queryType": "instant"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "orientation": "horizontal",
+                "displayMode": "gradient",
+                "showUnfilled": true,
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "currencyUSD",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "noValue": "No data",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 2,
+                  "min": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "turns-agent": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "User turns per session",
+          "description": "Average initial prompt plus follow-ups sent by the shared runner. This is not model generation count.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_logs}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (agent) (sum_over_time({service_namespace=\"${prefix}\", service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=~\"claude-code|codex|pi\" | __error__=\"\" | unwrap user_turns | __error__=\"\" [$__range])) / sum by (agent) (count_over_time({service_namespace=\"${prefix}\", service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=~\"claude-code|codex|pi\" | __error__=\"\"[$__range]))",
+                        "refId": "A",
+                        "legendFormat": "{{agent}}",
+                        "queryType": "instant"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "orientation": "horizontal",
+                "displayMode": "gradient",
+                "showUnfilled": true,
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "noValue": "No data",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 2,
+                  "min": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "activity": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "Completed sessions over time",
+          "description": "Rolling five-minute terminal-session counts. A quiet interval means no session completed.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_logs}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (agent) (count_over_time({service_namespace=\"${prefix}\", service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=~\"claude-code|codex|pi\" | __error__=\"\"[5m]))",
+                        "refId": "A",
+                        "legendFormat": "{{agent}}",
+                        "queryType": "range"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": true,
+                  "displayMode": "table",
+                  "placement": "right",
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "custom": {
+                    "drawStyle": "bars",
+                    "lineWidth": 1,
+                    "fillOpacity": 80,
+                    "gradientMode": "none",
+                    "showPoints": "never",
+                    "pointSize": 5,
+                    "barAlignment": 0,
+                    "spanNulls": false,
+                    "axisSoftMin": 0,
+                    "stacking": {
+                      "mode": "normal",
+                      "group": "A"
+                    }
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 3,
+                  "noValue": "No data"
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "cost-activity": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "Reported cost over time",
+          "description": "Rolling five-minute reported costs for completed sessions; not a cumulative billing total.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_logs}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (agent) (sum_over_time({service_namespace=\"${prefix}\", service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=~\"claude-code|codex|pi\" | __error__=\"\" | unwrap cost_usd | __error__=\"\" [5m]))",
+                        "refId": "A",
+                        "legendFormat": "{{agent}}",
+                        "queryType": "range"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": true,
+                  "displayMode": "table",
+                  "placement": "right",
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "currencyUSD",
+                  "custom": {
+                    "drawStyle": "bars",
+                    "lineWidth": 1,
+                    "fillOpacity": 80,
+                    "gradientMode": "none",
+                    "showPoints": "never",
+                    "pointSize": 5,
+                    "barAlignment": 0,
+                    "spanNulls": false,
+                    "axisSoftMin": 0,
+                    "stacking": {
+                      "mode": "normal",
+                      "group": "A"
+                    }
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 3,
+                  "noValue": "No data"
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "output": {
+        "kind": "Panel",
+        "spec": {
+          "id": 11,
+          "title": "Observed output tokens by agent",
+          "description": "Sum of per-session metric peaks observed within the range. Process restarts/resumes and partial windows can undercount; do not treat this as billing. Reasoning is not added to output again.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (gen_ai_agent_name) (max_over_time(gen_ai_client_token_usage_sum{agento11y_tag_service_namespace=\"${prefix}\",gen_ai_agent_name=~\"claude-code/${prefix}|codex-${prefix}|pi-${prefix}\",gen_ai_token_type=\"output\"}[$__range]))",
+                        "refId": "A",
+                        "legendFormat": "{{gen_ai_agent_name}}",
+                        "range": false,
+                        "instant": true
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "orientation": "horizontal",
+                "displayMode": "gradient",
+                "showUnfilled": true,
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "noValue": "No data",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 2,
+                  "min": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "guards": {
+        "kind": "Panel",
+        "spec": {
+          "id": 12,
+          "title": "Guard denials by agent",
+          "description": "Backend rule outcomes, including validation calls. Counter increases can miss the first event on a newly appearing series; absent series are not asserted as zero.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (agent) (label_replace(increase(agento11y_hook_rule_outcomes_total{rule_id=~\"${metric_prefix}_(claude_code|codex|pi)_.*\",outcome=\"deny\"}[$__range]),\"agent\",\"$1\",\"rule_id\",\"${metric_prefix}_(claude_code|codex|pi)_.*\"))",
+                        "refId": "A",
+                        "legendFormat": "{{agent}}",
+                        "range": false,
+                        "instant": true
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "orientation": "horizontal",
+                "displayMode": "gradient",
+                "showUnfilled": true,
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "noValue": "No data",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 2,
+                  "min": 0
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "recent": {
+        "kind": "Panel",
+        "spec": {
+          "id": 13,
+          "title": "Recent completed sessions",
+          "description": "One compact record per completed corpus session. Model ARNs and raw prompt content are not displayed. Conversation ids can be searched in Agent Observability.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_logs}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "{service_namespace=\"${prefix}\", service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=~\"claude-code|codex|pi\" | __error__=\"\" | line_format `{{.agent}} \u00b7 {{.developer}} \u00b7 {{.title}} | cost={{.cost_usd}} USD | error={{.is_error}} | turns={{.user_turns}} | session={{.session_id}}`",
+                        "refId": "A",
+                        "legendFormat": "",
+                        "queryType": "range"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "logs",
+            "version": "",
+            "spec": {
+              "options": {
+                "showTime": true,
+                "wrapLogMessage": true,
+                "sortOrder": "Descending",
+                "enableLogDetails": false,
+                "dedupStrategy": "none"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "noValue": "No data",
+                  "color": {
+                    "mode": "palette-classic"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 3,
+              "element": {
+                "kind": "ElementReference",
+                "name": "intro"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 3,
+              "width": 6,
+              "height": 4,
+              "element": {
+                "kind": "ElementReference",
+                "name": "sessions"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 6,
+              "y": 3,
+              "width": 6,
+              "height": 4,
+              "element": {
+                "kind": "ElementReference",
+                "name": "errors"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 3,
+              "width": 6,
+              "height": 4,
+              "element": {
+                "kind": "ElementReference",
+                "name": "cost"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 18,
+              "y": 3,
+              "width": 6,
+              "height": 4,
+              "element": {
+                "kind": "ElementReference",
+                "name": "developers"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 7,
+              "width": 8,
+              "height": 7,
+              "element": {
+                "kind": "ElementReference",
+                "name": "by-agent"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 8,
+              "y": 7,
+              "width": 8,
+              "height": 7,
+              "element": {
+                "kind": "ElementReference",
+                "name": "cost-agent"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 16,
+              "y": 7,
+              "width": 8,
+              "height": 7,
+              "element": {
+                "kind": "ElementReference",
+                "name": "turns-agent"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 14,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "activity"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 14,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "cost-activity"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 22,
+              "width": 12,
+              "height": 7,
+              "element": {
+                "kind": "ElementReference",
+                "name": "output"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 22,
+              "width": 12,
+              "height": 7,
+              "element": {
+                "kind": "ElementReference",
+                "name": "guards"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 29,
+              "width": 24,
+              "height": 10,
+              "element": {
+                "kind": "ElementReference",
+                "name": "recent"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

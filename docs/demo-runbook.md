@@ -12,7 +12,7 @@ AI feature in your own product:
 
 ## Before you start
 
-1. `tofu -chdir=examples/complete output dashboards` and open the four dashboards, signed in to
+1. `tofu -chdir=examples/complete output dashboards` and open the seven dashboards, signed in to
    the stack. Set the time range to the last 3 hours.
 2. Open these alongside them:
    - Alerting > Alert rules, filtered by label `touchline_demo=true`.
@@ -112,8 +112,16 @@ so use a completed session to establish baseline export before testing terminati
 Codex's native OTLP path has a separate metrics/logs/traces credential: plugin generations arriving
 does not prove that native telemetry works. Inspect its real signals in Explore before describing
 latency or hook-run coverage. Pi has plugin telemetry only. The existing Claude Code dashboard,
-`claude_code_*` alerts and recording rules remain Claude-only. This rollout deliberately keeps
-the built-in Coding agents view as the comparison surface; no Codex/pi dashboards are added.
+`claude_code_*` alerts and recording rules remain Claude-only.
+
+Open **Coding agents compared** for completed sessions, developer coverage, reported cost and
+output tokens across all three runtimes. Follow its **Codex** and **pi** links for runtime-specific
+tools, guards, tokens and recent sessions. Reported costs include local model estimates and are
+not the gateway billing ledger. Token panels show observed per-session counter peaks; interrupted
+exports and partial time windows can undercount. Codex native latency needs positive observed
+counter increments and shows insufficient samples otherwise. Use **Gateway** for the shared
+audit/spend tabs; they are no longer copied into Claude Code. All dashboards preserve the selected
+time range when navigating between them.
 
 Before claiming live coverage, record the selected time range, agent/user/model, a completed and
 resumed conversation, token/cost evidence, a tool trace, a guard result and any missing signals.

@@ -55,7 +55,7 @@ locals {
     contact_point     = "${var.name}-null"
     metric_prefix     = replace(var.name, "-", "_")
     demo_label        = "${replace(var.name, "-", "_")}_demo"
-    dashboards        = ["agents", "bedrock", "claude-code", "gateway"]
+    dashboards        = ["agents", "bedrock", "claude-code", "gateway", "codex", "pi", "coding-agents"]
     guard_prefix      = replace(var.name, "-", "_")
     datasource_prom   = "grafanacloud-prom"
     datasource_logs   = "grafanacloud-logs"

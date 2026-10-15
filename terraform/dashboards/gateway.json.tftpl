@@ -33,11 +33,11 @@
     },
     "links": [
       {
-        "title": "Observing Claude Code",
+        "title": "Coding agents",
         "type": "link",
-        "url": "/d/${dash_claude_code}",
+        "url": "/d/${dash_coding_agents}",
         "icon": "external link",
-        "tooltip": "",
+        "tooltip": "Coding agents dashboard",
         "tags": [],
         "asDropdown": false,
         "targetBlank": false,
@@ -45,11 +45,71 @@
         "keepTime": true
       },
       {
-        "title": "Observing Bedrock",
+        "title": "Claude Code",
+        "type": "link",
+        "url": "/d/${dash_claude_code}",
+        "icon": "external link",
+        "tooltip": "Claude Code dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Codex",
+        "type": "link",
+        "url": "/d/${dash_codex}",
+        "icon": "external link",
+        "tooltip": "Codex dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "pi",
+        "type": "link",
+        "url": "/d/${dash_pi}",
+        "icon": "external link",
+        "tooltip": "pi dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Gateway",
+        "type": "link",
+        "url": "/d/${dash_gateway}",
+        "icon": "external link",
+        "tooltip": "Gateway dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Bedrock",
         "type": "link",
         "url": "/d/${dash_bedrock}",
         "icon": "external link",
-        "tooltip": "",
+        "tooltip": "Bedrock dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Agentic app",
+        "type": "link",
+        "url": "/d/${dash_agents}",
+        "icon": "external link",
+        "tooltip": "Agentic app dashboard",
         "tags": [],
         "asDropdown": false,
         "targetBlank": false,
@@ -2535,74 +2595,6 @@
           }
         }
       },
-      "dm-spend": {
-        "kind": "Panel",
-        "spec": {
-          "id": 1037,
-          "title": "Spend by developer (from Postgres)",
-          "description": "${metric_prefix}_gateway_spend_usd: SQL recording rule over the gateway spend table.",
-          "links": [],
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "refId": "A",
-                    "hidden": false,
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "${ds_prom}"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "max by (email, period_kind) (${metric_prefix}_gateway_spend_usd)",
-                        "legendFormat": "{{email}} {{period_kind}}",
-                        "range": true,
-                        "instant": false,
-                        "refId": "A"
-                      }
-                    }
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {}
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "timeseries",
-            "version": "",
-            "spec": {
-              "options": {
-                "legend": {
-                  "displayMode": "table",
-                  "placement": "right",
-                  "calcs": [
-                    "lastNotNull",
-                    "max"
-                  ]
-                },
-                "tooltip": {
-                  "mode": "multi"
-                }
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "currencyUSD",
-                  "decimals": 2
-                },
-                "overrides": []
-              }
-            }
-          }
-        }
-      },
       "op-intro": {
         "kind": "Panel",
         "spec": {
@@ -3482,19 +3474,6 @@
                         "element": {
                           "kind": "ElementReference",
                           "name": "dm-signins"
-                        }
-                      }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
-                        "x": 0,
-                        "y": 27,
-                        "width": 24,
-                        "height": 8,
-                        "element": {
-                          "kind": "ElementReference",
-                          "name": "dm-spend"
                         }
                       }
                     }

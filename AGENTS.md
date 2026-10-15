@@ -61,8 +61,10 @@ images carry the former repository name as prefix (see CHANGELOG.md) and must st
 - Codex guards use canonical `Bash`/`apply_patch`; pi uses lowercase `bash`/`read`/`edit`/`write`.
   Pi preflight PII redacts rather than denies. New Codex/pi regression suites stay manual-only
   until the scheduler accounts for the enabled roster.
-- The built-in Coding agents view is the multi-agent comparison surface for this rollout; no new
-  dashboards are added. Existing native `claude_code_*` dashboards/alerts/rules remain Claude-only.
+- The combined Coding agents dashboard compares completed-session logs across Claude Code, Codex
+  and pi. Dedicated Codex/pi dashboards use their verified plugin/native signals; native
+  `claude_code_*` dashboards/alerts/rules remain Claude-only. Gateway audit and spend tabs live
+  only in the Gateway dashboard. Reported session costs are estimates, not the gateway ledger.
   Copilot and Cursor are deferred pending their recorded resume conditions.
 - The App Observability `team` span-metrics dimension has no API or Terraform resource. Adding it
   is a manual step in the stack's Application Observability settings.

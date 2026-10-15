@@ -24,6 +24,90 @@
     },
     "links": [
       {
+        "title": "Coding agents",
+        "type": "link",
+        "url": "/d/${dash_coding_agents}",
+        "icon": "external link",
+        "tooltip": "Coding agents dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Claude Code",
+        "type": "link",
+        "url": "/d/${dash_claude_code}",
+        "icon": "external link",
+        "tooltip": "Claude Code dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Codex",
+        "type": "link",
+        "url": "/d/${dash_codex}",
+        "icon": "external link",
+        "tooltip": "Codex dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "pi",
+        "type": "link",
+        "url": "/d/${dash_pi}",
+        "icon": "external link",
+        "tooltip": "pi dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Gateway",
+        "type": "link",
+        "url": "/d/${dash_gateway}",
+        "icon": "external link",
+        "tooltip": "Gateway dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Bedrock",
+        "type": "link",
+        "url": "/d/${dash_bedrock}",
+        "icon": "external link",
+        "tooltip": "Bedrock dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
+        "title": "Agentic app",
+        "type": "link",
+        "url": "/d/${dash_agents}",
+        "icon": "external link",
+        "tooltip": "Agentic app dashboard",
+        "tags": [],
+        "asDropdown": false,
+        "targetBlank": false,
+        "includeVars": false,
+        "keepTime": true
+      },
+      {
         "title": "Agent Observability",
         "type": "link",
         "url": "/a/grafana-agento11y-app",
@@ -932,270 +1016,6 @@
                   "decimals": 2
                 },
                 "overrides": []
-              }
-            }
-          }
-        }
-      },
-      "path-service": {
-        "kind": "Panel",
-        "spec": {
-          "id": 11,
-          "title": "Agent calls by role / hour",
-          "description": "Generation throughput by agent role, in calls per hour.",
-          "links": [],
-          "transparent": false,
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "refId": "A",
-                    "hidden": false,
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "${ds_prom}"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "(sum by (service_name)(rate(gen_ai_client_operation_duration_seconds_count{service_namespace=\"${prefix}\",service_name=~\"${agents_re}\",gen_ai_operation_name=\"generateText\"}[$__rate_interval]))) * 3600",
-                        "legendFormat": "{{service_name}}",
-                        "range": true,
-                        "instant": false,
-                        "refId": "A"
-                      }
-                    }
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {
-                "interval": "5m"
-              }
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "timeseries",
-            "version": "",
-            "spec": {
-              "options": {
-                "legend": {
-                  "showLegend": true,
-                  "displayMode": "table",
-                  "placement": "right",
-                  "calcs": [
-                    "lastNotNull"
-                  ]
-                },
-                "tooltip": {
-                  "mode": "multi",
-                  "sort": "desc"
-                }
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "short",
-                  "custom": {
-                    "drawStyle": "bars",
-                    "lineWidth": 1,
-                    "fillOpacity": 80,
-                    "gradientMode": "none",
-                    "showPoints": "never",
-                    "pointSize": 5,
-                    "barAlignment": 0,
-                    "spanNulls": false,
-                    "axisSoftMin": 0,
-                    "stacking": {
-                      "mode": "normal",
-                      "group": "A"
-                    }
-                  },
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "decimals": 3
-                },
-                "overrides": []
-              }
-            }
-          }
-        }
-      },
-      "path-traces": {
-        "kind": "Panel",
-        "spec": {
-          "id": 12,
-          "title": "Recent site-to-agent traces",
-          "description": "Browser and site requests with trace links. Open a trace to follow Redis, orchestrator and specialist spans.",
-          "links": [],
-          "transparent": false,
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "refId": "A",
-                    "hidden": false,
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "tempo",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "${ds_traces}"
-                      },
-                      "spec": {
-                        "queryType": "traceql",
-                        "query": "{ resource.service.name = \"${svc_site_api}\" && name = \"POST\" }",
-                        "limit": 50,
-                        "tableType": "spans",
-                        "spss": 3,
-                        "refId": "A"
-                      }
-                    }
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {}
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "table",
-            "version": "",
-            "spec": {
-              "options": {
-                "showHeader": true,
-                "cellHeight": "sm",
-                "enablePagination": false,
-                "sortBy": [
-                  {
-                    "displayName": "time",
-                    "desc": true
-                  }
-                ]
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "align": "auto",
-                    "cellOptions": {
-                      "type": "auto"
-                    },
-                    "filterable": false,
-                    "inspect": true
-                  },
-                  "color": {
-                    "mode": "continuous-BlPu"
-                  },
-                  "unit": "short"
-                },
-                "overrides": [
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Time"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.hidden",
-                        "value": true
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "user_prompt"
-                    },
-                    "properties": [
-                      {
-                        "id": "displayName",
-                        "value": "Prompt"
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "user.email"
-                    },
-                    "properties": [
-                      {
-                        "id": "displayName",
-                        "value": "Developer"
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "duration"
-                    },
-                    "properties": [
-                      {
-                        "id": "displayName",
-                        "value": "Duration"
-                      },
-                      {
-                        "id": "unit",
-                        "value": "ns"
-                      },
-                      {
-                        "id": "custom.width",
-                        "value": 110
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "time"
-                    },
-                    "properties": [
-                      {
-                        "id": "displayName",
-                        "value": "Start"
-                      },
-                      {
-                        "id": "custom.width",
-                        "value": 190
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Span ID"
-                    },
-                    "properties": [
-                      {
-                        "id": "displayName",
-                        "value": "Trace"
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byRegexp",
-                      "options": "^(Spans traceIdHidden|traceIdHidden|Trace Service|traceService|Trace Name|traceName|Name|name|service\\.name|team\\.name|gen_ai\\.agent\\.name|gen_ai\\.operation\\.name)$"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.hidden",
-                        "value": true
-                      }
-                    ]
-                  }
-                ]
               }
             }
           }
@@ -2478,7 +2298,7 @@
             "spec": {
               "options": {
                 "mode": "markdown",
-                "content": "### Signal path\n\nFaro browser tracing → `${svc_site_api}` → Redis and `${svc_orchestrator}` → specialist agents → Bedrock. The in-namespace Alloy sends OTLP metrics, logs and traces to Grafana Cloud. Agent Observability receives generations separately and runs online evaluations and the server guard.",
+                "content": "### Signal path\n\nFaro browser tracing \u2192 `${svc_site_api}` \u2192 Redis and `${svc_orchestrator}` \u2192 specialist agents \u2192 Bedrock. The in-namespace Alloy sends OTLP metrics, logs and traces to Grafana Cloud. Agent Observability receives generations separately and runs online evaluations and the server guard.",
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -2814,7 +2634,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "(sum by(client,server)(rate(traces_service_graph_request_total{server_service_namespace=\"${prefix}\",client!=\"user\"}[$__rate_interval]))) * 3600",
-                        "legendFormat": "{{client}} → {{server}}",
+                        "legendFormat": "{{client}} \u2192 {{server}}",
                         "range": true,
                         "instant": false,
                         "refId": "A"
@@ -3870,47 +3690,6 @@
                                   "element": {
                                     "kind": "ElementReference",
                                     "name": "path-api-p95"
-                                  }
-                                }
-                              }
-                            ]
-                          }
-                        }
-                      }
-                    },
-                    {
-                      "kind": "RowsLayoutRow",
-                      "spec": {
-                        "title": "Agent chain",
-                        "collapse": false,
-                        "hideHeader": false,
-                        "layout": {
-                          "kind": "GridLayout",
-                          "spec": {
-                            "items": [
-                              {
-                                "kind": "GridLayoutItem",
-                                "spec": {
-                                  "x": 0,
-                                  "y": 0,
-                                  "width": 12,
-                                  "height": 8,
-                                  "element": {
-                                    "kind": "ElementReference",
-                                    "name": "path-service"
-                                  }
-                                }
-                              },
-                              {
-                                "kind": "GridLayoutItem",
-                                "spec": {
-                                  "x": 12,
-                                  "y": 0,
-                                  "width": 12,
-                                  "height": 8,
-                                  "element": {
-                                    "kind": "ElementReference",
-                                    "name": "path-traces"
                                   }
                                 }
                               }

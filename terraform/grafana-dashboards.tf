@@ -1,4 +1,4 @@
-# Folder and the four dashboards (v2 schema). The dashboards are templates so every name follows
+# Folder and dashboards (v2 schema). The dashboards are templates so every name follows
 # var.name: service names, the recorded-metric prefix, rule ids, datasource uids and the Bedrock
 # inference profile ids (which only exist after apply) are substituted at plan time.
 
