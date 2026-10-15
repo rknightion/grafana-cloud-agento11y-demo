@@ -159,7 +159,8 @@ RUN chmod 0755 /usr/local/bin/claude-install /usr/local/bin/dev-entrypoint /opt/
     && ln -s /opt/agent-host/bin/dev-reseed /usr/local/bin/dev-reseed \
     && ln -s /opt/agent-host/bin/dev-login-link /usr/local/bin/dev-login-link \
     && ln -s /opt/agent-host/bin/pii-burst-window /usr/local/bin/pii-burst-window \
-    && install -d -o node -g node /home/node/.claude /home/node/work /home/node/.local/bin \
+    && install -d -o node -g node /home/node/.claude /home/node/work /home/node/.local \
+       /home/node/.local/bin /home/node/.local/state /home/node/.local/state/agent-host \
        /var/lib/agent-host/recent-prompts
 
 # RECENT_PROMPTS_DIR is a volume shared by every developer container (agent-host/render), so a

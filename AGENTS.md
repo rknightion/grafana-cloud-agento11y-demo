@@ -74,6 +74,12 @@ images carry the former repository name as prefix (see CHANGELOG.md) and must st
 - Parallel creation of Agent Observability rules returned partial HTTP 500s during live rollout.
   Read back actual rules before retrying, then apply missing rules with `-parallelism=1`; never
   assume a failed batch created nothing. Permission-check timeouts can also surface as HTTP 403.
+- The agents image has a maintainer-approved exception for CVE-2026-93687 in its installed
+  `braces` package, expiring 2026-11-15. Its YAML is scoped only to that image and package path;
+  remove it when an upstream fix is adopted, and never extend it without a new decision.
+- New non-Claude home volumes need the `.local` parent and state directories owned by uid1000.
+  Creating only `.local/bin` leaves its parent root-owned and causes a restart loop. The v0.5.0
+  rollout corrected the two fresh volume parents in place; the image now creates them explicitly.
 
 <!-- BACKLOG.MD GUIDELINES START -->
 <!-- backlog.md-instructions-version: 1.53.0 -->

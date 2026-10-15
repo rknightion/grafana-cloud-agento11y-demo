@@ -5,7 +5,7 @@ status: Parked
 assignee:
   - '@codex'
 created_date: '2026-10-14 11:57'
-updated_date: '2026-10-15 18:24'
+updated_date: '2026-10-15 20:13'
 labels: []
 dependencies: []
 references:
@@ -79,4 +79,16 @@ Session state revision 5: scoped prerequisites and new guard rules applied (27 r
 Session state revision 6: source repairs landed e5672d7, docs 83f8c0d; local gate/CodeRabbit clean. GitHub check+scrub passed for 83f8c0d, aggregation finishing. Five completed tasks: foundation, scoped credentials, guards, docs and SDK compatibility. Codex/pi implementation and API spikes pass; browser criteria explicitly deferred. Full rollout blocked by owner advisory disposition, with 27 prerequisite resources already applied and no host/workloads. Gateway/dev-workstation exact e5672d7 images published; agents image still older because CVE-2026-93687 gate is enforced. Prepared private consumer worktree remains uncommitted and must receive final immutable release/images before full serial apply. Never apply the all-Claude compatibility plans. Copilot/Cursor deferred by maintainer.
 
 Final CI evidence: run 38784447965 completed success at exact source/docs SHA 83f8c0db514b526f7ab97ad43b84de17beef45fc. Images run 38784029713 at e5672d7 completed failure solely for the agents advisory; five other image families published. No scanner exception applied. Current-code local tests and all previously recorded live proofs remain valid; subsequent closeout changes are tracker/documentation only.
+
+Resume revision 7: maintainer approved advisory exception then deploy. Existing destination and API-only visual deferral remain binding.
+
+Resume revision 8: v0.5.0 created at 6f5af7b08ba9b4c7d5215f30fa48370b882ef0af, approved exception commit bca1069 included. Release image run 38797356153 and release CI 38797355101 pending/running. Existing live state rechecked: 27 prerequisites, no instance/Helm release. Private consumer checkout fast-forwarded to current origin before changes; no duplicate provisioning.
+
+Resume revision 9: immutable v0.5.0 images for both architectures and all six cosign identities verified. Private consumer now pins release plus digests and defaults enabled=true. Saved full plan149 creates/no changes/no deletes is actively applying serially with traffic=false; original apply session retained, do not restart. State before apply contained27 prerequisites. Consumer full gate running after local cache initialization; shared root is never applied.
+
+Resume revision10: v0.5.0 fully deployed and enabled, final serial drift plan exits0/no changes. One fresh EC2 host, all seven developer containers running, all in-cluster services ready, loadgen1/CronJobs active. Real deployed Claude/Codex/pi generation readback and native metrics confirmed; gateway ledger populated. Startup root-owned .local issue fixed on only the two new volumes; durable Docker fix and macOS-only supervisor race correction under review. Remaining acceptance is previously deferred browser proof; Copilot/Cursor remain deferred. Advisory exception expires2026-11-15 and upstream task stays parked.
+
+Deployment goal complete via API verification. Remaining board parks: explicitly deferred visual checks, Copilot/Cursor choices, and upstream braces patch tracking. Exception is approved/deployed; it no longer blocks rollout. Final local follow-up fixes are being reviewed/landed; no running cloud mutator remains.
+
+Closeout revision11: deployed v0.5.0 and active traffic verified; exact release and private consumer CIs green, no drift. Follow-up Docker home-parent and Darwin exit-race fixes pass full local gate, Linux runtime suite and three repeated macOS suites; both CodeRabbit reviews complete with zero findings. Landing these for future builds; running immutable v0.5.0 keeps its corrected persistent home volumes.
 <!-- SECTION:NOTES:END -->

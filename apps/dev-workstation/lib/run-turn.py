@@ -26,8 +26,12 @@ def stop_group(process):
         except PermissionError:
             # Darwin reports EPERM for a group with no signalable members after exit.
             # Do not turn a permission failure for a still-running adapter into success.
-            if sys.platform == 'darwin' and process.poll() is not None:
-                return
+            if sys.platform == 'darwin':
+                try:
+                    process.wait(timeout=0.05)
+                    return
+                except subprocess.TimeoutExpired:
+                    continue
             raise
         time.sleep(0.05)
     # Kill the group even if its original leader exited during the grace period.
