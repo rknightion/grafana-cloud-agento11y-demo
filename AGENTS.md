@@ -106,3 +106,7 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
 
 </CRITICAL_INSTRUCTION>
 <!-- BACKLOG.MD GUIDELINES END -->
+
+- Loki instant metric results need all-values bar-gauge rendering for multi-agent comparisons;
+  retain label-based display names. Session-log panels set both `level` and `detected_level`
+  from `is_error`, because ingestion can misclassify the literal `is_error=false` as an error.
