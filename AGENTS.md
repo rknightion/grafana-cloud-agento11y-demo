@@ -12,7 +12,7 @@ queue.
 
 - Statuses are `To Do`, `In Progress`, `Parked`, `Done`. `Parked` means attempted and blocked,
   with a concrete resume boundary.
-- This public board deliberately does not carry the fan-out protocol (doc-0001 says why). Never
+- This public board deliberately does not carry the loop protocol (doc-0001 says why). Never
   import a copy here.
 
 ## Task interface
