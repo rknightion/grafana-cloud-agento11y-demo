@@ -1,11 +1,11 @@
 ---
 id: AIO-0010
 title: Expand coding-agent roster validate each developer and tear down demo
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-10-15 22:01'
-updated_date: '2026-10-15 22:09'
+updated_date: '2026-10-15 22:18'
 labels: []
 dependencies: []
 ordinal: 26000
@@ -19,16 +19,16 @@ User requested three developers each for Codex and pi, one per team, followed by
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Consumer defines five Claude Code, three Codex and three pi developers across all teams.
-- [ ] #2 Each non-Claude developer completes a live session and appears in telemetry and dashboard grouping.
-- [ ] #3 Saved configuration uses a workstation image with the fresh-home permissions fix.
-- [ ] #4 Demo-only resources are destroyed after validation with shared cluster and unrelated workloads preserved.
-- [ ] #5 Pi and Codex dashboards align with Claude Code styling and supported data; no unsupported empty panels remain.
+- [x] #1 Consumer defines five Claude Code, three Codex and three pi developers across all teams.
+- [x] #2 Each non-Claude developer completes a live session and appears in telemetry and dashboard grouping.
+- [x] #3 Saved configuration uses a workstation image with the fresh-home permissions fix.
+- [x] #4 Demo-only resources are destroyed after validation with shared cluster and unrelated workloads preserved.
+- [x] #5 Pi and Codex dashboards align with Claude Code styling and supported data; no unsupported empty panels remain.
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 just check
+- [x] #1 just check
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -53,4 +53,20 @@ AWS official documentation confirms user inline aggregate limit 2048 and managed
 Dashboard child completed Codex22/pi21 panels in three tabs aligned with Claude style. All41 data queries returned real six-hour series. Removed unsupported native TTFT instead of retaining an empty panel. Full combined source just check passed; templatefile render passed for both revised dashboards. Visual proof waits for deployment.
 
 CodeRabbit completed IAM review: one major migration-order finding fixed by attaching managed policy before reducing existing inline policy to the exact profile-only subset. Corrective delta review completed with one minor size-guard finding, also fixed. Measured real three-team policy:2269chars full and661chars retained subset. Both policy sizes are guarded; permissions unchanged. No new tests added for declarative IaC; validate, tflint, full just check and live plan/apply are the proof.
+
+Current resume boundary: public source248f699772ccfb39baad8f8ecfd18cd3b2530270 pushed; private consumer938ca42 pushed,5/3/3 roster, corrected workstation digest6559f047..., source pinned248f699. Fixed plan process running against isolated demo root; prior old host absent after partial apply. Next inspect fixed plan, apply, prove11containers and all6non-Claude successful sessions, render all6dashboard tabs, then destroy separate root. User requested child parity work before teardown; child candidate integrated. No teardown has started.
+
+Fixed apply completed4adds3changes0destroys, including replacement host creation and both parity dashboards. New host is SSM-online with cloud-init still running. Six dashboard tab PNGs rendered to /tmp/touchline-parity-snapshots/. No teardown yet; next verify startup and fresh6persona telemetry, then inspect snapshots and destroy.
+
+Visual inspection passed the Overview, Cost and tokens and Tools and guards tabs for both runtimes: real values, named developer/team bars, tool and guard breakdowns, no No data panels. Correct tab URLs use dtab slugs; the first numeric-tab render attempt only showed Overview and is not counted. Correct six-tab evidence is /tmp/touchline-parity-correct-tabs/. Fresh host has six non-Claude services with writable homes/credential access; first new-team completed sessions are arriving. Live IAM readback confirms attached full policy and exact inline subset.
+
+Fresh-host validation succeeded:11developer containers running, healthy gateway/Postgres, all6non-Claude homes writable without manual repair, and all6produced is_error=false completed sessions with correct developer/team labels in Loki. Evidence /tmp/touchline-roster-host-validated.log and /tmp/touchline-roster-telemetry-final.log; bounded SSM watcher reached running=11 completed_nonclaude=6. All53queries across dedicated+combined dashboards now return data. Final expanded screenshots being captured while destroy plan refresh runs; no destroy apply yet.
+
+Validation complete: all6fresh non-Claude sessions succeeded, all11containers running, all53queries return real series; expanded Overview snapshots visibly show3developers and all3teams for both runtimes. Saved destroy plan admitted181delete-only demo resources; no shared EKS, Grafana stack or stack-wide onboarding. Authorized teardown apply now running via isolated consumer; pending final state and live absence checks. KMS seven-day pending deletion is expected.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented and validated5Claude Code/3Codex/3pi developers, with one non-Claude developer per team. Corrected fresh-home image is digest-pinned. Fixed the actual three-team IAM policy-size failure without broadening permissions; CodeRabbit migration-order and size-guard findings corrected. Child agent aligned Codex/pi dashboards with Claude-style Overview, Cost and tokens, Tools and guards;22/21panels, unsupported TTFT removed. All11containers ran; all6non-Claude personas completed fresh successful sessions; all53dashboard queries returned data and six tab snapshots were inspected, including3developer/team breakdowns. Local gates passed and exact source CI38815202496 succeeded. Then destroyed181demo resources from the isolated state. State is empty; live checks prove host terminated, namespace/folder/seven dashboards/IAM users/policy/secrets/buckets/Cognito/logging absent, shared EKS ACTIVE. KMS key is PendingDeletion for22October2026. Source248f699 and private consumer938ca42 preserve recreation inputs; private lifecycle runbook records next-demo steps.
+<!-- SECTION:FINAL_SUMMARY:END -->
