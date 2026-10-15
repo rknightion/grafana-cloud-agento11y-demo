@@ -214,15 +214,9 @@ run_turn() {
   local text="$1" resume_id="$2" to="$3"
   : >"$STATE_DIR/last-stderr.log"
   set +e
-  # Keep the monitored supervisor alive through the TERM grace even if an adapter exits
-  # immediately: otherwise timeout exits too, leaving a TERM-resistant grandchild behind.
-  # Caught shell signals reset to their defaults in the adapter; only this supervisor waits
-  # for the five-second group-wide KILL. Adapters must clean up any groups they create.
-  last_result="$(timeout --kill-after=5 "$to" bash -c '
-    trap "sleep 6" TERM
-    "$@" &
-    wait "$!"
-  ' dev-agent "$AGENT_ADAPTER" run "$text" "$model" "$resume_id" "$to" \
+  # A dedicated session owns the whole process group on both Linux and macOS. Adapters
+  # still clean up any separate groups they create for their own client processes.
+  last_result="$(python3 "$DEV_RUNTIME_DIR/run-turn.py" "$to" "$AGENT_ADAPTER" run "$text" "$model" "$resume_id" "$to" \
     "$budget_remaining" "$effort" "$MCP" "$STATE_DIR/last-stderr.log")"
   last_rc=$?
   set -e

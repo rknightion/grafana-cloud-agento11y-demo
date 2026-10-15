@@ -263,3 +263,22 @@ client telemetry to the Grafana Cloud OTLP gateway with `telemetry.forward_to`),
 switches (from `content_capture`), resource attributes scoping everything to `service.namespace=touchline`,
 the Agent Observability plugin with its tags and its agent name (`claude-code/touchline`, which the guards match on), MCP servers, and the model list. The Claude Code developer
 containers carry only the three managed settings needed to find and sign in to the gateway.
+
+### Pinned-client telemetry details
+
+Codex 0.162.1 gates custom OTLP metrics on `analytics.enabled`. The demo enables it only when
+its explicit Grafana exporters are configured; otherwise all exporters are `none`. Native
+metrics observed include `codex_turn_token_usage_sum`, `codex_tool_call_total`,
+`codex_hooks_run_total` and `codex_turn_ttft_duration_ms_milliseconds_sum`. Cumulative
+metric temporality is explicit. The agento11y 0.49.0 Codex hook currently records the Mantle
+model with provider `codex` and no cost; the runner's token-priced estimate is separate and
+must not be presented as the plugin's recorded billing.
+
+Pi's `--no-extensions` also disables its built-in MCP extension. The demo explicitly loads
+`builtin:mcp` alongside the Grafana observer, while keeping arbitrary discovered extensions
+disabled. A model saying it called an MCP tool is insufficient proof: check the exported
+`mcp__<server>__<tool>` event.
+
+An interrupted pi turn is not guaranteed to export: a live SIGTERM immediately after the first
+`message_update` exited 143 and produced no ingested conversation. Completed generations flush
+normally, but the last in-progress generation can be absent after cancellation.

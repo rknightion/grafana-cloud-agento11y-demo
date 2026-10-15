@@ -94,7 +94,9 @@ def reseed(cfg):
              'model_context_window = 272000', 'model_auto_compact_token_limit = 240000',
              'check_for_update_on_startup = false', 'web_search = "disabled"',
              'developer_instructions = "Work only inside the current seeded repository. Never commit, push, or clone another repository."',
-             '[analytics]', 'enabled = false', '[feedback]', 'enabled = false',
+             # Codex 0.162.1 disables even custom OTLP metrics when analytics is false.
+             # All three exporters below are explicitly the operator's endpoint or none.
+             '[analytics]', f'enabled = {str(bool(cfg.get("otel"))).lower()}', '[feedback]', 'enabled = false',
              '[model_providers.amazon-bedrock]', f'base_url = {quote("https://bedrock-mantle."+region+".api.aws/openai/v1")}',
              '[model_providers.amazon-bedrock.aws]', 'profile = "default"', f'region = {quote(region)}',
              '[shell_environment_policy]', 'inherit = "all"',
@@ -138,7 +140,7 @@ def reseed(cfg):
 
 def normalized(events, cfg, resume_id, rc):
     result = {'is_error': True, 'cost_mode':'cumulative', 'total_cost_usd':0, 'session_id':resume_id or None,
-              'permission_denials':[], 'num_turns':0, 'subtype':'error', 'result':'Codex stream ended without usage'}
+              'permission_denials':[], 'num_turns':0, 'subtype':'error', 'result':''}
     complete = False
     failure = False
     for event in events:
@@ -174,6 +176,8 @@ def normalized(events, cfg, resume_id, rc):
                 result['result'] = str(item.get('text',''))
     result['is_error'] = rc != 0 or failure or not complete or not result['session_id']
     result['subtype'] = 'error' if result['is_error'] else 'success'
+    if result['is_error'] and not result['result']:
+        result['result'] = 'Codex stream ended without successful usage'
     return result
 
 

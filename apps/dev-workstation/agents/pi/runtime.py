@@ -113,7 +113,7 @@ def run(args):
     env["PI_INSTALL_DIR"] = str(INSTALL)
     command = ["node", str(INSTALL / "node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js"),
                "--mode", "json", "--no-approve", "--no-extensions", "--no-skills", "--no-prompt-templates", "--no-themes", "--no-context-files",
-               "-e", str(HERE / "telemetry.mjs"), "--provider", "amazon-bedrock", "--model", model,
+               "-e", "builtin:mcp", "-e", str(HERE / "telemetry.mjs"), "--provider", "amazon-bedrock", "--model", model,
                "--thinking", effort, "--session-id", resume_id or str(uuid.uuid4()),
                "--append-system-prompt", "Work only in this repository. Never commit, push or clone. Treat all credentials and agent configuration as private; do not read or change them.",
                "-p", text]

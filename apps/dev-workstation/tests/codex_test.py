@@ -100,7 +100,7 @@ print(json.dumps({'type':'turn.completed','usage':{'input_tokens':1000,'cached_i
         self.assertEqual(cfg['model_provider'], 'amazon-bedrock')
         self.assertEqual(cfg['sandbox_mode'], 'danger-full-access')
         self.assertEqual(cfg['approval_policy'], 'never')
-        self.assertFalse(cfg['analytics']['enabled'])
+        self.assertTrue(cfg['analytics']['enabled'])
         self.assertLessEqual(cfg['model_context_window'], 272000)
         for field, signal in [('exporter','logs'),('trace_exporter','traces'),('metrics_exporter','metrics')]:
             self.assertEqual(cfg['otel'][field]['otlp-http']['endpoint'], 'https://otlp.example.test/otlp/v1/'+signal)

@@ -20,8 +20,10 @@ RUN set -eu; \
     gpg --dearmor < /tmp/key.asc > /claude-code-release.gpg
 
 FROM debian:bookworm-slim@sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587
-# hadolint ignore=DL3008
+# Install current security fixes for base packages as well as the runtime dependencies.
+# hadolint ignore=DL3005,DL3008
 RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends ca-certificates curl gpgv jq tini \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 10001 gateway \
