@@ -616,23 +616,15 @@
             "version": "",
             "spec": {
               "options": {
+                "orientation": "horizontal",
+                "displayMode": "gradient",
+                "showUnfilled": true,
                 "reduceOptions": {
                   "calcs": [
                     "lastNotNull"
                   ],
                   "fields": "",
                   "values": true
-                },
-                "orientation": "horizontal",
-                "displayMode": "gradient",
-                "valueMode": "color",
-                "namePlacement": "top",
-                "showUnfilled": true,
-                "sizing": "manual",
-                "minVizHeight": 16,
-                "maxVizHeight": 36,
-                "legend": {
-                  "showLegend": false
                 }
               },
               "fieldConfig": {
@@ -641,7 +633,19 @@
                   "color": {
                     "mode": "palette-classic"
                   },
-                  "min": 0
+                  "noValue": "No data",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "decimals": 2,
+                  "min": 0,
+                  "displayName": "$${__field.labels.developer}"
                 },
                 "overrides": []
               }
@@ -993,7 +997,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "{service_namespace=\"${prefix}\",service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=\"pi\" | __error__=\"\" | label_format level=`{{ if eq .is_error \"true\" }}error{{ else }}info{{ end }}` | drop model | line_format `developer={{.developer}} scenario={{.scenario}} cost_usd={{.cost_usd}} error={{.is_error}} session={{.session_id}}`",
+                        "expr": "{service_namespace=\"${prefix}\",service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=\"pi\" | __error__=\"\" | label_format level=`{{ if eq .is_error \"true\" }}error{{ else }}info{{ end }}` | label_format detected_level=`{{ if eq .is_error \"true\" }}error{{ else }}info{{ end }}` | drop model | line_format `developer={{.developer}} scenario={{.scenario}} cost_usd={{.cost_usd}} error={{.is_error}} session={{.session_id}}`",
                         "refId": "A",
                         "legendFormat": "",
                         "queryType": "range"

@@ -1153,7 +1153,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "{service_namespace=\"${prefix}\", service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=~\"claude-code|codex|pi\" | __error__=\"\" | label_format level=`{{ if eq .is_error \"true\" }}error{{ else }}info{{ end }}` | drop model | line_format `{{.agent}} \u00b7 {{.developer}} \u00b7 {{.title}} | cost={{.cost_usd}} USD | error={{.is_error}} | turns={{.user_turns}} | session={{.session_id}}`",
+                        "expr": "{service_namespace=\"${prefix}\", service_name=\"${svc_agent_host}\"} |= \"dev_session\" | json | event=\"dev_session\" | agent=~\"claude-code|codex|pi\" | __error__=\"\" | label_format level=`{{ if eq .is_error \"true\" }}error{{ else }}info{{ end }}` | label_format detected_level=`{{ if eq .is_error \"true\" }}error{{ else }}info{{ end }}` | drop model | line_format `{{.agent}} \u00b7 {{.developer}} \u00b7 {{.title}} | cost={{.cost_usd}} USD | error={{.is_error}} | turns={{.user_turns}} | session={{.session_id}}`",
                         "refId": "A",
                         "legendFormat": "",
                         "queryType": "range"
