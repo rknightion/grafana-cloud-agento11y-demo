@@ -59,7 +59,7 @@ jobs:
       image-name: gc-agento11y-${{ matrix.name }}
       context: ${{ matrix.context }}
       dockerfile: ${{ matrix.dockerfile }}
-      # Private until published: no code-scanning upload or attestations on this plan yet.
-      trivy-upload-sarif: false
+      # Keep failed scan findings visible in this public repository's Security tab.
+      trivy-upload-sarif: true
       trivy-ignore-unfixed: ${{ matrix.trivy-ignore-unfixed || false }}
       provenance: false
