@@ -54,7 +54,7 @@ resource "aws_cognito_user_group" "team" {
 }
 
 resource "random_password" "developer" {
-  for_each = local.developers
+  for_each = local.claude_developers
 
   length           = 24
   min_lower        = 2
@@ -65,7 +65,7 @@ resource "random_password" "developer" {
 }
 
 resource "aws_cognito_user" "developer" {
-  for_each = local.developers
+  for_each = local.claude_developers
 
   user_pool_id   = aws_cognito_user_pool.gateway.id
   username       = each.key
@@ -79,7 +79,7 @@ resource "aws_cognito_user" "developer" {
 }
 
 resource "aws_cognito_user_in_group" "developer" {
-  for_each = local.developers
+  for_each = local.claude_developers
 
   user_pool_id = aws_cognito_user_pool.gateway.id
   group_name   = aws_cognito_user_group.team[each.value.team].name

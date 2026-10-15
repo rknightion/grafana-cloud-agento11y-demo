@@ -1,0 +1,33 @@
+# Pinned Grafana agento11y 0.49.0 hooks. Install root-owned at /etc/codex/config.toml.
+[features]
+hooks = true
+[[hooks.SessionStart]]
+matcher = "startup|resume|clear"
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "agento11y codex hook || sigil codex hook"
+timeout = 10
+statusMessage = "Preparing Sigil telemetry"
+[[hooks.UserPromptSubmit]]
+[[hooks.UserPromptSubmit.hooks]]
+type = "command"
+command = "agento11y codex hook || sigil codex hook"
+timeout = 10
+[[hooks.PreToolUse]]
+matcher = "*"
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "agento11y codex hook || sigil codex hook"
+timeout = 10
+statusMessage = "Checking Sigil guard"
+[[hooks.PostToolUse]]
+matcher = "*"
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "agento11y codex hook || sigil codex hook"
+timeout = 10
+[[hooks.Stop]]
+[[hooks.Stop.hooks]]
+type = "command"
+command = "agento11y codex hook || sigil codex hook"
+timeout = 30

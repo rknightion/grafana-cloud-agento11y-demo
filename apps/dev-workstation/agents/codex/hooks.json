@@ -1,0 +1,64 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agento11y codex hook || sigil codex hook",
+            "timeout": 10,
+            "statusMessage": "Preparing Sigil telemetry"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agento11y codex hook || sigil codex hook",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agento11y codex hook || sigil codex hook",
+            "timeout": 10,
+            "statusMessage": "Checking Sigil guard"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agento11y codex hook || sigil codex hook",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agento11y codex hook || sigil codex hook",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

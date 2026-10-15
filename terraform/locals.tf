@@ -36,6 +36,8 @@ locals {
     email = "${d.name}@${var.developer_email_domain}"
   }) }
 
+  claude_developers = { for name, d in local.developers : name => d if d.agent == "claude-code" }
+
   teams = toset(var.teams)
 
   # "<team>.<model key>" => { team, model, source_profile } for per-team application inference profiles.

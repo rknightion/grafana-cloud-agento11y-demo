@@ -22,7 +22,7 @@ AI feature in your own product:
    - Explore on Tempo and Loki.
 3. Port-forward the site: `kubectl -n touchline port-forward svc/touchline-site-api 8080:8080` and
    open http://localhost:8080.
-4. Check the developers are signed in: the *Gateway audit log* tab should show `session.mint` and
+4. Check the Claude Code developers are signed in: the *Gateway audit log* tab should show `session.mint` and
    `inference` events in the last hour. If not, see [coding-agents.md](coding-agents.md).
 5. Optional, for the live guard moment: open an SSM shell on the agent host
    (`aws ssm start-session --target $(tofu -chdir=examples/complete output -raw agent_host_instance_id)`).
@@ -38,7 +38,7 @@ AI feature in your own product:
 - **Say what is captured.** Content capture is on: prompts and responses are in the logs. Say so,
   and say it is a variable (`content_capture`).
 
-## Part 1: developers and Claude Code
+## Part 1: developers and coding agents
 
 **Context (1 min).** "Five developers in three teams use Claude Code. They never hold an API key
 or AWS credential: they sign in to the Claude apps gateway with the company IdP, and the gateway
@@ -79,7 +79,47 @@ to 5 minutes to land. The host is not replaced, but the wait is unpredictable mi
 
 ![Claude Code dashboard, OpenTelemetry overview tab: spend, sessions and tokens per developer and team](assets/screenshots/dashboards-claude-code.png)
 
-### The PII guard
+### Comparing Claude Code, Codex and pi
+
+This section applies when the deployed roster opts into Codex and pi. The five default personas
+are still Claude Code; licences for Copilot or Cursor do not add them to the deployed roster.
+
+1. Open Agent Observability > **Coding agents**, select the demo namespace and a range covering
+   completed sessions for all enabled agents. Compare `claude-code/<prefix>`, `codex-<prefix>`
+   and `pi-<prefix>` in the same time window. If no completed non-Claude session exists yet,
+   run one bounded session on the host and wait for its actual export before presenting it.
+2. Group by agent and developer. Check that the expected developer identity and team appear;
+   compare conversations, generations, token categories and estimated cost. Open a conversation
+   from each agent and follow a tool span and its trace link. Check the model: Codex uses Luna;
+   pi should show a canonical Haiku model name, rather than a profile ARN as the model label.
+3. Show a resumed conversation and confirm its follow-up stays with the same conversation and
+   developer. Check completed-turn usage is positive and costs are plausible; session logs alone
+   do not establish that the plugin exported the same usage.
+4. Contrast the paths: “Claude signs in to the gateway and gets a server-side spend cap. Codex
+   and pi use separate file credentials to call Bedrock directly; their local session budget is
+   an estimate and does not appear in the gateway ledger.”
+5. Inspect guards for the matching agent name. Codex tool checks use `Bash`/`apply_patch`; pi
+   uses lowercase tool names. Pi's prompt PII rule redacts instead of blocking, so a pi PII
+   probe is not evidence for the Claude deny alert. Use each agent's own guard history.
+
+If an agent is missing, inspect its `dev-<name>` service logs for startup, credential, model or
+export errors; confirm its rendered config exists without printing it. From that container,
+`agento11y doctor --require-cloud` checks generation export and OTLP connectivity independently.
+For pi, also check the extension loaded and a turn completed; its plugin reads the user config
+file, not just container environment. A killed or interrupted pi turn may have no generation,
+so use a completed session to establish baseline export before testing termination.
+
+Codex's native OTLP path has a separate metrics/logs/traces credential: plugin generations arriving
+does not prove that native telemetry works. Inspect its real signals in Explore before describing
+latency or hook-run coverage. Pi has plugin telemetry only. The existing Claude Code dashboard,
+`claude_code_*` alerts and recording rules remain Claude-only. This rollout deliberately keeps
+the built-in Coding agents view as the comparison surface; no Codex/pi dashboards are added.
+
+Before claiming live coverage, record the selected time range, agent/user/model, a completed and
+resumed conversation, token/cost evidence, a tool trace, a guard result and any missing signals.
+This procedure does not itself establish live verification.
+
+### The PII guard (Claude Code)
 
 Agent Observability > Guards. Show the `touchline_claude_code_*` rules and point at
 `touchline_claude_code_pii_gate`: a preflight rule that denies a prompt containing a card number,

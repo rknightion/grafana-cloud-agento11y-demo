@@ -18,7 +18,14 @@
 # two-hour slot.
 set -Eeuo pipefail
 
-STATE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/agent-host"
+runtime_lib="${DEV_RUNTIME_LIB:-/usr/local/lib/dev-workstation/agent-runtime.sh}"
+if [[ ! -r "$runtime_lib" ]]; then
+  runtime_lib="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../lib/agent-runtime.sh"
+fi
+# shellcheck source=apps/dev-workstation/lib/agent-runtime.sh
+source "$runtime_lib"
+
+STATE_DIR="$AGENT_STATE_DIR"
 ANCHOR_FILE="${PII_BURST_ANCHOR_FILE:-$STATE_DIR/traffic-start-epoch}"
 mkdir -p "$STATE_DIR"
 [[ -s "$ANCHOR_FILE" ]] || date -u +%s >"$ANCHOR_FILE"

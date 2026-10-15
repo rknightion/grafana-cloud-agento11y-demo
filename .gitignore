@@ -46,6 +46,8 @@ terraform.rc
 docs/superpowers/
 .firecrawl/
 node_modules/
+__pycache__/
+*.py[cod]
 .scrub-denylist
 
 # Injected by the docs hub at build time — never commit these.

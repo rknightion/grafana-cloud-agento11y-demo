@@ -9,6 +9,29 @@
 
 FROM ghcr.io/astral-sh/uv:0.13.1@sha256:4a1f3666816dafadd20ceb71eac9a7d56d7ef30279f7d64048519ab901ada336 AS uv
 
+FROM --platform=$BUILDPLATFORM ghcr.io/sigstore/cosign/cosign:v3.1.3@sha256:9e5c2f2edc34351160407ca3416c61855bdf9403c3c5936e0f0be7fc261611b8 AS cosign
+
+FROM --platform=$BUILDPLATFORM debian:bookworm-slim@sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587 AS codex
+ARG CODEX_VERSION=0.162.1
+ARG TARGETARCH
+COPY --from=cosign /ko-app/cosign /usr/local/bin/cosign
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+RUN set -eu; \
+    case "$TARGETARCH" in arm64) arch=aarch64 ;; amd64) arch=x86_64 ;; *) exit 1 ;; esac; \
+    package="codex-package-${arch}-unknown-linux-musl.tar.gz"; \
+    base="https://github.com/openai/codex/releases/download/rust-v${CODEX_VERSION}"; \
+    curl -fsSL --retry 3 "$base/$package" -o "$package"; \
+    curl -fsSL --retry 3 "$base/$package.sigstore" -o "$package.sigstore"; \
+    curl -fsSL --retry 3 "$base/codex-package_SHA256SUMS" -o checksums; \
+    awk -v name="$package" '$2 == name || $2 == "*" name' checksums > selected.sha256; \
+    test -s selected.sha256; sha256sum -c selected.sha256; \
+    cosign verify-blob --bundle "$package.sigstore" \
+      --certificate-identity "https://github.com/openai/codex/.github/workflows/rust-release.yml@refs/tags/rust-v${CODEX_VERSION}" \
+      --certificate-oidc-issuer https://token.actions.githubusercontent.com "$package"; \
+    mkdir -p /opt/codex; tar -xzf "$package" -C /opt/codex
+
 FROM debian:bookworm-slim@sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587 AS release-key
 ARG RELEASE_SIGNER_URL=https://downloads.claude.ai/keys/claude-code.asc
 ARG RELEASE_SIGNER_FPR=31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE
@@ -65,6 +88,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=uv /uv /uvx /usr/local/bin/
+COPY --from=codex /opt/codex /opt/codex
+RUN ln -s /opt/codex/bin/codex /usr/local/bin/codex
 COPY --from=release-key /claude-code-release.gpg /usr/share/keyrings/claude-code-release.gpg
 
 ENV UV_TOOL_DIR=/opt/uv-tools \
@@ -103,6 +128,12 @@ RUN npm ci --prefix /opt/mcp-tools --omit=dev --no-fund --no-audit --ignore-scri
 COPY apps/mcp-tools/src /opt/mcp-tools/src
 RUN test -f /opt/mcp-tools/src/server.mjs
 
+# Pi and its Grafana extension are pinned together before npm is removed.
+COPY apps/dev-workstation/agents/pi/package.json apps/dev-workstation/agents/pi/package-lock.json /opt/pi/
+RUN npm ci --prefix /opt/pi --omit=dev --no-fund --no-audit --ignore-scripts \
+    && ln -s /opt/pi/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js /usr/local/bin/pi \
+    && npm cache clean --force
+
 # npm/npx/corepack are unused from here on: the demo prompts work inside the seeded Touchline
 # checkout (see agent-host/codebase) with plain `node`, never `npm install` or `npm test`. Drop
 # the base image's bundled npm CLI so its own vulnerable transitive deps (pacote, sigstore,
@@ -114,9 +145,13 @@ COPY apps/gateway/claude-install.sh /usr/local/bin/claude-install
 COPY agent-host/prompts /opt/agent-host/prompts
 COPY agent-host/codebase /opt/agent-host/codebase
 COPY apps/dev-workstation/bin/ /opt/agent-host/bin/
+COPY apps/dev-workstation/lib/ /usr/local/lib/dev-workstation/
+COPY apps/dev-workstation/agents/ /usr/local/lib/dev-workstation/agents/
+COPY apps/dev-workstation/agents/codex/managed-config.toml /etc/codex/config.toml
 COPY apps/dev-workstation/entrypoint.sh /usr/local/bin/dev-entrypoint
 
 RUN chmod 0755 /usr/local/bin/claude-install /usr/local/bin/dev-entrypoint /opt/agent-host/bin/* \
+    /usr/local/lib/dev-workstation/agents/*/adapter /usr/local/lib/dev-workstation/agents/claude-code/reseed \
     /opt/agent-host/codebase/seed-repo \
     && ln -s /opt/agent-host/bin/dev-login /usr/local/bin/dev-login \
     && ln -s /opt/agent-host/bin/dev-session /usr/local/bin/dev-session \
@@ -136,6 +171,7 @@ ENV HOME=/home/node \
     NODE_EXTRA_CA_CERTS=/etc/agent-host/ca.pem \
     PATH=/home/node/.local/bin:/usr/local/bin:/usr/bin:/bin \
     DISABLE_AUTOUPDATER=1 \
+    AGENTO11Y_ANONYMOUS_USAGE_STATS=disabled \
     PROMPTS_DIR=/opt/agent-host/prompts
 
 USER 1000:1000

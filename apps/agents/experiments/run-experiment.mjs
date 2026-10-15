@@ -13,7 +13,7 @@
 // final evaluator (a number against pass_threshold, or a boolean that must be true) plus its
 // diagnostic evaluators. --scheduled is the CronJob mode: random delay, random skip, one weighted
 // suite per slot, a UTC daily run cap and a Kubernetes Lease so overlapping Jobs never
-// double-create runs.
+// double-create runs. A suite with scheduled: false is available only to manual runs.
 //
 // Environment (the SDK's own names):
 //   AGENTO11Y_ENDPOINT, AGENTO11Y_AUTH_TENANT_ID, AGENTO11Y_AUTH_TOKEN   experiment ingest
@@ -73,7 +73,9 @@ export function resolveSuite(raw, env = process.env) {
   }
   if (suite.candidate) {
     suite.candidate.agent_name = suite.target === 'guards'
-      ? `claude-code/${serviceNamespace(env)}/guard-suite`
+      ? (suite.candidate.guard_agent === undefined
+        ? `claude-code/${serviceNamespace(env)}/guard-suite`
+        : `${suite.candidate.guard_agent}-${serviceNamespace(env)}`)
       : agentName(suite.candidate.agent_role ?? 'orchestrator', env);
   }
   for (const testCase of Array.isArray(suite.cases) ? suite.cases : []) {
@@ -94,8 +96,15 @@ export function validateSuite(suite) {
   const target = suite.target ?? 'orchestrator';
   if (!targets.includes(target)) throw new Error(`suite target must be ${targets.join(' or ')}`);
   const guards = target === 'guards';
-  if (suite.candidate?.agent_role !== (guards ? 'guards' : 'orchestrator') || suite.candidate.model_provider !== 'anthropic') {
+  if (suite.candidate?.agent_role !== (guards ? 'guards' : 'orchestrator')) {
     throw new Error(guards ? 'candidate must identify the guards agent' : 'candidate must identify the Anthropic orchestrator agent');
+  }
+  if (typeof suite.candidate.model_provider !== 'string' || !suite.candidate.model_provider.trim() ||
+      (!guards && suite.candidate.model_provider !== 'anthropic')) {
+    throw new Error('candidate.model_provider must identify the provider (anthropic for the orchestrator)');
+  }
+  if (suite.candidate.guard_agent !== undefined && (!guards || !['codex', 'pi'].includes(suite.candidate.guard_agent))) {
+    throw new Error('candidate.guard_agent is only supported for codex or pi guards; omit it for Claude Code');
   }
   if (!Array.isArray(suite.candidates) || !suite.candidates.length) throw new Error('suite must define at least one model candidate');
   const ids = suite.candidates.map((candidate) => candidate?.id);
@@ -111,6 +120,7 @@ export function validateSuite(suite) {
   if (suite.run_slug !== undefined && !ID.test(suite.run_slug)) throw new Error('run_slug must be a short stable identifier');
   if (!suite.comparison && !ID.test(suite.run_slug ?? '')) throw new Error('a suite without comparison needs a run_slug');
   if (suite.weight !== undefined && !(Number.isFinite(suite.weight) && suite.weight > 0)) throw new Error('weight must be a positive number');
+  if (suite.scheduled !== undefined && typeof suite.scheduled !== 'boolean') throw new Error('scheduled must be true or false');
   const scoring = suite.scoring;
   if (!scoring || typeof scoring !== 'object' || Array.isArray(scoring)) throw new Error('suite must define scoring');
   if (!ID.test(scoring.final ?? '')) throw new Error('scoring.final must be an evaluator id');
@@ -151,6 +161,13 @@ function validateGuardCase(caseId, testCase) {
   }
   if (!expected || typeof expected !== 'object' || !['allow', 'deny'].includes(expected.action)) throw new Error(`${caseId}: expected.action must be allow or deny`);
   if (expected.rule_id !== undefined && !ID.test(expected.rule_id)) throw new Error(`${caseId}: expected.rule_id must be a rule id`);
+  if (expected.redacted_strings !== undefined) {
+    const original = input.phase === 'preflight' ? input.prompt : JSON.stringify(input.tool_input);
+    if (expected.action !== 'allow' || !Array.isArray(expected.redacted_strings) || !expected.redacted_strings.length ||
+        expected.redacted_strings.some((value) => typeof value !== 'string' || !value.trim() || !original.includes(value))) {
+      throw new Error(`${caseId}: expected.redacted_strings must name non-empty strings present in an allowed input`);
+    }
+  }
 }
 
 export async function loadSuite(path = defaultConfigPath, env = process.env) {
@@ -171,13 +188,15 @@ export async function loadSuites(path = defaultSuitesDir, env = process.env) {
   return suites;
 }
 
-/** One suite for a scheduled slot, chosen by weight (default 1); a named suite id wins. */
+/** One enabled suite for a scheduled slot, chosen by weight; a named enabled suite id wins. */
 export function pickSuite(suites, { random = Math.random, suiteId } = {}) {
+  suites = suites.filter((suite) => suite.scheduled !== false);
   if (suiteId !== undefined) {
     const named = suites.find((suite) => suite.suite_id === suiteId || suite.suite_id.endsWith(`_${suiteId}`));
     if (!named) throw new Error(`no suite matches ${suiteId}`);
     return named;
   }
+  if (!suites.length) throw new Error('no suites enabled for scheduled runs');
   const total = suites.reduce((sum, suite) => sum + (suite.weight ?? 1), 0);
   let draw = random() * total;
   for (const suite of suites) {
@@ -513,7 +532,7 @@ function defaultSuitesClient(env = process.env) {
   return new TestSuitesClient({ grafanaUrl: env.AGENTO11Y_GRAFANA_URL, serviceAccountToken: env.AGENTO11Y_SERVICE_ACCOUNT_TOKEN });
 }
 
-/** The hook request the agento11y Claude Code plugin sends for this case (plugin v0.48.0). */
+/** Shared prompt/tool hook wire shape (CLI v0.49.0 and pi plugin v0.25.0). */
 export function guardRequest(suite, testCase, conversationId) {
   const { input } = testCase;
   const context = { agentName: suite.candidate.agent_name, model: { provider: suite.candidate.model_provider, name: suite.candidates[0].model_name }, conversationId };
@@ -535,22 +554,55 @@ function defaultHookClient(env = process.env) {
   });
 }
 
-/** One guards trial: no model call, the decision is compared with the case's expected action. */
+/** Require a usable transform on the exact evaluated content; an allow alone proves no redaction. */
+function guardRedactionPassed(testCase, decision) {
+  if (!testCase.expected.redacted_strings) return true;
+  const transformed = decision.transformedInput;
+  let content;
+  if (testCase.input.phase === 'preflight') {
+    const messages = transformed?.messages;
+    if (!Array.isArray(messages) || messages.length !== 1 || messages[0].role !== 'user') return false;
+    content = messages[0].parts?.filter((part) => part.type === 'text').map((part) => part.text).join('');
+    if (typeof content !== 'string' || !content.trim()) return false;
+  } else {
+    const calls = transformed?.output?.flatMap((message) => message.role === 'assistant' ? (message.parts ?? []) : [])
+      .filter((part) => part.type === 'tool_call').map((part) => part.toolCall)
+      .filter((call) => call?.id === `toolu_${testCase.test_case_id}` && call.name === testCase.input.tool_name);
+    if (calls?.length !== 1) return false;
+    try {
+      const args = JSON.parse(calls[0].inputJSON);
+      if (!args || typeof args !== 'object' || Array.isArray(args)) return false;
+      for (const [key, original] of Object.entries(testCase.input.tool_input)) {
+        if (!Object.hasOwn(args, key) || typeof args[key] !== typeof original ||
+            (typeof original === 'string' && original.trim() && !args[key].trim())) return false;
+      }
+      content = JSON.stringify(args);
+    } catch { return false; }
+  }
+  return testCase.expected.redacted_strings.every((value) => !content.includes(value));
+}
+
+/** One guards trial: no model call; check the action and any required redaction transform. */
 async function recordGuardTrial({ trial, suite, testCase, hookClient, runId, log }) {
   const conversationId = `${serviceNamespace()}-guard-suite-${trial.trialId}`;
   const decision = await hookClient.evaluateHook(guardRequest(suite, testCase, conversationId));
-  const matched = decision.action === testCase.expected.action;
+  const actionMatched = decision.action === testCase.expected.action;
+  const redactionMatched = guardRedactionPassed(testCase, decision);
+  const matched = actionMatched && redactionMatched;
+  const explanation = `expected ${testCase.expected.action}, got ${decision.action}${testCase.expected.redacted_strings ? `; redaction ${redactionMatched ? 'applied' : 'missing or invalid'}` : ''}`;
   const evaluator = { evaluatorId: 'expected_action', kind: 'deterministic' };
   const detail = { phase: testCase.input.phase, tool_name: testCase.input.tool_name, expected: testCase.expected,
-    actual: { action: decision.action, rule_id: decision.ruleId ?? '', reason: decision.reason ?? '' } };
+    actual: { action: decision.action, rule_id: decision.ruleId ?? '', reason: decision.reason ?? '',
+      ...(testCase.expected.redacted_strings ? { redaction_applied: redactionMatched, transformed_input: decision.transformedInput } : {}) } };
   await trial.artifact('decision.json', { data: detail, kind: 'json', mime: 'application/json' });
-  trial.checkScore('expected_action', { passed: matched, value: matched, evaluator, explanation: `expected ${testCase.expected.action}, got ${decision.action}` });
+  trial.checkScore('expected_action', { passed: actionMatched, value: actionMatched, evaluator, explanation: `expected ${testCase.expected.action}, got ${decision.action}` });
+  if (testCase.expected.redacted_strings) trial.checkScore('expected_redaction', { passed: redactionMatched, value: redactionMatched, evaluator, explanation });
   // The rule id is informational: a different rule may deny the same call.
   if (testCase.expected.rule_id) {
     trial.checkScore('expected_rule', { passed: decision.ruleId === testCase.expected.rule_id, value: decision.ruleId === testCase.expected.rule_id, evaluator,
       explanation: `expected ${testCase.expected.rule_id}, got ${decision.ruleId ?? 'none'}` });
   }
-  trial.finalScore(matched, { passed: matched, evaluator, explanation: `expected ${testCase.expected.action}, got ${decision.action}` });
+  trial.finalScore(matched, { passed: matched, evaluator, explanation });
   await trial.close();
   log({ event: 'trial_recorded', runId, caseId: testCase.test_case_id, expected: testCase.expected.action, actual: decision.action, matched });
 }

@@ -26,7 +26,11 @@ characters), `gateway_admin_read_key` (32+ characters), `postgres_password` (gat
 `postgres_grafana_ro_password`, `grafana_otlp_token` (metrics, logs and traces write: gateway
 `forward_to` and host Alloy only), `agento11y_client_token` (generation, metrics and traces write: the
 Claude Code plugin's generations and its own OTLP export, pushed to every client), `pdc_token`, `tls_ca_pem`, `tls_cert_pem` (leaf for
-`gateway_hostname`), `tls_key_pem`, `developer_passwords` (`{name: password}`).
+`gateway_hostname`), `tls_key_pem`, `developer_passwords` (`{name: password}` for Claude Code developers only).
+`developer_bedrock_credentials` is `{agent: {access_key_id, secret_access_key, region}}`,
+where `agent` is `codex` or `pi`; IAM principals are scoped independently by integration.
+`codex_otlp_token` is a separate metrics/logs/traces-only credential consumed solely by Codex native
+telemetry, never the Agent Observability generation client token.
 
 `config` holds every mutable knob:
 
@@ -35,10 +39,11 @@ Claude Code plugin's generations and its own OTLP export, pushed to every client
 | `gateway_hostname` | string | `<prefix>-gateway.internal`; gateway URL is `https://<gateway_hostname>` (port 443) |
 | `claude_code_version` | string | Claude Code release installed at container start |
 | `agento11y_cli_version` | string | `latest` keeps the image's pinned build; a version installs that one. The plugin marketplace is pinned to the matching `plugins/agento11y/v<version>` tag |
-| `developers` | list | `[{name, email, team, sub}]`, `sub` is the Cognito user's sub |
+| `developers` | list | `[{name, email, team, agent?, sub?}]`; `agent` defaults to `claude-code`, supported values are `claude-code`, `codex`, `pi`. Only Claude Code has a Cognito `sub` |
 | `teams` | list | `["newsroom", ...]`, Cognito group names |
-| `spend_caps` | object | `{organization: {period: usd}, groups: {team: {period: usd}}, users: {name: {period: usd}}}`, periods `daily`, `weekly`, `monthly` |
-| `gateway_models` | list | `[{key, id, upstream_profile_arns_by_team: {team: arn}}]`, optional `upstream_profile_arn` |
+| `spend_caps` | object | `{organization: {period: usd}, groups: {team: {period: usd}}, users: {name: {period: usd}}}`, periods `daily`, `weekly`, `monthly`; user caps apply only to Claude Code identities |
+| `gateway_models` | list | `[{key, id, source_profile, upstream_profile_arns_by_team: {team: arn}}]`, optional `upstream_profile_arn`; `source_profile` identifies the exact priced pi model |
+| `codex_bedrock` | object | `{model, region}`; exact Mantle model id and request region, required for Codex developers |
 | `team_model_allowlist` | map | `{team: [model key]}`; a listed team gets only those gateway models |
 | `cognito_issuer`, `cognito_client_id`, `cognito_domain_url` | string | OIDC issuer, app client id, hosted UI base URL |
 | `traffic_enabled` | bool | Developer sessions on or off |
@@ -81,3 +86,64 @@ the secret re-renders within 5 minutes and recreates only the services whose inp
   `AGENTO11Y_TAGS=service.namespace=<prefix>,team=<team>` pushed by the gateway policy. The
   policy also sets `AGENTO11Y_AGENT_NAME=claude-code/<prefix>`, which the Claude Code guards match
   on because the plugin's guard calls carry no tags.
+
+## Non-Claude developer foundation
+
+Terraform creates Cognito users, passwords and group memberships only for `claude-code` developers.
+The mutable developer roster carries `agent`; omitting it retains the previous renderer behavior.
+An all-Claude roster retains the compose and gateway configuration bytes checked by the synthetic
+fixture in `agent-host/render/claude-baseline.json` (recorded from its `source_sha`).
+
+Codex and pi use the existing workstation image as uid 1000, `HOME=/home/node`, and an independent
+`<agent>-home-<developer slug>` volume. They receive `DEVELOPER_AGENT` and
+`AGENT_STATE_DIR=/home/node/.local/state/agent-host`. They have no gateway dependency, managed Claude
+settings, Claude binary/config volumes or gateway CA mounts. `NODE_EXTRA_CA_CERTS` is explicitly
+empty to override the image's Claude CA default. The shared recent-prompts volume still spans the
+roster, so dedupe and PII burst coordination work across agents.
+
+The common Agent Observability environment constructor feeds both the gateway policy and each
+non-Claude developer's `secrets/dev-<slug>/agento11y_config`. The latter is mode 0400, owned by uid
+1000 and mounted directly at `/home/node/.config/agento11y/config.env`. It contains the dedicated
+client token, never the gateway/Alloy ingest token. Its keys are the shared `AGENTO11Y_ENDPOINT`,
+protocol, basic auth, tenant, client token, guard enable/timeout, auto-update and content-capture
+settings, plus `AGENTO11Y_TAGS=service.namespace=<prefix>,team=<team>`,
+`AGENTO11Y_USER_ID=<developer email>` and `AGENTO11Y_AUTO_CODING_AGENT_TAGS=false`. Matching OTLP and
+Agent Observability tenants also receive the common OTLP endpoint/client-token settings. The
+single-quoted config format rejects newline, NUL and single-quote values instead of expanding them.
+Config changes participate in the service input hash; secret values stay out of compose.
+
+Non-Claude agent names are `codex-<prefix>` and `pi-<prefix>`. This keeps a stable aggregate per agent
+and demo in the Coding agents view while allowing guards to select each integration by exact name.
+The slash form was rejected because its acceptance by these native integrations is unverified.
+Claude retains `claude-code/<prefix>` for existing guards. Automatic repository/branch discovery
+stays off; static tags and the explicit developer user identity provide deterministic attribution.
+
+Each non-Claude developer additionally receives a uid 1000, mode 0400 INI secret mounted at
+`/run/secrets/developer_aws_credentials`, containing `[default]`, `aws_access_key_id` and
+`aws_secret_access_key`. `AWS_SHARED_CREDENTIALS_FILE` points there, `AWS_REGION` comes from the
+integration credential and `AWS_EC2_METADATA_DISABLED=true` prevents fallback to instance metadata.
+Keys stay out of compose and user data; missing credentials fail rendering. These credentials are
+separate from Agent Observability's client token and from the gateway's host instance role.
+
+Codex `SESSION_MODELS` is `<codex_bedrock.model>=1`; its credential and model regions must agree.
+Pi receives `/run/pi/config.json` as another uid-owned mode 0400 secret with `provider`, `region`
+and `model`. The model id is its team's application inference profile ARN, and its display name is
+the canonical Claude model id. Pi `SESSION_MODELS` selects that ARN with weight 1. The first
+supported model is the allowed `haiku` gateway model with source profile
+`eu.anthropic.claude-haiku-4-5-20251001-v1:0`; other sources fail explicitly until their pricing is
+verified. The [pi model catalogue](https://pi.dev/models/amazon-bedrock/eu-anthropic-claude-haiku-4-5-20251001-v1-0)
+provides its USD-per-million-token prices: input 1.1, output 5.5, cache read 0.11, cache write 1.375.
+The frozen initial limits are `contextWindow=200000` and `maxTokens=4096`.
+
+Actual non-Claude model calls, runner lifecycle and Cloud telemetry remain deployment acceptance
+checks. Keep the deployed roster Claude-only until those spikes pass; selecting an unavailable
+adapter fails clearly. Never forward gateway secrets or the ingest credential to a developer.
+
+Codex additionally mounts uid 1000, mode 0400 `/run/secrets/codex_otlp_token` and
+`/run/codex/config.json`. The JSON shape is `{provider, region, model: {id, cost, contextWindow},
+otel: {endpoint, username}}`, where `provider=amazon-bedrock` and `otel` selects the Grafana OTLP
+endpoint/username independently from generation export. The first supported Codex model is
+`openai.gpt-5.6-luna`; other models fail until their pricing is verified. Its initial USD-per-million
+token rates are input 0.22, output 1.32, cache read 0.022 and cache write 0.275, with
+`contextWindow=272000`, from AWS's model card short-context In-Region rates. The native token
+is not present in pi/Claude mounts, common Agent Observability config or compose environment.

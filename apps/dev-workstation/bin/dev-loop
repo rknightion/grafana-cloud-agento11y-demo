@@ -6,59 +6,35 @@
 # probes rather than one every SESSION_INTERVAL_MINUTES.
 set -Eeuo pipefail
 
+runtime_lib="${DEV_RUNTIME_LIB:-/usr/local/lib/dev-workstation/agent-runtime.sh}"
+if [[ ! -r "$runtime_lib" ]]; then
+  runtime_lib="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../lib/agent-runtime.sh"
+fi
+# shellcheck source=apps/dev-workstation/lib/agent-runtime.sh
+source "$runtime_lib"
+
 log() { printf '%s dev-loop[%s]: %s\n' "$(date -u +%FT%TZ)" "${DEVELOPER_NAME:-?}" "$*" >&2; }
 
 interval_s=$(( ${SESSION_INTERVAL_MINUTES:-20} * 60 ))
 burst_interval_s=$(( ${PII_BURST_INTERVAL_MINUTES:-6} * 60 ))
-state="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/agent-host"
+state="$AGENT_STATE_DIR"
 mkdir -p "$state"
-plugin_done=0
 backoff=60
-
-ensure_login() {
-  local force=()
-  if [[ -e "$state/relogin-needed" ]]; then force=(--force); fi
-  if dev-login "${force[@]}"; then
-    rm -f "$state/relogin-needed"
-    backoff=60
-    return 0
-  fi
-  return 1
-}
-
-# The gateway policy enables the plugin; installing it explicitly makes the first session's hooks
-# certain rather than depending on managed-settings install timing.
-ensure_plugin() {
-  ((plugin_done)) && return 0
-  if claude plugin list 2>/dev/null | grep -q 'agento11y-claude-code'; then
-    plugin_done=1
-    return 0
-  fi
-  # Same source and release tag as the gateway's managed extraKnownMarketplaces entry.
-  claude plugin marketplace add "${AGENTO11Y_MARKETPLACE:?}" >&2 || true
-  if claude plugin install agento11y-claude-code@agento11y --scope user >&2; then
-    log "installed the agento11y Claude Code plugin"
-    plugin_done=1
-  else
-    log "plugin install failed; will retry before the next session"
-  fi
-}
 
 # Stagger developers so five containers do not all start at once.
 sleep $((RANDOM % 60))
 
 while true; do
-  if ! ensure_login; then
-    log "sign-in failed; next try in ${backoff}s"
+  if ! "$AGENT_ADAPTER" ready; then
+    log "agent preparation failed; next try in ${backoff}s"
     sleep "$backoff"
     backoff=$((backoff * 2 > 1800 ? 1800 : backoff * 2))
     continue
   fi
-  ensure_plugin
 
   if [[ "${TRAFFIC_ENABLED:-false}" != "true" ]]; then
     rm -f -- "$state/traffic-start-epoch"
-    log "traffic disabled; staying signed in (checking hourly)"
+    log "traffic disabled; checking hourly"
     sleep 3600
     continue
   fi
@@ -70,8 +46,22 @@ while true; do
   [[ -s "$state/traffic-start-epoch" ]] || date -u +%s >"$state/traffic-start-epoch"
 
   # Drop anything the previous session persisted in the user-scope config before the next one.
-  dev-reseed || log "config reset failed with $?"
-  ensure_plugin
+  if dev-reseed; then
+    :
+  else
+    rc=$?
+    log "config reset failed with $rc; next try in ${backoff}s"
+    sleep "$backoff"
+    backoff=$((backoff * 2 > 1800 ? 1800 : backoff * 2))
+    continue
+  fi
+  if ! "$AGENT_ADAPTER" ready; then
+    log "agent preparation failed after config reset; next try in ${backoff}s"
+    sleep "$backoff"
+    backoff=$((backoff * 2 > 1800 ? 1800 : backoff * 2))
+    continue
+  fi
+  backoff=60
   dev-session || log "session exited with $?"
 
   if [[ "$(pii-burst-window 2>/dev/null || echo 0)" == "1" ]]; then

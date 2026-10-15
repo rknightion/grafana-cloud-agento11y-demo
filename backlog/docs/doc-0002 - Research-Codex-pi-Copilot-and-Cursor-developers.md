@@ -3,7 +3,7 @@ id: doc-0002
 title: 'Research: Codex, pi, Copilot and Cursor developers'
 type: specification
 created_date: '2026-10-14 11:57'
-updated_date: '2026-10-14 11:57'
+updated_date: '2026-10-15 17:44'
 ---
 # Research: Codex, pi, Copilot and Cursor developers on the agent host
 
@@ -133,7 +133,7 @@ Research done 2026-10-14 against agento11y `plugins/agento11y/v0.49.0` (the vers
 - **Blocker.** In headless `agent -p` mode Cursor does not emit `beforeSubmitPrompt`, `afterAgentResponse` or `stop` (per Cursor staff, 2026-08). The result has no prompt, assistant text or tokens, no preflight guard, and `generation_id == conversation_id`. A Linux arm64 report also has hooks failing silently.
   - Workarounds:
     - accept capture limited to tool spans;
-    - build a wrapper over `--output-format stream-json` (which has `usage`) that emits generations via the agento11y SDK;
+    - evaluate a wrapper over `--output-format stream-json` that emits generations via the agento11y SDK; token usage remains UNVERIFIED because the current official output schema does not document it;
     - wait for Cursor to fix it.
 - **Model.** Always Cursor's hosted backend, which needs paid Cursor seat(s) or Enterprise service accounts. Bedrock BYOK is documented for the IDE only. No per-session budget.
 - **Install.** A tarball from `downloads.cursor.com` with no published checksum or signature. Redistribution terms are unknown, so install at container start rather than baking it into the public image.
@@ -142,3 +142,11 @@ Research done 2026-10-14 against agento11y `plugins/agento11y/v0.49.0` (the vers
   - https://cursor.com/docs/hooks
   - https://forum.cursor.com/t/cursor-cli-omits-beforesubmitprompt-afteragentresponse-and-stop-hooks-loses-token-usage-and-emits-inconsistent-generation-id-values/169059
   - `plugins/cursor/README.md`
+
+
+## Maintainer decisions and refresh, 2026-10-15
+
+- Keep the existing demo stack destination.
+- Copilot: use the existing seat for a bounded spike only; continuous synthetic traffic requires a separate decision after results.
+- Cursor: defer deployment. Resume after a pinned headless release proves the required lifecycle and token fields, or an explicit decision accepts incomplete capture. Current [output-format documentation](https://cursor.com/docs/cli/reference/output-format) does not establish token usage; the earlier stream-json usage claim was unverified.
+- SDK JS 0.13.0 and CLI/plugin 0.49.0 remain the latest stable releases, verified against GitHub releases and npm. Retain pins; use `agento11y doctor --require-cloud` for live validation. CLI 0.49.0 anonymous statistics are disabled explicitly in the demo image.

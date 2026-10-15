@@ -45,6 +45,33 @@ resource "grafana_cloud_access_policy_token" "client" {
   access_policy_id = grafana_cloud_access_policy.client.policy_id
 }
 
+# Native Codex telemetry includes logs. Keep its credential separate from the host ingest token.
+resource "grafana_cloud_access_policy" "codex" {
+  provider = grafana.cloud
+  count    = contains(local.developer_bedrock_agents, "codex") ? 1 : 0
+
+  name         = "${local.prefix}-codex-otel"
+  display_name = "${local.prefix} native Codex telemetry"
+  region       = data.grafana_cloud_stack.this.region_slug
+  scopes       = ["metrics:write", "logs:write", "traces:write"]
+  dynamic "realm" {
+    for_each = local.grafana_stack_realm
+    content {
+      type       = realm.value.type
+      identifier = realm.value.identifier
+    }
+  }
+}
+
+resource "grafana_cloud_access_policy_token" "codex" {
+  provider = grafana.cloud
+  count    = length(grafana_cloud_access_policy.codex)
+
+  name             = "${local.prefix}-codex-otel"
+  region           = data.grafana_cloud_stack.this.region_slug
+  access_policy_id = grafana_cloud_access_policy.codex[0].policy_id
+}
+
 resource "grafana_cloud_access_policy" "ingest" {
   provider = grafana.cloud
 

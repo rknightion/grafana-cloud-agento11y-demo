@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Pi runs in its own home using only the rendered scoped Bedrock credential.
+set -Eeuo pipefail
+exec python3 "$(dirname "${BASH_SOURCE[0]}")/runtime.py" "$@"

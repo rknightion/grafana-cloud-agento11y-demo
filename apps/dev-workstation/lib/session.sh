@@ -1,0 +1,313 @@
+#!/usr/bin/env bash
+# Shared conversation orchestration: prompt selection/dedupe, budgets, PII probes and follow-ups.
+# Sourced only after agent-runtime.sh selected an installed adapter.
+
+PROMPTS_DIR="${PROMPTS_DIR:-/opt/agent-host/prompts}"
+EFFORT_DEFAULT="${SESSION_EFFORT:-low}"
+BUDGET_DEFAULT_USD="${SESSION_BUDGET_USD:-0.30}"
+MAX_BUDGET_USD="${SESSION_MAX_BUDGET_USD:-1.00}"
+MIN_REMAINING_BUDGET_USD="${SESSION_MIN_REMAINING_BUDGET_USD:-0.02}"
+TIMEOUT_S="${SESSION_TIMEOUT_S:-900}"
+SHORT_TIMEOUT_S="${SESSION_SHORT_TIMEOUT_S:-45}"
+SHORT_TIMEOUT_PERCENT="${SESSION_SHORT_TIMEOUT_PERCENT:-8}"
+FOLLOWUP_PERCENT="${SESSION_FOLLOWUP_PERCENT:-45}"
+ABANDON_PERCENT="${SESSION_ABANDON_PERCENT:-20}"
+MAX_FOLLOWUPS="${SESSION_MAX_FOLLOWUPS:-3}"
+PII_BASELINE_PERCENT="${PII_BASELINE_PERCENT:-2}"
+TEAM_DEFAULT="${DEVELOPER_TEAM:-platform}"
+RECENT_PROMPTS_DIR="${RECENT_PROMPTS_DIR:-}"
+RECENT_PROMPT_MINUTES="${RECENT_PROMPT_MINUTES:-45}"
+MCP="${MCP_SERVER_NAME:-touchline}"
+CODEBASE_SEED="${CODEBASE_SEED:-/opt/agent-host/codebase/seed-repo}"
+STATE_DIR="$AGENT_STATE_DIR"
+mkdir -p "$STATE_DIR"
+
+exec 9>"${AGENT_LOCK:-${CLAUDE_LOCK:-/tmp/claude.lock}}"
+flock -w 120 9 || { echo "dev-session: agent is busy (sign-in or another session); skipping" >&2; exit 0; }
+
+bool() { if (("$1")); then echo true; else echo false; fi; }
+
+# Weighted model choice from "id=weight,id=weight".
+pick_model() {
+  local total=0 spec id w r
+  local -a ids=() weights=()
+  IFS=',' read -r -a specs <<<"${SESSION_MODELS:-claude-haiku-4-5=1}"
+  for spec in "${specs[@]}"; do
+    id=${spec%%=*}; w=${spec##*=}
+    ids+=("$id"); weights+=("$w"); total=$((total + w))
+  done
+  r=$((RANDOM % total))
+  for i in "${!ids[@]}"; do
+    r=$((r - weights[i]))
+    if ((r < 0)); then echo "${ids[i]}"; return; fi
+  done
+  echo "${ids[0]}"
+}
+
+# Drops from a pool every prompt any developer on this host started in the last
+# RECENT_PROMPT_MINUTES (the shared RECENT_PROMPTS_DIR), so two developers never send the same
+# opening text close together (AIO-0001 AC2). Without a usable directory nothing is filtered.
+not_recent() {
+  local picks="$RECENT_PROMPTS_DIR/picks" cutoff
+  if [[ -z "$RECENT_PROMPTS_DIR" || ! -r "$picks" ]]; then
+    cat
+    return
+  fi
+  cutoff=$(($(date +%s) - RECENT_PROMPT_MINUTES * 60))
+  grep -v -x -F -f <(awk -v c="$cutoff" '$1 >= c { print $2 }' "$picks") || true
+}
+
+# PII probes: a low baseline everywhere, plus this developer's own scheduled burst window
+# (pii-burst-window; see AIO-0001.03). Otherwise mostly this developer's own team, sometimes any
+# non-PII prompt. A pool emptied by not_recent falls back to every non-PII prompt not used
+# recently, then to every non-PII prompt.
+pick_prompt() {
+  local -a pool=()
+  local in_burst
+  in_burst="$(pii-burst-window 2>/dev/null || echo 0)"
+  if [[ "$in_burst" == "1" ]] || ((RANDOM % 100 < PII_BASELINE_PERCENT)); then
+    mapfile -t pool < <(find "$PROMPTS_DIR" -name 'pii-*.txt' | not_recent)
+  elif ((RANDOM % 100 < 70)); then
+    mapfile -t pool < <(grep -l -x "team: $TEAM_DEFAULT" "$PROMPTS_DIR"/*.txt | grep -v '/pii-' | not_recent)
+  fi
+  if ((${#pool[@]} == 0)); then
+    mapfile -t pool < <(find "$PROMPTS_DIR" -name '*.txt' ! -name 'pii-*.txt' | not_recent)
+  fi
+  if ((${#pool[@]} == 0)); then
+    mapfile -t pool < <(find "$PROMPTS_DIR" -name '*.txt' ! -name 'pii-*.txt')
+  fi
+  printf '%s\n' "${pool[@]}" | shuf -n 1
+}
+
+# Picks a prompt and records it in the shared list under a host-wide lock, so two developers
+# choosing at the same moment still see each other's pick.
+pick_prompt_shared() {
+  local choice
+  if [[ -z "$RECENT_PROMPTS_DIR" ]] || ! { exec 8>>"$RECENT_PROMPTS_DIR/.lock"; } 2>/dev/null; then
+    pick_prompt
+    return
+  fi
+  if ! flock -w 30 8; then
+    exec 8>&-
+    pick_prompt
+    return
+  fi
+  choice="$(pick_prompt)"
+  [[ -n "$choice" ]] && printf '%s %s\n' "$(date +%s)" "$choice" >>"$RECENT_PROMPTS_DIR/picks"
+  # Keep only the window's picks so the file stays small.
+  local cutoff=$(($(date +%s) - RECENT_PROMPT_MINUTES * 60))
+  awk -v c="$cutoff" '$1 >= c' "$RECENT_PROMPTS_DIR/picks" >"$RECENT_PROMPTS_DIR/picks.tmp" \
+    && mv "$RECENT_PROMPTS_DIR/picks.tmp" "$RECENT_PROMPTS_DIR/picks"
+  exec 8>&-
+  printf '%s\n' "$choice"
+}
+
+# Parses a Seam 2 prompt file into globals: title, file_effort, file_budget, and turns[] (turns[0]
+# is the first user turn, turns[1..] are the "--- followup" turns, in order). {{MCP}} is
+# substituted in every turn and in the title. The header's own "team" key is only used by
+# pick_prompt's file-name grep (below); this developer's team for reporting is $TEAM_DEFAULT.
+parse_prompt() {
+  local file="$1" header body line new_turn
+  header="$(sed '/^---$/q' "$file" | sed '$d')"
+  title="$(printf '%s\n' "$header" | sed -n 's/^title: *//p' | head -1 | sed "s/{{MCP}}/$MCP/g")"
+  file_effort="$(printf '%s\n' "$header" | sed -n 's/^effort: *//p' | head -1)"
+  file_budget="$(printf '%s\n' "$header" | sed -n 's/^budget: *//p' | head -1)"
+
+  body="$(sed '1,/^---$/d' "$file")"
+  turns=()
+  current=""
+  new_turn=1
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" == "--- followup" ]]; then
+      turns+=("$current")
+      current=""
+      new_turn=1
+    elif ((new_turn)); then
+      current="$line"
+      new_turn=0
+    else
+      current+=$'\n'"$line"
+    fi
+  done <<<"$body"
+  turns+=("$current")
+  for i in "${!turns[@]}"; do
+    turns[i]="${turns[i]//\{\{MCP\}\}/$MCP}"
+  done
+}
+
+model="${SESSION_MODEL:-$(pick_model)}"
+prompt_file="${1:-$(pick_prompt_shared)}"
+[[ -r "$prompt_file" ]] || { echo "dev-session: no prompt file" >&2; exit 2; }
+
+declare -a turns=()
+title="" file_effort="" file_budget="" current=""
+parse_prompt "$prompt_file"
+[[ -n "${turns[0]:-}" ]] || { echo "dev-session: empty prompt in $prompt_file" >&2; exit 2; }
+scenario="$(basename "$prompt_file" .txt)"
+
+effort="${file_effort:-$EFFORT_DEFAULT}"
+case "$effort" in
+  low | medium | high) ;;
+  *) effort="$EFFORT_DEFAULT" ;;
+esac
+
+# File budget (optional) clamped to SESSION_MAX_BUDGET_USD; an absent or non-positive value falls
+# back to SESSION_BUDGET_USD first. This is the whole session's budget, shared across every turn
+# (see the --max-budget-usd use below): each --resume call gets whatever is left, and the loop
+# stops once it runs low. SESSION_MAX_BUDGET_USD's default of $1.00 sits well inside every gateway
+# spend cap configured for this demo (terraform/variables.tf spend_caps: organization $20/day,
+# trading team $5/day, and the tightest single-developer cap $2/day) -- comfortably under even the
+# tightest per-developer cap while still allowing several sessions a day per developer.
+budget_usd="$(awk -v b="$file_budget" -v d="$BUDGET_DEFAULT_USD" -v m="$MAX_BUDGET_USD" \
+  'BEGIN{ bn=b+0; if (bn<=0) bn=d+0; if (bn>m+0) bn=m+0; printf "%.4f", bn }')"
+
+work="$(mktemp -d "$HOME/work/session.XXXXXX")"
+trap 'rm -rf -- "$work"' EXIT
+
+started="$(date -u +%FT%TZ)"
+
+# Seed a fresh checkout of the fictional Touchline codebase (agent-host/codebase) for this
+# session; CODEBASE_SEED is overridable for testing. On failure, report it the same way as every
+# other dev_session result and stop cleanly rather than falling through to an empty directory.
+if ! "$CODEBASE_SEED" "$work"; then
+  jq -cn --arg agent "$DEVELOPER_AGENT" --arg started "$started" --arg developer "${DEVELOPER_NAME:-}" --arg team "$TEAM_DEFAULT" \
+    --arg scenario "$scenario" --arg title "$title" --arg model "$model" --arg effort "$effort" \
+    --argjson budget_usd "$budget_usd" '
+    {event: "dev_session", agent: $agent, started: $started, developer: $developer, team: $team,
+     scenario: $scenario, title: $title, model: $model, effort: $effort, budget_usd: $budget_usd,
+     rc: 1, pii_probe: ($scenario | startswith("pii-")), guard_blocked: false,
+     subtype: null, is_error: true, cost_usd: 0, turns: 0, user_turns: 0, abandoned: true,
+     denials: [], session_id: null, error: "codebase seed failed"}'
+  exit 3
+fi
+cd "$work"
+
+# How many follow-ups (if any) this session will attempt, and whether it stops early
+# (abandoned): a share of sessions with follow-ups in the file (SESSION_FOLLOWUP_PERCENT) plan to
+# use 1..min(available, SESSION_MAX_FOLLOWUPS) of them; of those, SESSION_ABANDON_PERCENT instead
+# use fewer than planned. A session that was never a follow-up candidate is not "abandoned" just
+# for having one turn.
+available_followups=$((${#turns[@]} - 1))
+planned_followups=0
+if ((available_followups > 0 && MAX_FOLLOWUPS > 0)) && ((RANDOM % 100 < FOLLOWUP_PERCENT)); then
+  cap=$((available_followups < MAX_FOLLOWUPS ? available_followups : MAX_FOLLOWUPS))
+  planned_followups=$(((RANDOM % cap) + 1))
+fi
+target_followups=$planned_followups
+if ((planned_followups > 0)) && ((RANDOM % 100 < ABANDON_PERCENT)); then
+  target_followups=$((RANDOM % planned_followups))
+fi
+
+# Occasionally a distracted developer only gives the first turn a very short amount of time
+# before walking away; if that turn actually times out, treat the whole session as abandoned
+# (there is no session to resume).
+first_timeout="$TIMEOUT_S"
+short_timeout_roll=0
+if ((RANDOM % 100 < SHORT_TIMEOUT_PERCENT)); then
+  first_timeout="$SHORT_TIMEOUT_S"
+  short_timeout_roll=1
+fi
+
+# The adapter receives one turn and emits the common result contract. No adapter owns the
+# conversation, prompt selection or the shared budget.
+run_turn() {
+  local text="$1" resume_id="$2" to="$3"
+  : >"$STATE_DIR/last-stderr.log"
+  set +e
+  # Keep the monitored supervisor alive through the TERM grace even if an adapter exits
+  # immediately: otherwise timeout exits too, leaving a TERM-resistant grandchild behind.
+  # Caught shell signals reset to their defaults in the adapter; only this supervisor waits
+  # for the five-second group-wide KILL. Adapters must clean up any groups they create.
+  last_result="$(timeout --kill-after=5 "$to" bash -c '
+    trap "sleep 6" TERM
+    "$@" &
+    wait "$!"
+  ' dev-agent "$AGENT_ADAPTER" run "$text" "$model" "$resume_id" "$to" \
+    "$budget_remaining" "$effort" "$MCP" "$STATE_DIR/last-stderr.log")"
+  last_rc=$?
+  set -e
+  # Fail closed when a runner exits successfully without a usable normalized result. A broken
+  # cost contract must never enable follow-ups with an untracked spend.
+  if ! jq -es 'length == 1 and (.[0] | type == "object"
+      and (.cost_mode == "cumulative" or .cost_mode == "incremental")
+      and (.total_cost_usd | type == "number" and . >= 0)
+      and (.is_error | type == "boolean")
+      and (.session_id == null or (.session_id | type == "string"))
+      and ((.permission_denials // []) | type == "array"))' <<<"$last_result" >/dev/null 2>&1; then
+    if ((last_rc == 0)); then
+      last_rc=65
+      printf '%s\n' "dev-session: adapter '$DEVELOPER_AGENT' returned an invalid result" >>"$STATE_DIR/last-stderr.log"
+    fi
+    last_result='{"is_error":true,"cost_mode":"incremental","total_cost_usd":0}'
+  elif [[ "$(jq -r '.is_error' <<<"$last_result")" == true ]] && ((last_rc == 0)); then
+    last_rc=1
+  fi
+}
+
+cumulative_cost="0"
+user_turns=0
+session_id=""
+all_denials='[]'
+last_result=""
+last_rc=0
+any_guard_blocked=0
+
+for ((i = 0; i <= target_followups; i++)); do
+  if ((i == 0)); then
+    turn_timeout="$first_timeout"
+    turn_text="${turns[0]}"
+    resume=""
+  else
+    turn_timeout="$TIMEOUT_S"
+    turn_text="${turns[i]}"
+    resume="$session_id"
+  fi
+
+  budget_remaining="$(awk -v b="$budget_usd" -v c="$cumulative_cost" \
+    'BEGIN{ r=b-c; if (r<0) r=0; printf "%.6f", r }')"
+  run_turn "$turn_text" "$resume" "$turn_timeout"
+  user_turns=$((user_turns + 1))
+
+  if printf '%s' "${last_result}$(tail -c 400 "$STATE_DIR/last-stderr.log" 2>/dev/null)" \
+      | grep -qiE 'blocked by hook|policy blocked'; then
+    any_guard_blocked=1
+  fi
+
+  turn_cost="$(jq -r '.total_cost_usd // 0' <<<"$last_result" 2>/dev/null || echo 0)"
+  turn_session_id="$(jq -r '.session_id // empty' <<<"$last_result" 2>/dev/null || true)"
+  [[ -n "$turn_session_id" ]] && session_id="$turn_session_id"
+  turn_denials="$(jq -c '.permission_denials // [] | map(.tool_name)' <<<"$last_result" 2>/dev/null || echo '[]')"
+  all_denials="$(jq -cn --argjson a "$all_denials" --argjson b "$turn_denials" '$a + $b' 2>/dev/null || echo "$all_denials")"
+  cost_mode="$(jq -r '.cost_mode' <<<"$last_result")"
+  cumulative_cost="$(awk -v c="$cumulative_cost" -v t="$turn_cost" -v mode="$cost_mode" \
+    'BEGIN{ printf "%.6f", (mode == "incremental" ? c+t : (t > c ? t : c)) }')"
+
+  # Stop the conversation on a hard error, a session with no resumable id, or (once the budget
+  # tracked above is spent) nothing meaningful left to spend on another turn.
+  if ((last_rc != 0)) || [[ -z "$session_id" ]]; then break; fi
+  remaining_after="$(awk -v b="$budget_usd" -v c="$cumulative_cost" \
+    'BEGIN{ r=b-c; if (r<0) r=0; printf "%.6f", r }')"
+  if awk -v r="$remaining_after" -v m="$MIN_REMAINING_BUDGET_USD" 'BEGIN{ exit !(r+0<=m+0) }'; then break; fi
+done
+
+followups_sent=$((user_turns - 1))
+abandoned_flag=0
+if ((followups_sent < planned_followups)); then abandoned_flag=1; fi
+if ((short_timeout_roll == 1)) && ((last_rc != 0)); then abandoned_flag=1; fi
+
+final_stderr="$(tail -c 400 "$STATE_DIR/last-stderr.log" 2>/dev/null)"
+
+jq -cn --arg agent "$DEVELOPER_AGENT" --arg started "$started" --arg developer "${DEVELOPER_NAME:-}" --arg team "$TEAM_DEFAULT" \
+  --arg scenario "$scenario" --arg title "$title" --arg model "$model" --arg effort "$effort" \
+  --argjson rc "$last_rc" --argjson budget_usd "$budget_usd" --argjson cost_usd "$cumulative_cost" \
+  --argjson user_turns "$user_turns" --argjson abandoned "$(bool "$abandoned_flag")" \
+  --argjson guard_blocked "$(bool "$any_guard_blocked")" --argjson denials "$all_denials" \
+  --arg session_id "$session_id" --arg result "$last_result" --arg stderr "$final_stderr" '
+  ($result | try fromjson catch {}) as $r
+  | {event: "dev_session", agent: $agent, started: $started, developer: $developer, team: $team,
+     scenario: $scenario, title: $title, model: $model, effort: $effort, budget_usd: $budget_usd,
+     rc: $rc, pii_probe: ($scenario | startswith("pii-")), guard_blocked: $guard_blocked,
+     subtype: $r.subtype, is_error: ($rc != 0 or ($r.is_error // false)), cost_usd: $cost_usd, turns: $r.num_turns,
+     user_turns: $user_turns, abandoned: $abandoned,
+     denials: $denials, session_id: (if $session_id == "" then null else $session_id end),
+     error: (if $rc != 0 or ($r.is_error // false) then ($r.result // $stderr | tostring | .[0:300]) else null end)}'

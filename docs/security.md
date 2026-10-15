@@ -23,7 +23,8 @@ source repositories, and PII probes built from test card numbers and reserved ex
 With real users, capture content only for groups that need it, and treat the stack's logs and
 Agent Observability data as sensitive.
 
-`content_capture = false` switches the content settings off for Claude Code and the agents. The
+`content_capture = false` selects metadata-only plugin export for coding agents and switches
+the in-app content settings off. The
 prompt-level panels and the content-based evaluators then have nothing to work with.
 
 ## Credentials in Terraform state
@@ -33,7 +34,7 @@ Terraform generates or receives every credential the demo uses, so they are all 
 - Grafana Cloud access policy tokens (ingest: metrics, logs, traces and Agent Observability write;
   Firehose: metrics and logs write), the PDC network token, and an Admin service account token
   for the experiments;
-- the Cognito app client secret and every developer's password;
+- the Cognito app client secret and each Claude Code developer's password;
 - the gateway session signing secret and admin read and write keys, the Postgres passwords;
 - the private CA and gateway TLS private keys.
 
@@ -95,7 +96,7 @@ The agent host's user data holds no credentials; it reads them from Secrets Mana
   developer's session JWT should be refused there: confirm in your lab that a request to
   `/v1/organizations/spend_limits/effective` with a session token instead of `x-api-key` gets 401
   or 403 before relying on it.
-- Each developer session auto-approves `python3`, `node` and
+- Each Claude Code developer session auto-approves `python3`, `node` and
   `awk` (plus read-only git, file tools, `jq` and the MCP servers) with no `curl`, `rm`, `npm` or
   `npx` - the traffic loop's own scripted prompts need an interpreter to write and run small
   scripts. A prompt that talked a session into running an arbitrary script still runs it inside
@@ -123,7 +124,7 @@ acts on the demo's traffic:
 - The Claude Code guards (the hook rules below) match agent name `claude-code/touchline` and its
   subagents (`claude-code/touchline/*`), which the gateway sets for the demo developers through
   `AGENTO11Y_AGENT_NAME`. They cannot use the tag: the plugin's guard calls carry no tags
-  (agento11y plugin v0.48.0). Other Claude Code users of the same stack are not matched.
+  (agento11y plugin v0.49.0). Other Claude Code users of the same stack are not matched.
 
 What the guards do, in the order they run (ascending priority):
 
@@ -146,7 +147,7 @@ only warn; 60 and above informational. Grafana Cloud has no allow or exception r
 deny can only skip later rules for a request that is already denied. Deny rules stay
 deterministic and narrowly matched, and a new deny rule is rolled out as warn first.
 
-The Claude Code plugin (v0.48.0) sends two guard requests: a preflight check with only the
+The Claude Code plugin (v0.49.0) sends two guard requests: a preflight check with only the
 submitted prompt, and a postflight check from `PreToolUse` with the tool name and its input. It
 ignores transforms on the prompt check, so there is no preflight redaction for Claude Code, and it
 never sends tool results, so no guard can check what a tool returned. The tool check runs before
@@ -157,6 +158,102 @@ these rules (see [Architecture](architecture.md)).
 Guards are a demonstration of the mechanism, not a data-loss control. The plugin's guard calls
 time out after 5 seconds, and a timeout fails open. Warn rules record and never block. Redaction
 covers Claude Code tool arguments and the in-app agents' tool results, not Claude Code prompts.
+
+## Non-Claude Bedrock credentials and rotation
+
+An enabled agent host creates a separate IAM user and access key for each selected non-Claude
+agent type (`codex`, `pi`). An all-Claude roster creates neither. These credentials are also in
+Terraform state and in the existing agent-host Secrets Manager value under
+`developer_bedrock_credentials`, keyed by agent type. The renderer mounts only the matching
+credential as a uid-1000-owned 0400 AWS shared-credentials INI file. It never puts access keys in
+compose environment or host user data. The two agent types do not share a key, but personas of the same type do.
+
+- Codex receives only `bedrock-mantle:CreateInference`, limited by the exact model and request
+  region in `codex_bedrock` (default `openai.gpt-5.6-luna`, `us-east-1`). Mantle authorizes that
+  action on a project resource, so the policy permits this account's projects in that region
+  with `bedrock-mantle:Model` and `aws:RequestedRegion` conditions. It does not invent a model ARN
+  or claim to isolate one project. The client uses Mantle's default project; the live client path
+  and scoped authorization still need verification before enabling Codex traffic.
+- Pi receives only streaming and non-streaming invocation on the module's application inference
+  profiles for teams with pi personas, restricted to their gateway model allowlists. Foundation
+  models are granted only behind those profiles using `bedrock:InferenceProfileArn`. Their
+  destination regions come from the existing cross-region profiles; the request starts in the
+  module's AWS region. Personas sharing the pi key can use the union of those selected teams'
+  profiles. This is demo-level isolation, not per-persona or per-team enforcement.
+- Neither key grants discovery, subscription, IAM, Secrets Manager or other AWS services. Model
+  access and any Marketplace subscription must already be provisioned by the operator. These
+  paths bypass the Claude gateway, so its spend caps do not constrain their inference.
+
+IAM access keys are intentional here. The pinned AWS provider supports both
+[`aws_iam_access_key`](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.0/website/docs/r/iam_access_key.html.markdown)
+and Bedrock
+[`aws_iam_service_specific_credential`](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.0/website/docs/r/iam_service_specific_credential.html.markdown).
+Codex and pi can use the AWS SDK credential chain, so file-based SigV4 credentials work across
+both request paths without a bearer-token authentication grant. The alternative service-specific
+key is supported by Terraform; it was not rejected for lack of provider support. Mantle's
+[authorization reference](https://docs.aws.amazon.com/service-authorization/latest/reference/list_bedrock-mantle.md)
+documents project resources and the model condition separately from bearer-token permission.
+
+Keys do not expire automatically. Rotate them through the consumer's Terraform configuration:
+
+1. Set `traffic_enabled = false` and apply; let active developer sessions finish or stop them.
+2. Find the selected module's `aws_iam_access_key.developer_bedrock` address with
+   `tofu state list`. Plan replacement of its `codex` or `pi` key with `-replace`, review the
+   plan, and apply it. Do not print the secret or export it to a local credential file.
+3. Creation runs before destruction, subject to IAM's two-active-keys-per-user limit. The new
+   value updates the agent-host secret, but the previous key may be revoked before the host's
+   next five-minute reconciliation. This rotation has a bounded interruption; it is not a
+   zero-downtime procedure. Terraform credential changes alone do not replace the EC2 instance.
+4. Confirm host reconciliation has rendered the new uid-owned 0400 file and recreated the
+   affected services. Run a bounded inference with the selected agent and inspect telemetry;
+   check that the old key is absent from IAM without exposing either key value.
+5. Restore `traffic_enabled = true` and apply after those checks pass.
+
+For suspected compromise, deactivate the affected IAM key immediately with the operator identity,
+then rotate through Terraform and reconcile the host before restoring traffic. Removing the last
+persona of an agent type destroys that type's IAM user and key on the next apply. Neither the
+developer key nor its user can perform its own rotation.
+
+## Codex and pi capture and guard boundaries
+
+Only selected agent types receive non-Claude guard rules. They match `codex-<prefix>` or
+`pi-<prefix>` and their subagent names, keeping other coding agents on a shared stack outside the
+demo policy. Namespace/team tags and `AGENTO11Y_USER_ID` are set explicitly in the rendered user
+config file. For pi, developer attribution is exported in `metadata["agento11y.user.id"]`; do not
+require a top-level `user_id` when inspecting a generation export.
+
+The shared Agent Observability client token is mounted in
+`/home/node/.config/agento11y/config.env`; it can write generations, plugin metrics and traces.
+Codex native OTLP uses its own `codex_otlp_token` for metrics, logs and traces, scoped to the demo
+stack. Neither Codex nor pi receives the host's broader ingest token. Both developer processes can
+read the credentials mounted for their service; guards and configuration are not a security
+boundary against arbitrary code in that container. File-based keys avoid exposing values in
+compose environment and leave the existing firewall's IMDS block intact.
+
+| Agent | Prompt/preflight | Tool check before execution | Capture limits |
+|---|---|---|---|
+| Codex | Priority-0 PII deny | Postflight priority 1/2/3 deny destructive shell, secret-file reads and protected edits; priority-20 secret redaction | Hook-facing `Bash` and `apply_patch`; a shell read is a `Bash` call. Hosted tools without `PreToolUse` coverage are outside these rules. Native OTLP prompt/response logging is disabled; plugin content capture is separate. |
+| pi | Priority-20 PII redaction, not denial | Postflight priority 1/2/3 deny destructive `bash`, secret `bash`/`read` and protected `edit`/`write`; priority-20 secret redaction | Lowercase native tool names. Preflight context transforms can redact, but cannot enforce a prompt deny. Completed turns export through the official extension; a mid-turn termination may lose an unfinished generation. |
+
+The tool phase name `postflight` refers to Agent Observability's policy API: these tool checks run
+before execution. Codex hook names are canonicalized by the pinned CLI; matching native names such
+as `exec_command` would miss the hook-facing `Bash` payload. Pi names are not capitalized. Neither
+rule set is complete protection against shell indirection, encodings or all possible tool paths.
+Guards retain the five-second timeout and fail-open behavior; prompt redaction is not proof that
+original content can never reach another telemetry path.
+
+`content_capture` selects full versus metadata-only plugin export for both agents. In full mode,
+completed prompts, replies and tool content can enter Agent Observability. The flag does not
+remove content from the agent's own local transcript, prevent model submission, or turn guards
+into a data-loss control. Codex native prompt and response logs remain off independently. Pi has
+no native Claude telemetry stream; its official plugin supplies generations and associated signals.
+
+The Codex/pi guard-policy regression suites are manual-only until the scheduler knows which
+agents are deployed. They replay direct policy API requests, including redaction transforms;
+a passing suite establishes Cloud policy behavior, not that the actual client ran the right hook
+or honored the response. Check those client paths separately on initial and resumed sessions.
+Existing Claude native dashboards, alerts and recording rules continue to cover Claude only.
+Copilot and Cursor deployment is deferred; neither is represented by these rules.
 
 ## Bedrock invocation logging
 

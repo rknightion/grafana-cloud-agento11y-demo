@@ -90,20 +90,22 @@ resource "aws_secretsmanager_secret" "agent_host" {
 resource "aws_secretsmanager_secret_version" "agent_host" {
   secret_id = aws_secretsmanager_secret.agent_host.id
   secret_string = jsonencode({
-    config                       = local.agent_host_config
-    cognito_client_secret        = aws_cognito_user_pool_client.gateway.client_secret
-    gateway_jwt_secret           = random_password.gateway_jwt_secret.result
-    gateway_admin_write_key      = random_password.gateway_admin_write_key.result
-    gateway_admin_read_key       = random_password.gateway_admin_read_key.result
-    postgres_password            = random_password.postgres.result
-    postgres_grafana_ro_password = random_password.grafana_ro.result
-    grafana_otlp_token           = local.grafana_ingest.otlp_token
-    agento11y_client_token       = local.grafana_ingest.agento11y_client_token
-    pdc_token                    = local.grafana_ingest.pdc_token
-    tls_ca_pem                   = tls_self_signed_cert.gateway_ca.cert_pem
-    tls_cert_pem                 = tls_locally_signed_cert.gateway.cert_pem
-    tls_key_pem                  = tls_private_key.gateway.private_key_pem
-    developer_passwords          = { for name, p in random_password.developer : name => p.result }
+    config                        = local.agent_host_config
+    cognito_client_secret         = aws_cognito_user_pool_client.gateway.client_secret
+    gateway_jwt_secret            = random_password.gateway_jwt_secret.result
+    gateway_admin_write_key       = random_password.gateway_admin_write_key.result
+    gateway_admin_read_key        = random_password.gateway_admin_read_key.result
+    postgres_password             = random_password.postgres.result
+    postgres_grafana_ro_password  = random_password.grafana_ro.result
+    grafana_otlp_token            = local.grafana_ingest.otlp_token
+    agento11y_client_token        = local.grafana_ingest.agento11y_client_token
+    codex_otlp_token              = try(grafana_cloud_access_policy_token.codex[0].token, "")
+    pdc_token                     = local.grafana_ingest.pdc_token
+    tls_ca_pem                    = tls_self_signed_cert.gateway_ca.cert_pem
+    tls_cert_pem                  = tls_locally_signed_cert.gateway.cert_pem
+    tls_key_pem                   = tls_private_key.gateway.private_key_pem
+    developer_passwords           = { for name, p in random_password.developer : name => p.result }
+    developer_bedrock_credentials = local.developer_bedrock_credentials
   })
 }
 
@@ -150,12 +152,18 @@ locals {
   # Mutable knobs: the `config` key of the agent-host secret (agent-host/SEAM.md). A change here
   # updates the secret version only; the host picks it up within 5 minutes.
   agent_host_config = {
-    gateway_hostname         = local.gateway_hostname
-    claude_code_version      = var.claude_code_version
-    agento11y_cli_version    = var.agento11y_cli_version
-    developers               = [for name, d in local.developers : { name = name, email = d.email, team = d.team, sub = aws_cognito_user.developer[name].sub }]
-    teams                    = var.teams
-    spend_caps               = var.spend_caps
+    gateway_hostname      = local.gateway_hostname
+    claude_code_version   = var.claude_code_version
+    agento11y_cli_version = var.agento11y_cli_version
+    codex_bedrock         = var.codex_bedrock
+    developers = [for name, d in local.developers : merge(
+      { name = name, email = d.email, team = d.team, agent = d.agent },
+      d.agent == "claude-code" ? { sub = aws_cognito_user.developer[name].sub } : {}
+    )]
+    teams = var.teams
+    spend_caps = merge(var.spend_caps, {
+      users = { for name, caps in var.spend_caps.users : name => caps if contains(keys(local.claude_developers), name) }
+    })
     gateway_models           = local.gateway_models
     team_model_allowlist     = var.team_model_allowlist
     cognito_issuer           = local.cognito_issuer
@@ -182,8 +190,9 @@ locals {
   # Gateway model id from a system profile id: "eu.anthropic.claude-haiku-4-5-20251001-v1:0" ->
   # "claude-haiku-4-5", "eu.anthropic.claude-sonnet-4-6" -> "claude-sonnet-4-6".
   gateway_models = [for k in var.gateway_models : {
-    key = k
-    id  = replace(regex("anthropic\\.(.+)$", var.bedrock_models[k])[0], "/-[0-9]{8}-v[0-9]+:[0-9]+$/", "")
+    key            = k
+    source_profile = var.bedrock_models[k]
+    id             = replace(regex("anthropic\\.(.+)$", var.bedrock_models[k])[0], "/-[0-9]{8}-v[0-9]+:[0-9]+$/", "")
     upstream_profile_arns_by_team = {
       for t in var.teams : t => aws_bedrock_inference_profile.team_model["${t}.${k}"].arn
     }

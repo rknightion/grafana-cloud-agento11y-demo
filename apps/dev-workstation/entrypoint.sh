@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
-# Developer container start: install the pinned Claude Code, reset the per-developer config on
-# its volume (onboarding flags, user-scope MCP servers, settings), then hand over to the traffic
-# loop, which signs the developer in through the gateway and runs sessions.
+# Developer container start: prepare the selected agent, reset its config and run traffic.
 set -Eeuo pipefail
 
 log() { printf '%s dev-entrypoint[%s]: %s\n' "$(date -u +%FT%TZ)" "${DEVELOPER_NAME:-?}" "$*" >&2; }
 
-: "${CLAUDE_CODE_VERSION:?}" "${DEVELOPER_NAME:?}" "${GATEWAY_URL:?}"
+runtime_lib="${DEV_RUNTIME_LIB:-/usr/local/lib/dev-workstation/agent-runtime.sh}"
+if [[ ! -r "$runtime_lib" ]]; then
+  runtime_lib="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/lib/agent-runtime.sh"
+fi
+# shellcheck source=apps/dev-workstation/lib/agent-runtime.sh
+source "$runtime_lib"
 
-# 1. Claude Code: verified release from the shared read-only cache, or a private download.
-claude_bin="$(claude-install "$CLAUDE_CODE_VERSION" "${CLAUDE_CODE_CACHE:-/opt/claude-code}")"
-ln -sf "$claude_bin" "$HOME/.local/bin/claude"
-log "claude $(claude --version 2>/dev/null | head -1)"
+: "${DEVELOPER_NAME:?}"
+"$AGENT_ADAPTER" setup
 
-# 2. Agent Observability CLI: the image ships a pinned build; a specific agento11y_cli_version
+# Agent Observability CLI: the image ships a pinned build; a specific agento11y_cli_version
 #    that differs is installed into ~/.local/bin (the installer verifies the archive checksum).
 want="${AGENTO11Y_CLI_VERSION:-latest}"
 have="$(agento11y --version 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)"
@@ -24,8 +25,7 @@ if [[ "$want" != "latest" && -n "$want" && "$want" != "$have" ]]; then
 fi
 log "agento11y $(agento11y --version 2>/dev/null | head -1)"
 
-# 3. Per-developer Claude config (on the claude-home volume, so sign-in survives restarts), reset
-#    to the known state on every start: see dev-reseed.
+# Reset the selected agent's configuration to the known state on every start.
 dev-reseed
 
 if [[ $# -gt 0 ]]; then

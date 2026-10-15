@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
+import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { Trial } from '@grafana/agento11y/experiments';
 import { loadSuite, loadSuites, pickSuite, guardRequest, scorePassed, validateSuite, resolveSuite, selectCandidates, candidateHeaders, scheduledPlan,
@@ -35,6 +36,31 @@ test('suite placeholders follow SERVICE_NAMESPACE and env overrides the evaluato
   const overrideEnv = { EXPERIMENTS_EVALUATOR_ID: 'custom' };
   assert.equal(resolveSuite({ scoring: { final: '{prefix}_answer_quality' } }, overrideEnv).scoring.final, 'custom');
   assert.equal(resolveSuite({ scoring: { final: '{prefix}_tool_result_grounded' } }, overrideEnv).scoring.final, 'touchline_tool_result_grounded');
+});
+
+test('non-Claude guards use exact namespace names and reject unsupported guard agents', async () => {
+  for (const agent of ['codex', 'pi']) {
+    const suite = await loadSuite(new URL(`../config/suites/${agent}-guard-policy.yaml`, import.meta.url), { SERVICE_NAMESPACE: 'match-day' });
+    assert.equal(suite.candidate.agent_name, `${agent}-match-day`);
+    const tool = suite.cases.find((item) => item.input.phase === 'postflight');
+    assert.equal(guardRequest(suite, tool, 'conv').context.agentName, `${agent}-match-day`);
+    assert.equal(tool.input.tool_name, agent === 'codex' ? 'Bash' : 'bash');
+    assert.ok(suite.cases.some((item) => item.expected.redacted_strings?.length));
+    for (const guardAgent of ['cursor', 'codex/*', '']) {
+      const invalid = structuredClone(suite);
+      invalid.candidate.guard_agent = guardAgent;
+      assert.throws(() => validateSuite(invalid), /guard_agent/);
+    }
+    const noProvider = structuredClone(suite);
+    noProvider.candidate.model_provider = '';
+    assert.throws(() => validateSuite(noProvider), /model_provider/);
+    const invalidRedaction = structuredClone(suite);
+    invalidRedaction.cases[0].expected.redacted_strings = ['absent from the input'];
+    assert.throws(() => validateSuite(invalidRedaction), /redacted_strings/);
+  }
+  const orchestrator = await loadSuite(undefined, {});
+  orchestrator.candidate.guard_agent = 'codex';
+  assert.throws(() => validateSuite(orchestrator), /guard_agent/);
 });
 
 test('match desk keeps its three cases and emits the right candidate headers', async () => {
@@ -304,8 +330,8 @@ test('pending evaluation resume publishes the final score before run finalizatio
 
 test('shipped suites all validate, and only the match desk compares candidates', async () => {
   const suites = await loadSuites(undefined, {});
-  assert.deepEqual(suites.map((item) => item.suite_id).sort(), ['touchline_claude_code_guard_policy', 'touchline_injection_resistance',
-    'touchline_match_desk_comparison', 'touchline_responsible_gambling', 'touchline_tool_grounding']);
+  assert.deepEqual(suites.map((item) => item.suite_id).sort(), ['touchline_claude_code_guard_policy', 'touchline_codex_guard_policy', 'touchline_injection_resistance',
+    'touchline_match_desk_comparison', 'touchline_pi_guard_policy', 'touchline_responsible_gambling', 'touchline_tool_grounding']);
   assert.deepEqual(suites.filter((item) => item.comparison).map((item) => item.suite_id), ['touchline_match_desk_comparison']);
   for (const item of suites.filter((entry) => !entry.comparison)) {
     assert.equal(selectCandidates(item, 'variants', variants).length, 1, `${item.suite_id} runs one candidate whatever the set`);
@@ -343,7 +369,7 @@ test('boolean finals pass only when true and numeric finals compare with the sui
 });
 
 test('weighted suite picking is deterministic per draw and a named suite wins', async () => {
-  const suites = await loadSuites(undefined, {});
+  const suites = (await loadSuites(undefined, {})).filter((suite) => suite.scheduled !== false);
   const weights = suites.map((item) => item.weight ?? 1);
   const total = weights.reduce((sum, weight) => sum + weight, 0);
   assert.equal(pickSuite(suites, { random: () => 0 }), suites[0]);
@@ -356,6 +382,25 @@ test('weighted suite picking is deterministic per draw and a named suite wins', 
   assert.equal(plan.fires, true);
   assert.equal(plan.set, 'grounding');
   assert.deepEqual(plan.runIds, [`touchline-sched-grounding-haiku-20260923T${plan.runIds[0].slice(-4)}`]);
+});
+
+test('manual guard suites stay out of scheduled selection and remain available through the CLI', async () => {
+  const suites = await loadSuites(undefined, {});
+  const manual = suites.filter((suite) => suite.scheduled === false);
+  assert.deepEqual(manual.map((suite) => suite.candidate.guard_agent).sort(), ['codex', 'pi']);
+  for (const suite of manual) {
+    assert.throws(() => pickSuite(suites, { suiteId: suite.suite_id }), /no suite matches/);
+    const invalid = structuredClone(suite);
+    invalid.scheduled = 'false';
+    assert.throws(() => validateSuite(invalid), /scheduled must be/);
+    const output = execFileSync(process.execPath, [new URL('./run-experiment.mjs', import.meta.url).pathname, '--suite', suite.suite_id],
+      { encoding: 'utf8', timeout: 10_000 });
+    assert.equal(JSON.parse(output).suiteId, suite.suite_id);
+  }
+  const onlyEnabled = suites.filter((suite) => suite.scheduled !== false);
+  assert.equal(pickSuite(suites, { random: () => 0 }), onlyEnabled[0]);
+  assert.equal(pickSuite(suites, { random: () => 0.999999 }), onlyEnabled.at(-1));
+  assert.throws(() => pickSuite(manual), /no suites enabled/);
 });
 
 test('guard requests mirror the Claude Code plugin: a user text message, or one tool_call part', async () => {
@@ -417,6 +462,43 @@ test('a guards run needs no orchestrator: each decision is checked against the e
   assert.equal(finals.filter((score) => !score.passed).length, expectedFails);
   assert.equal(scores.filter((score) => score.scoreKey === 'expected_action').length, suite.cases.length);
   assert.ok(calls.some((item) => item[0] === 'finalize' && item[1] === 'completed'), 'a policy mismatch does not fail the run');
+});
+
+test('redaction trials require a usable transform of the evaluated prompt or tool arguments', async (t) => {
+  const priorFlag = process.env.AGENTO11Y_ENABLE_EXPERIMENTAL_FEATURES;
+  process.env.AGENTO11Y_ENABLE_EXPERIMENTAL_FEATURES = 'true';
+  t.after(() => { if (priorFlag === undefined) delete process.env.AGENTO11Y_ENABLE_EXPERIMENTAL_FEATURES;
+    else process.env.AGENTO11Y_ENABLE_EXPERIMENTAL_FEATURES = priorFlag; });
+  const suite = await loadSuite(new URL('../config/suites/pi-guard-policy.yaml', import.meta.url), {});
+  for (const testCase of suite.cases.filter((item) => item.expected.redacted_strings)) {
+    for (const transform of ['absent', 'unchanged', 'empty', 'wrong-id', 'redacted']) {
+      const focused = { ...suite, cases: [testCase] };
+      const calls = [];
+      const hookClient = { evaluateHook: async (request) => {
+        if (transform === 'absent') return { action: 'allow' };
+        if (transform === 'empty') return { action: 'allow', transformedInput: {} };
+        const transformedInput = structuredClone(request.input);
+        if (transform === 'redacted' || transform === 'wrong-id') {
+          if (request.phase === 'preflight') {
+            const part = transformedInput.messages[0].parts[0];
+            for (const secret of testCase.expected.redacted_strings) part.text = part.text.replaceAll(secret, '[REDACTED]');
+            if (transform === 'wrong-id') transformedInput.messages[0].role = 'assistant';
+          } else {
+            const call = transformedInput.output[0].parts[0].toolCall;
+            for (const secret of testCase.expected.redacted_strings) call.inputJSON = call.inputJSON.replaceAll(secret, '[REDACTED]');
+            if (transform === 'wrong-id') call.id = 'unrelated';
+          }
+        }
+        return { action: 'allow', transformedInput };
+      } };
+      await executeExperiment({ suite: focused, runIdPrefix: `redact-${testCase.test_case_id}-${transform}`, client: recordingClient(calls), hookClient, env: {},
+        reads: { listRuns: async () => [], getSuite: async () => ({ versions: [{ version: 'v1', published: true, test_case_count: 1 }] }) } });
+      const scores = calls.filter((item) => item[0] === 'scores').flatMap((item) => item[1]);
+      const final = scores.find((score) => score.scoreKey === 'final');
+      assert.equal(final.passed, transform === 'redacted', `${testCase.test_case_id} ${transform}`);
+      assert.equal(scores.find((score) => score.scoreKey === 'expected_redaction').passed, transform === 'redacted');
+    }
+  }
 });
 
 test('a boolean-final orchestrator suite evaluates the final and diagnostic evaluators and passes on true', async (t) => {

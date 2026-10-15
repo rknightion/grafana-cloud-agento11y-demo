@@ -5,12 +5,20 @@ Two things make the synthetic traffic read like real usage instead of a chatbot 
 - **The reader corpus** (`apps/corpus/readers.json` + `apps/corpus/readers.mjs`): personas, the
   intents each persona asks, and the phrasings/follow-ups for each intent. The in-app load
   generator and the site-browser CronJob both draw from it.
-- **The developer prompts** (`agent-host/prompts/*.txt`): one Claude Code session per file, a
+- **The developer prompts** (`agent-host/prompts/*.txt`): one coding-agent session per file, a
   `team: newsroom|trading|platform` header, a title, and one or more turns. Some are ordinary
   engineering tasks; files named `pii-*` are deliberate PII probes the preflight deny guard should
-  block.
+  block for Claude Code and Codex; pi redacts matching PII before submission.
 - **The fictional Touchline codebase** (`agent-host/codebase/`) the developer prompts run against,
   seeded fresh into each session's working directory.
+
+Claude Code, Codex and pi share the developer corpus and prompt parser. Agent-specific adapters
+resume conversations and report usage to the same runner; team weighting, host-wide recent-prompt
+deduplication and abandonment stay shared. Follow-ups keep the selected agent and its model. The
+PII burst schedule uses the full developer roster, but a pi redaction must not be counted as a
+Claude-style deny. The new Codex/pi guard-policy regression suites are **manual-only**
+(`scheduled: false`) until scheduling can account for which agent types are enabled; the hourly
+CronJob must not create non-Claude coverage claims for an all-Claude roster.
 
 Both corpora are committed and finite, so anyone watching the demo for long enough would start
 spotting repeats. `apps/agents/corpus-gen/` grows them with a cheap model (Haiku on Bedrock), but
@@ -24,7 +32,7 @@ nothing it generates reaches the committed corpora without a person reviewing it
    ```bash
    just corpus-grow reader-intent best-price          # more phrasings/follow-ups for an intent
    just corpus-grow reader-persona casual-fan 8        # a few new intents for a persona
-   just corpus-grow dev-team trading 10 0.30           # new Claude Code session prompts for a team
+   just corpus-grow dev-team trading 10 0.30           # new coding-agent session prompts for a team
    just corpus-grow dev-scenario best-price-brief       # a variant of an existing scenario family
    ```
 

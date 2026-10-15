@@ -2,7 +2,8 @@
 
 The demo has three halves that share one Grafana Cloud stack: the in-cluster Touchline Times app
 and its AI agents, an EC2 host that plays a small engineering team using Claude Code through the
-Claude apps gateway, and Bedrock's own telemetry. One Terraform module (`terraform/`) creates all
+Claude apps gateway and optional Codex/pi containers calling Bedrock directly, and Bedrock's own
+telemetry. One Terraform module (`terraform/`) creates all
 of it, except the EKS cluster, which you bring or create with
 [examples/eks-auto-mode](https://github.com/rknightion/grafana-cloud-agento11y-demo/tree/main/examples/eks-auto-mode).
 
@@ -59,6 +60,25 @@ and [coding-agents.md](coding-agents.md).
 ![On the agent host: five Claude Code containers reach the Claude apps gateway over HTTPS; the gateway keeps spend in Postgres, signs developers in with Cognito, calls Bedrock with its instance role and forwards telemetry, the plugin sends generations to Agent Observability and the PDC agent tunnels Postgres to Grafana](assets/diagrams/architecture-agent-host.png#only-light)
 ![On the agent host: five Claude Code containers reach the Claude apps gateway over HTTPS; the gateway keeps spend in Postgres, signs developers in with Cognito, calls Bedrock with its instance role and forwards telemetry, the plugin sends generations to Agent Observability and the PDC agent tunnels Postgres to Grafana](assets/diagrams/architecture-agent-host-dark.png#only-dark)
 
+The image above shows the default Claude path. Optional developer services add these direct
+routes without changing the gateway path:
+
+```text
+EC2 / docker compose                         AWS                 Grafana Cloud
++------------------------------------+
+| dev-<name>: Claude Code             |---> gateway ---> Bedrock team profiles
+| dev-<name>: Codex + managed hooks   |----------------> Bedrock Mantle
+|   scoped Codex key file, no IMDS    |                  Luna / us-east-1
+| dev-<name>: pi + Grafana extension  |----------------> Bedrock team profile
+|   scoped pi key file, no IMDS       |                  EU Haiku 4.5
+|                                    |
+| all three: plugin generations      |--------------------------> Agent Observability
+| Codex: separate native OTLP token  |--------------------------> metrics/logs/traces
+| Alloy: host ingest token           |--------------------------> host logs/metrics
++------------------------------------+
+Only Claude uses gateway sign-in, managed settings and server-side spend caps.
+```
+
 - The Claude apps gateway, Anthropic's self-hosted gateway, which runs from the `claude` binary.
   It listens on 443 inside the compose network under the private hostname
   `<prefix>-gateway.internal`, with a certificate from a private CA that Terraform generates. On the
@@ -69,11 +89,21 @@ and [coding-agents.md](coding-agents.md).
   inbound path.
 - Host Alloy, which ships container logs (the gateway audit log as `service_name=<prefix>-gateway`,
   everything else as `<prefix>-agent-host`) and host metrics.
-- Five developer containers, one per developer, each running Claude Code with a login bot
-  and a traffic loop. Claude Code is downloaded at container start, pinned by version and
+- One container per developer: the default five run Claude Code with a login bot and traffic
+  loop. Optional Codex and pi personas use the same prompt/session orchestration through separate
+  adapters, volumes and configuration, with no gateway login dependency. Claude Code is downloaded
+  at container start, pinned by version and
   verified; it is never baked into an image.
+- Codex calls Bedrock Mantle directly in `us-east-1` using `openai.gpt-5.6-luna`; pi calls the
+  team application profile for EU Haiku 4.5 directly. Terraform provisions one scoped IAM user/key
+  per enabled non-Claude agent type, delivered as a 0400 shared-credentials file from Secrets
+  Manager. Developer containers still cannot access IMDS. Gateway spend caps do not apply.
+- The non-Claude Agent Observability configuration is a separate user config file containing the
+  client token, agent name, namespace, team and developer identity. Codex native OTLP metrics,
+  logs and traces use a different dedicated token. Pi exports through its official extension.
+  Neither receives the host ingest token.
 
-The gateway pushes each developer's managed settings by Cognito group: OpenTelemetry export
+The gateway pushes each Claude Code developer's managed settings by Cognito group: OpenTelemetry export
 (`telemetry.forward_to` sends the client telemetry to the Grafana Cloud OTLP gateway), resource
 attributes that scope everything to the demo, MCP servers, the Agent Observability plugin and, for
 the trading team, a narrower model list (Haiku only).
@@ -86,7 +116,7 @@ the trading team, a narrower model list (Haiku only).
 - Bedrock: for every team and every `bedrock_models` entry, an application inference profile
   copied from the system cross-region profile you name. The agents and the gateway call these
   ARNs, so Bedrock's metrics and logs carry team and model.
-- Cognito: the gateway's OIDC provider, one group per team, one user per developer with a
+- Cognito: the gateway's OIDC provider, one group per team, one user per Claude Code developer with a
   generated password, and the classic hosted UI (which the login bot drives).
 - A CloudWatch metric stream (on by default) for `AWS/Bedrock`, through Firehose to Grafana Cloud
   Metrics.
@@ -107,6 +137,12 @@ Terraform creates, through two provider aliases:
   optionally the Application Observability switch and Knowledge Graph onboarding
   (`grafana_asserts_stack`, gated on `manage_knowledge_graph`, with its own Cloud access policy
   token and stack service account token on `grafana.cloud`).
+
+The built-in Coding agents view is the first-cut comparison surface for Claude Code, Codex and
+pi. No additional per-agent dashboards are introduced: live signal names and coverage must be
+established before choosing useful panels. The existing Claude Code dashboard and native
+`claude_code_*` recording rules and alerts remain Claude-only; the gateway dashboard remains
+gateway-only.
 
 Alert rules use simplified routing (`notification_settings`) straight to a contact point, so the
 module never touches the stack's notification policy tree.

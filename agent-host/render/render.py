@@ -123,6 +123,7 @@ def load(vars_path, s):
         host = json.load(fh)
     config = as_obj(s.get("config") or {})
     v = {**config, **host}  # static boot values win over the secret
+    v["developer_bedrock_credentials"] = as_obj(s.get("developer_bedrock_credentials") or {})
     missing = [k for k in HOST_KEYS if k not in host] + [k for k in CONFIG_KEYS if k not in config]
     if missing:
         fail(f"missing {', '.join(missing)} (host.json / secret config)")
@@ -130,6 +131,9 @@ def load(vars_path, s):
         v[key] = as_obj(v[key])
     if not re.fullmatch(r"\d+\.\d+\.\d+", str(v["claude_code_version"])):
         fail(f"claude_code_version must be X.Y.Z, got {v['claude_code_version']!r}")
+    for dev in v["developers"]:
+        if dev.get("agent", "claude-code") not in ("claude-code", "codex", "pi"):
+            fail(f"unsupported developer agent {dev.get('agent')!r}")
     return v
 
 
@@ -203,10 +207,108 @@ def model_label(mid):
     return " ".join(w.capitalize() for w in words) + (" " + ".".join(version) if version else "")
 
 
+def agento11y_env(v, dev=None, token=None):
+    """Shared plugin configuration; only the dedicated client token crosses this seam."""
+    name = v["name"]
+    auth = token if token is not None else file_ref("/run/secrets/agento11y_client_token")
+    env = {
+        "AGENTO11Y_ENDPOINT": v["agento11y_endpoint"],
+        "AGENTO11Y_PROTOCOL": "http",
+        "AGENTO11Y_AUTH_MODE": "basic",
+        "AGENTO11Y_AUTH_TENANT_ID": str(v["agento11y_tenant"]),
+        "AGENTO11Y_AUTH_TOKEN": auth,
+        "AGENTO11Y_GUARDS_ENABLED": "true",
+        "AGENTO11Y_GUARDS_TIMEOUT_MS": "5000",
+        "AGENTO11Y_AUTO_UPDATE": "false",
+        "AGENTO11Y_TAGS": f"service.namespace={name}",
+        "AGENTO11Y_AGENT_NAME": f"claude-code/{name}",
+        "AGENTO11Y_CONTENT_CAPTURE_MODE": "full" if truthy(v["content_capture"]) else "metadata_only",
+    }
+    if truthy(v["content_capture"]):
+        env["AGENTO11Y_REDACT_INPUT_MESSAGES"] = "false"
+    if str(v["grafana_otlp_username"]) == str(v["agento11y_tenant"]):
+        env["AGENTO11Y_OTEL_EXPORTER_OTLP_ENDPOINT"] = v["grafana_otlp_endpoint"]
+        env["AGENTO11Y_OTEL_AUTH_TOKEN"] = auth
+    if dev is not None:
+        env.update({
+            "AGENTO11Y_TAGS": f"service.namespace={name},team={dev['team']}",
+            # No slash: native integrations share one name per agent/demo, and guards scope it.
+            "AGENTO11Y_AGENT_NAME": f"{dev['agent']}-{name}",
+            "AGENTO11Y_USER_ID": dev["email"],
+            "AGENTO11Y_AUTO_CODING_AGENT_TAGS": "false",
+        })
+    return env
+
+
+def config_env(v, dev, token):
+    # Single quotes prevent expansion of dollar signs/backticks in shell and dotenv readers.
+    env = agento11y_env(v, dev, token)
+    for value in env.values():
+        if any(c in value for c in ("\n", "\r", "\x00", "'")):
+            fail("agento11y config values must be single-line and contain no single quotes")
+    return "".join(f"{key}='{value}'\n" for key, value in env.items())
+
+
+def developer_credentials(v, dev):
+    agent = dev["agent"]
+    credentials = v["developer_bedrock_credentials"].get(agent) or {}
+    if any(not credentials.get(key) for key in ("access_key_id", "secret_access_key", "region")):
+        fail(f"missing Bedrock credentials for {agent}")
+    if any(any(char in str(value) for char in "\r\n\x00") for value in credentials.values()):
+        fail(f"invalid multiline Bedrock credentials for {agent}")
+    return credentials
+
+
+def pi_model_config(v, dev):
+    """First proven model only; pricing is USD per million tokens (including cache tokens)."""
+    allowed = model_keys_for_team(v, dev["team"])
+    haiku = next((model for model in v["gateway_models"] if model["key"] == "haiku" and model["key"] in allowed), None)
+    if not haiku or haiku.get("source_profile") != "eu.anthropic.claude-haiku-4-5-20251001-v1:0":
+        fail(f"unsupported pi model for team {dev['team']!r}; requires the priced EU Haiku 4.5 profile")
+    profile = (haiku.get("upstream_profile_arns_by_team") or {}).get(dev["team"])
+    if not profile:
+        fail(f"no pi application inference profile for team {dev['team']!r}")
+    # https://pi.dev/models/amazon-bedrock/eu-anthropic-claude-haiku-4-5-20251001-v1-0
+    return {
+        "model": {"id": profile, "name": haiku["id"],
+                  "cost": {"input": 1.1, "output": 5.5, "cacheRead": 0.11, "cacheWrite": 1.375},
+                  "contextWindow": 200000, "maxTokens": 4096},
+        "region": developer_credentials(v, dev)["region"],
+        "provider": "amazon-bedrock",
+    }
+
+
+def codex_model_config(v):
+    codex = v.get("codex_bedrock") or {}
+    if codex.get("model") != "openai.gpt-5.6-luna":
+        fail("unsupported Codex model; only openai.gpt-5.6-luna has verified pricing")
+    if not codex.get("region"):
+        fail("Codex developers require config.codex_bedrock region")
+    # AWS model-card-openai-gpt-56-luna.md: short-context, In-Region USD/million tokens.
+    return {
+        "provider": "amazon-bedrock",
+        "region": codex["region"],
+        "model": {"id": codex["model"],
+                  "cost": {"input": 0.22, "output": 1.32, "cacheRead": 0.022, "cacheWrite": 0.275},
+                  "contextWindow": 272000},
+        "otel": {"endpoint": v["grafana_otlp_endpoint"], "username": str(v["grafana_otlp_username"])},
+    }
+
+
+def non_claude_session_models(v, dev):
+    if dev["agent"] == "pi":
+        return pi_model_config(v, dev)["model"]["id"] + "=1"
+    codex = v.get("codex_bedrock") or {}
+    if not codex.get("model") or not codex.get("region"):
+        fail("Codex developers require config.codex_bedrock model and region")
+    if codex["region"] != developer_credentials(v, dev)["region"]:
+        fail("Codex model and credential regions disagree")
+    return codex["model"] + "=1"
+
+
 def gateway_config(v):
     name = v["name"]
     content = truthy(v["content_capture"])
-    otlp_user_matches_tenant = str(v["grafana_otlp_username"]) == str(v["agento11y_tenant"])
 
     env = {
         # Traces need this on every client; the gateway does not push it.
@@ -220,38 +322,17 @@ def gateway_config(v):
         "OTEL_LOG_TOOL_DETAILS": "1",
         "OTEL_RESOURCE_ATTRIBUTES": f"service.namespace={name}",
         "DISABLE_AUTOUPDATER": "1",
-        # Agent Observability plugin: its hooks read these from the Claude Code process. The
-        # token is the dedicated client token, never the gateway/Alloy ingest token.
-        "AGENTO11Y_ENDPOINT": v["agento11y_endpoint"],
-        "AGENTO11Y_PROTOCOL": "http",
-        "AGENTO11Y_AUTH_MODE": "basic",
-        "AGENTO11Y_AUTH_TENANT_ID": str(v["agento11y_tenant"]),
-        "AGENTO11Y_AUTH_TOKEN": file_ref("/run/secrets/agento11y_client_token"),
-        "AGENTO11Y_GUARDS_ENABLED": "true",
-        # The 1500 ms default leaves Cloud too little time for an LLM-judge guard; a timeout
-        # fails open silently.
-        "AGENTO11Y_GUARDS_TIMEOUT_MS": "5000",
-        "AGENTO11Y_AUTO_UPDATE": "false",
-        # Evaluation rules select the demo's generations by this tag. Guard calls carry no tags
-        # (plugin v0.48.0), so the guards select the demo by this agent name instead; the plugin
-        # appends /<subagent> for subagents.
-        "AGENTO11Y_TAGS": f"service.namespace={name}",
-        "AGENTO11Y_AGENT_NAME": f"claude-code/{name}",
-        "AGENTO11Y_CONTENT_CAPTURE_MODE": "full" if content else "metadata_only",
     }
+    plugin = agento11y_env(v)
+    tail_keys = ("AGENTO11Y_REDACT_INPUT_MESSAGES", "AGENTO11Y_OTEL_EXPORTER_OTLP_ENDPOINT", "AGENTO11Y_OTEL_AUTH_TOKEN")
+    env.update({key: value for key, value in plugin.items() if key not in tail_keys})
     if content:
         env.update({
             "OTEL_LOG_USER_PROMPTS": "1",
             "OTEL_LOG_ASSISTANT_RESPONSES": "1",
             "OTEL_LOG_TOOL_CONTENT": "1",
-            # Prompts are otherwise redacted from conversations even in full mode.
-            "AGENTO11Y_REDACT_INPUT_MESSAGES": "false",
         })
-    if otlp_user_matches_tenant:
-        # The plugin's own metrics and spans (hook rule outcomes, generation cost) authenticate as
-        # AGENTO11Y_AUTH_TENANT_ID with the same client token (generation, metrics, traces write).
-        env["AGENTO11Y_OTEL_EXPORTER_OTLP_ENDPOINT"] = v["grafana_otlp_endpoint"]
-        env["AGENTO11Y_OTEL_AUTH_TOKEN"] = file_ref("/run/secrets/agento11y_client_token")
+    env.update({key: plugin[key] for key in tail_keys if key in plugin})
 
     all_ids = model_ids(v, [m["key"] for m in v["gateway_models"]])
     base_cli = {
@@ -347,7 +428,8 @@ def gateway_config(v):
 def spend_caps_cents(v):
     """Normalise spend_caps (whole USD per period) into admin API payloads, in cents."""
     caps = v["spend_caps"] or {}
-    subs = {d["name"]: d.get("sub") for d in v["developers"]}
+    subs = {d["name"]: d.get("sub") for d in v["developers"] if d.get("agent", "claude-code") == "claude-code"}
+    non_claude = {d["name"] for d in v["developers"] if d.get("agent", "claude-code") != "claude-code"}
     out = []
 
     def add(scope, periods, label):
@@ -362,6 +444,8 @@ def spend_caps_cents(v):
     for group, periods in (caps.get("groups") or {}).items():
         add({"type": "rbac_group", "rbac_group_id": group}, periods, f"group {group}")
     for user, periods in (caps.get("users") or {}).items():
+        if user in non_claude:
+            continue
         if not subs.get(user):
             fail(f"spend cap for unknown developer {user!r}")
         add({"type": "user", "user_id": subs[user]}, periods, f"user {user}")
@@ -572,6 +656,55 @@ def compose_project(v, files, host_root="/etc/agent-host"):
     for dev in v["developers"]:
         slug = dev_slug(dev)
         ids = model_ids(v, model_keys_for_team(v, dev["team"]))
+        agent = dev.get("agent", "claude-code")
+        if agent != "claude-code":
+            home_volume = f"{agent}-home-{slug}"
+            services[f"dev-{slug}"] = {
+                "image": dev_image,
+                "hostname": f"dev-{slug}",
+                "working_dir": "/home/node/work",
+                "environment": {
+                    "HOME": "/home/node",
+                    "DEVELOPER_AGENT": agent,
+                    "DEVELOPER_NAME": dev["name"],
+                    "DEVELOPER_EMAIL": dev["email"],
+                    "DEVELOPER_TEAM": dev["team"],
+                    "AGENT_STATE_DIR": "/home/node/.local/state/agent-host",
+                    "NODE_EXTRA_CA_CERTS": "",
+                    "AGENTO11Y_CLI_VERSION": v["agento11y_cli_version"],
+                    "TRAFFIC_ENABLED": "true" if truthy(v["traffic_enabled"]) else "false",
+                    "SESSION_INTERVAL_MINUTES": str(v["session_interval_minutes"]),
+                    "SESSION_MODELS": non_claude_session_models(v, dev),
+                    "AWS_SHARED_CREDENTIALS_FILE": "/run/secrets/developer_aws_credentials",
+                    "AWS_REGION": developer_credentials(v, dev)["region"],
+                    "AWS_EC2_METADATA_DISABLED": "true",
+                    "SERVICE_NAMESPACE": name,
+                    "MCP_SERVER_NAME": name,
+                    "PII_ROSTER": roster,
+                },
+                "secrets": [
+                    {**entry, "target": "/home/node/.config/agento11y/config.env"}
+                    for entry in use(f"dev-{slug}", ["agento11y_config"])
+                ] + [{**entry, "target": "/run/secrets/developer_aws_credentials"}
+                     for entry in use(f"dev-{slug}", ["developer_aws_credentials"])] + ([
+                    {**entry, "target": "/run/pi/config.json"}
+                    for entry in use(f"dev-{slug}", ["pi_config"])
+                ] if agent == "pi" else [
+                    {**entry, "target": "/run/codex/config.json"}
+                    for entry in use(f"dev-{slug}", ["codex_config"])
+                ] + [{**entry, "target": "/run/secrets/codex_otlp_token"}
+                     for entry in use(f"dev-{slug}", ["codex_otlp_token"])]),
+                "volumes": [f"{home_volume}:/home/node", "recent-prompts:/var/lib/agent-host/recent-prompts"],
+                "networks": ["dev"],
+                "shm_size": "512m",
+                "mem_limit": "2g",
+                "pids_limit": 1024,
+                "restart": "unless-stopped",
+                "labels": label(svc["agent_host"], "developer"),
+                **hardening,
+            }
+            volumes[home_volume] = {}
+            continue
         services[f"dev-{slug}"] = {
             "image": dev_image,
             "hostname": f"dev-{slug}",
@@ -646,7 +779,7 @@ def compose_project(v, files, host_root="/etc/agent-host"):
 
 def secret_files(v, s):
     """Map consumer -> {file name: (value, uid)} from the agent-host secret."""
-    missing = [k for k in SECRET_KEYS if not s.get(k)]
+    missing = [k for k in SECRET_KEYS if k not in s or (k != "developer_passwords" and not s[k])]
     if missing:
         fail(f"agent-host secret is missing {', '.join(missing)}")
 
@@ -665,6 +798,25 @@ def secret_files(v, s):
     files["gateway"]["otlp_authorization"] = (f"Basic {basic}", g)
     passwords = as_obj(s["developer_passwords"])
     for dev in v["developers"]:
+        if dev.get("agent", "claude-code") != "claude-code":
+            files[f"dev-{dev_slug(dev)}"] = {
+                "agento11y_config": (config_env(v, dev, s["agento11y_client_token"]), UID["developer"]),
+            }
+            credentials = developer_credentials(v, dev)
+            files[f"dev-{dev_slug(dev)}"]["developer_aws_credentials"] = (
+                "[default]\n" + f"aws_access_key_id = {credentials['access_key_id']}\n"
+                + f"aws_secret_access_key = {credentials['secret_access_key']}\n", UID["developer"])
+            if dev["agent"] == "pi":
+                files[f"dev-{dev_slug(dev)}"]["pi_config"] = (
+                    json.dumps(pi_model_config(v, dev), indent=2) + "\n", UID["developer"])
+            else:
+                if not s.get("codex_otlp_token"):
+                    fail("missing Codex OTLP token")
+                files[f"dev-{dev_slug(dev)}"].update({
+                    "codex_otlp_token": (s["codex_otlp_token"], UID["developer"]),
+                    "codex_config": (json.dumps(codex_model_config(v), indent=2) + "\n", UID["developer"]),
+                })
+            continue
         pw = passwords.get(dev["name"])
         if not pw:
             fail(f"no password for developer {dev['name']}")

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Codex shares orchestration, but owns its config, credentials and JSONL translation.
+set -Eeuo pipefail
+exec python3 "$(dirname "${BASH_SOURCE[0]}")/runtime.py" "$@"

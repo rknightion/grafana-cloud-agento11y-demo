@@ -1,7 +1,8 @@
 # Agent host
 
 One EC2 instance (Amazon Linux 2023, `t4g.xlarge` by default) that plays a small engineering
-team using Claude Code through the Claude apps gateway. Terraform creates it and nothing on it is
+team using Claude Code through the Claude apps gateway, plus optional Codex and pi personas
+calling Bedrock directly. Terraform creates it and nothing on it is
 configured by hand.
 
 ```
@@ -11,6 +12,9 @@ configured by hand.
  │   Claude Code             │   │                                            │
  │   + agento11y plugin      │   └─ telemetry.forward_to ──> Grafana Cloud OTLP
  │   + stdio MCP servers     └─ postgres <── pdc-agent <── Grafana (spend SQL) │
+ │  dev-<name> (Codex / pi, opt-in) ── scoped key file ──> Bedrock directly   │
+ │   Codex: Mantle / Luna; pi: EU Haiku team profile; no gateway caps         │
+ │   plugin ──> Agent Observability; Codex native OTLP uses separate token     │
  │  alloy: container logs + host metrics ──> Grafana Cloud OTLP               │
  │  spend-caps (one shot): admin API caps per org, team and developer         │
  └───────────────────────────────────────────────────────────────────────────┘
@@ -56,10 +60,37 @@ on the four reporting tables, then `spend-caps` and the developer containers sta
 
 Developer containers also run with every capability dropped and `no-new-privileges`.
 
-No image contains Claude Code: the gateway and every developer container resolve the pinned
-version at start and refuse a binary that fails verification.
+No image contains Claude Code: the gateway and every Claude Code developer container resolve the
+pinned version at start and refuse a binary that fails verification.
 
-## The login bot
+## Optional Codex and pi containers
+
+`developers[].agent` defaults to `claude-code`; `codex` and `pi` use the same `dev-<name>` service
+naming and shared traffic loop with their own adapter and home volume. Only Claude containers
+require `claude-install`, the gateway and Cognito sign-in. Non-Claude agents do not inherit Claude
+managed settings or auth. They read these uid-owned 0400 mounts:
+
+| File in container | Consumer |
+|---|---|
+| `/run/secrets/developer_aws_credentials` | AWS shared-credentials INI; key scoped to Codex or pi, shared only among personas of that type |
+| `/home/node/.config/agento11y/config.env` | Agent Observability client auth, capture mode, agent name, namespace, team and developer identity |
+| `/run/codex/config.json` | Codex's priced Luna model, `us-east-1` routing and native OTLP destination |
+| `/run/secrets/codex_otlp_token` | Codex native metrics, logs and traces only; separate from the plugin and host ingest tokens |
+| `/run/pi/config.json` | pi's explicitly priced EU Haiku 4.5 application-profile route |
+
+Pi loads its official Grafana extension from the pinned package and reads the rendered user config
+file. Completed turns export generations, usage, tools and cost with canonical model names; the
+routing ARN remains in pi's provider configuration. Incomplete-turn flushing after SIGTERM needs
+separate verification. Codex CLI hooks provide the plugin path; native telemetry is independent.
+Agent names are `codex-<prefix>` and `pi-<prefix>`. IMDS remains blocked for both.
+
+The gateway ledger and caps do not cover direct calls. Local budgets account for reported usage
+and stop subsequent work; pi may exceed them during a model response and Codex during a whole
+CLI turn containing several model/tool calls. Enable new personas only after a
+bounded inference and export check; see the [operator guide](../docs/coding-agents.md) and
+[security/rotation](../docs/security.md#non-claude-bedrock-credentials-and-rotation).
+
+## The login bot (Claude Code only)
 
 Claude Code has no non-interactive way to sign in to a gateway, so each developer container
 drives the real terminal UI (`apps/dev-workstation/bin/dev-login`):
@@ -96,17 +127,22 @@ With `traffic_enabled`, each developer runs `dev-session` every `session_interva
 (jittered): the container first re-seeds a fresh copy of the fictional Touchline codebase
 (`agent-host/codebase`) into the session directory, then picks a prompt from `prompts/` and runs
 its first turn plus, for a share of sessions, one to three of its `--- followup` turns on the
-same Claude Code session (`claude -p ... --resume <session_id>`), sharing one budget across every
-turn; some of those sessions stop before using all their follow-ups (abandoned). A low baseline of
-sessions are PII probes that the preflight deny guard should block (`pii-*.txt`), plus occasional
+same agent conversation (Claude uses `claude -p ... --resume <session_id>`), sharing one budget
+across every turn; some of those sessions stop before using all their follow-ups (abandoned).
+A low baseline of sessions are PII probes that the Claude/Codex preflight deny guard should block
+(`pii-*.txt`; pi redacts instead), plus occasional
 bursts of several probes in a row from one developer at a time (`pii-burst-window`; see
-AIO-0001.03) -- deterministic per time slot from the wall clock and the developer roster, no
+AIO-0001.03 (PII burst windows)) -- deterministic per time slot from the wall clock and the
+developer roster, no
 coordination between containers. Of the rest, 70% are written for the developer's team and the
-others are any non-PII prompt. Each session uses a model weighted mostly towards Haiku within the
-team's allowed models, and a hard whole-session budget from the prompt file (clamped to
+others are any non-PII prompt. Each Claude session uses a model weighted mostly towards Haiku within the
+team's allowed models, and a whole-session budget from the prompt file (clamped to
 `SESSION_MAX_BUDGET_USD`, default $1.00, comfortably under every gateway spend cap). Every session
 writes one JSON result line to the container log (`event=dev_session`, with `guard_blocked` for
-blocked probes, `user_turns` for the turn count and `abandoned` for early stops). Sessions
+blocked probes, `user_turns` for the turn count and `abandoned` for early stops). Codex and pi use
+their single supported
+model/profile instead of the Claude model weighting; local budgets cannot enforce an exact dollar
+ceiling on an in-flight CLI turn. Claude sessions
 auto-approve only the tools the prompts need (read-only git plus local
 checkout/restore/reset, file tools, python3, node, jq and the MCP servers); no curl, rm, npm, npx
 or `git clone` (prompts work inside the already-seeded checkout, not by cloning anything).
@@ -166,5 +202,9 @@ Common failures:
 - The private CA has no name constraints (the Terraform tls provider cannot set them) but
   `max_path_length = 0`, is trusted only inside the developer containers, and its key exists only
   in Terraform state.
+- Non-Claude services hold only their matching direct Bedrock key and plugin token; Codex
+  additionally holds its dedicated native OTLP token. They never receive the host ingest token.
+  Pi prompt PII is redacted, not denied; see each agent's capture and guard gaps in the security
+  guide. Copilot and Cursor remain deferred.
 - With `content_capture` on, prompts, responses and tool content go to Grafana Cloud. The
   containers only run demo work against public repositories and fictional data.

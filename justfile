@@ -11,6 +11,7 @@ default:
 setup:
     pre-commit install --hook-type pre-commit --hook-type commit-msg
     for app in agents site mcp-tools; do (cd apps/$app && npm ci); done
+    npm ci --prefix apps/dev-workstation/agents/pi --ignore-scripts
     tofu -chdir=terraform init -backend=false -input=false
     helm dependency build charts/touchline
 
@@ -41,6 +42,10 @@ lint:
 [group('check')]
 test:
     for app in agents site mcp-tools; do (cd apps/$app && npm test); done
+    python3 -m unittest discover -s agent-host/render -p 'test_*.py'
+    python3 -m unittest discover -s apps/dev-workstation/tests -p '*_test.py'
+    python3 -m unittest discover -s apps/dev-workstation/agents/pi -p 'test_*.py'
+    shellcheck apps/dev-workstation/bin/dev-session apps/dev-workstation/bin/dev-loop apps/dev-workstation/bin/dev-reseed apps/dev-workstation/bin/pii-burst-window apps/dev-workstation/lib/*.sh apps/dev-workstation/agents/claude-code/*
 
 # The pre-commit gate: formatting, lint and tests
 [group('check')]

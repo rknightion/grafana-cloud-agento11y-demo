@@ -51,6 +51,19 @@ images carry the former repository name as prefix (see CHANGELOG.md) and must st
   order documented in `docs/security.md`; keep deny rules below 10.
 - The Experiments overview reads `last_over_time(agento11y_experiment_*)` over the picker range.
   After downtime a short range shows nothing; widen it before assuming data is missing.
+- `developers[].agent` defaults to `claude-code`; Codex/pi are opt-in and use isolated homes,
+  scoped per-agent-type IAM keys via 0400 shared-credentials files, no IMDS and no gateway caps.
+  Codex is priced only for `openai.gpt-5.6-luna` in `us-east-1`; pi requires the priced EU Haiku
+  4.5 source profile. Local budgets can overshoot an in-flight call.
+- Non-Claude plugin names are `codex-<prefix>` and `pi-<prefix>`. Pi reads the rendered user
+  Agent Observability config file and captures completed turns; interrupted-turn export needs
+  verification. Codex native OTLP has its own metrics/logs/traces token, separate from plugin auth.
+- Codex guards use canonical `Bash`/`apply_patch`; pi uses lowercase `bash`/`read`/`edit`/`write`.
+  Pi preflight PII redacts rather than denies. New Codex/pi regression suites stay manual-only
+  until the scheduler accounts for the enabled roster.
+- The built-in Coding agents view is the multi-agent comparison surface for this rollout; no new
+  dashboards are added. Existing native `claude_code_*` dashboards/alerts/rules remain Claude-only.
+  Copilot and Cursor are deferred pending their recorded resume conditions.
 - The App Observability `team` span-metrics dimension has no API or Terraform resource. Adding it
   is a manual step in the stack's Application Observability settings.
 

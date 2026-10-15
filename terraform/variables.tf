@@ -131,10 +131,11 @@ variable "teams" {
 }
 
 variable "developers" {
-  description = "Claude Code developers signed in through the gateway, one container each on the agent host. name is a stable key (letters, digits, dots)."
+  description = "Developers, one container each on the agent host. agent defaults to claude-code; codex and pi require their runner and scoped model credentials. name is a stable key (letters, digits, dots)."
   type = list(object({
-    name = string
-    team = string
+    name  = string
+    team  = string
+    agent = optional(string, "claude-code")
   }))
   default = [
     { name = "alex.morgan", team = "newsroom" },
@@ -143,6 +144,11 @@ variable "developers" {
     { name = "jordan.lee", team = "trading" },
     { name = "casey.nguyen", team = "platform" },
   ]
+
+  validation {
+    condition     = alltrue([for d in var.developers : contains(["claude-code", "codex", "pi"], d.agent)])
+    error_message = "developers[].agent must be claude-code, codex or pi."
+  }
 }
 
 variable "developer_email_domain" {
