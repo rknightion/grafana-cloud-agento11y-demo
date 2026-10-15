@@ -66,6 +66,14 @@ images carry the former repository name as prefix (see CHANGELOG.md) and must st
   Copilot and Cursor are deferred pending their recorded resume conditions.
 - The App Observability `team` span-metrics dimension has no API or Terraform resource. Adding it
   is a manual step in the stack's Application Observability settings.
+- Codex 0.162.1 suppresses custom OTLP metrics when `analytics.enabled=false`; enable it only with
+  explicitly configured operator exporters. Its agento11y hook reports provider `codex` and no cost.
+- Pi 1.2.0 needs explicit `-e builtin:mcp` when using `--no-extensions`. Its prompt transform
+  redacts model context, not the original full-content telemetry; a mid-turn SIGTERM can lose the
+  unfinished generation.
+- Parallel creation of Agent Observability rules returned partial HTTP 500s during live rollout.
+  Read back actual rules before retrying, then apply missing rules with `-parallelism=1`; never
+  assume a failed batch created nothing. Permission-check timeouts can also surface as HTTP 403.
 
 <!-- BACKLOG.MD GUIDELINES START -->
 <!-- backlog.md-instructions-version: 1.53.0 -->

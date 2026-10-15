@@ -1,11 +1,11 @@
 ---
 id: AIO-0005
 title: 'Add Codex, pi, Copilot and Cursor developers to the agent host'
-status: In Progress
+status: Parked
 assignee:
   - '@codex'
 created_date: '2026-10-14 11:57'
-updated_date: '2026-10-15 17:50'
+updated_date: '2026-10-15 18:24'
 labels: []
 dependencies: []
 references:
@@ -71,4 +71,12 @@ Independent security review found one major producer/consumer mismatch: native C
 CodeRabbit completed full candidate review with four minor issues and no major/critical findings. Fixed duplicated prose, native Codex service.namespace tagging, guard suite model attribution, and false-positive secret path patterns; targeted tests/validation pass, namespace regression was observed red then green. Delta review running on code corrections. Pi legacy peer aliases are pinned to current runtime and npm audit reports zero vulnerabilities. Maintainer approved API-only live verification this session, with visual Coding agents criterion left pending.
 
 CodeRabbit full review completed with four minor issues, all corrected; delta review completed with zero findings. Final reviewed just check in progress. Consumer work must use a fresh origin/main checkout: the older shared checkout is diverged and has an unrelated merge conflict. Preserve it; only demo-root consumer paths are authorized.
+
+Session state revision 4: implementation landed ed451c229035c30794e42db647116ffff328e09e; scan-evidence wiring landed 1ee77c5cc813d4d49dc09e05b1fabc150ade48ea. CI failed the TERM-resistant child check on Ubuntu; fix uses dedicated Python process group supervisor and unchanged tests pass macOS/Linux. Repair review running. Gateway image scan reproduced seven fixed Perl advisories; apt upgrade rebuild now has zero fixed high/critical findings. Agents image has only unpatched braces CVE-2026-93687 via unused Google ADK; owner decision pending for dated exception vs hold/remove. Dev-workstation both architectures built/scanned/signed successfully for ed451c2; all images must still publish exact final version before apply. No cloud infrastructure mutation. Full mixed preview 176 creates/0 changes/0 deletes. Current consumer deploy worktree is separate latest origin/main checkout; old dirty main preserved.
+
+Session state revision 5: scoped prerequisites and new guard rules applied (27 resources total), no agent host/workloads yet. Codex/pi real ARM64 initial/resume + MCP + generation/user/model/token proof succeeded; pi priced cost present, Codex plugin provider/cost limitation documented. Corrected explicit builtin:mcp for pi and analytics custom-metrics gating for Codex; native metrics now observed. Real destructive and secret reads denied, fake tool key redacted before file write for both. Pi SIGTERM after first stream update yields no generation (documented). Gateway patch clears local scan; agents image blocked solely by no-fix braces advisory, owner disposition still pending. Process supervisor repair review final delta active. Next: land reviewed repairs, publish successful images, complete reviewed full apply only after advisory decision; visual proof explicitly deferred by owner.
+
+Session state revision 6: source repairs landed e5672d7, docs 83f8c0d; local gate/CodeRabbit clean. GitHub check+scrub passed for 83f8c0d, aggregation finishing. Five completed tasks: foundation, scoped credentials, guards, docs and SDK compatibility. Codex/pi implementation and API spikes pass; browser criteria explicitly deferred. Full rollout blocked by owner advisory disposition, with 27 prerequisite resources already applied and no host/workloads. Gateway/dev-workstation exact e5672d7 images published; agents image still older because CVE-2026-93687 gate is enforced. Prepared private consumer worktree remains uncommitted and must receive final immutable release/images before full serial apply. Never apply the all-Claude compatibility plans. Copilot/Cursor deferred by maintainer.
+
+Final CI evidence: run 38784447965 completed success at exact source/docs SHA 83f8c0db514b526f7ab97ad43b84de17beef45fc. Images run 38784029713 at e5672d7 completed failure solely for the agents advisory; five other image families published. No scanner exception applied. Current-code local tests and all previously recorded live proofs remain valid; subsequent closeout changes are tracker/documentation only.
 <!-- SECTION:NOTES:END -->
