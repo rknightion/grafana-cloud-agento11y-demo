@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "dependencies": {
-    "@earendil-works/pi-coding-agent": "1.2.0",
+    "@earendil-works/pi-coding-agent": "1.3.0",
     "@grafana/agento11y-pi": "0.25.0",
     "@mariozechner/pi-ai": "npm:@earendil-works/pi-ai@1.2.0",
     "@mariozechner/pi-coding-agent": "npm:@earendil-works/pi-coding-agent@1.2.0"
