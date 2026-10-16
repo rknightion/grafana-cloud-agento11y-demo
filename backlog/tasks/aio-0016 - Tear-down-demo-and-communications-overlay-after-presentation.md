@@ -14,7 +14,7 @@ ordinal: 32000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-User authorized teardown of the running isolated aio11y demo lab, including temporary communications overlay. Preserve expanded configuration for recreation and shared RKPS infrastructure.
+User authorized teardown of the running isolated demo lab, including temporary communications overlay. Preserve expanded configuration for recreation and shared infrastructure.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
