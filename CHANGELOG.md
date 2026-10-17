@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.6.0](https://github.com/rknightion/grafana-cloud-agento11y-demo/compare/v0.5.0...v0.6.0) (2026-10-17)
+
+
+### Features
+
+* add multi-agent dashboards and consolidate shared panels ([8f13e2c](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/8f13e2cc47d3504cdb457e848fd3ca5b299e9a5a))
+* align coding-agent dashboards and support multi-team pi policies ([248f699](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/248f699772ccfb39baad8f8ecfd18cd3b2530270))
+
+
+### Bug Fixes
+
+* default all agent dashboards to three hours ([6354c02](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/6354c02f5b7a856248d5a050f1e2310dbc5fd539))
+* **deps:** update dependency @earendil-works/pi-coding-agent to v1.3.0 ([#90](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/90)) ([cc3088f](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/cc3088f0ec6b707043e8312859b6a8c605d023ce))
+* **deps:** update dependency @mariozechner/pi-ai to v1.3.0 ([#91](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/91)) ([1c7c695](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/1c7c6955d04aa2786b8c3088c13991baeef0afc5))
+* **deps:** update dependency @mariozechner/pi-coding-agent to v1.3.0 ([#92](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/92)) ([36fd1e5](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/36fd1e5829312751690796bde315da25971fa96b))
+* **deps:** update dependency @opentelemetry/auto-instrumentations-node to v0.81.1 ([#93](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/93)) ([aeed7cc](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/aeed7cc5e574a2fbe0f03c137f5fcfd523bb2196))
+* **deps:** update dependency @opentelemetry/auto-instrumentations-node to v0.81.2 ([#94](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/94)) ([4858902](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/4858902725f4bce322899f0e35e7fd9c091cf0bf))
+* display each agent comparison row and explicit log severity ([8ede3d9](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/8ede3d96ebffd3b28b808d45c1fc594a3957ed74))
+* link demo dashboards to Knowledge Graph catalogue ([65bf924](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/65bf924f8f0592200bd57723b906728778ce4744))
+* prepare writable developer state directories ([0608be3](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/0608be34b07d64104b8b995b5f763ae80b80145c))
+* retain developer labels and normalize detected session severity ([5f88d64](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/5f88d644f43ef654d9153394009fcf266f611aad))
+
+
+### Documentation
+
+* record expanded roster validation and completed lab teardown ([e571f61](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/e571f618e966c53e4c5dc004893b40c9ea9c3d7b))
+* record varied communications traffic and catalogue identity ([f31a883](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/f31a883732f919c4527aa7dd269320182424f688))
+* record verified communications dashboard tabs and replay follow-up ([6b41fa5](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/6b41fa54343415e1e6ed8b72a510b062d00c9e32))
+* record verified communications showcase overlay ([77c6cda](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/77c6cdaeec17c418c580226c930dbf95af14d972))
+* record verified expanded demo recreation ([2f216cc](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/2f216cc2b99685e0ccdab52840c9022f52dcc241))
+* record verified multi-agent dashboard rollout ([06b58a4](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/06b58a4e2791f440b80c4498b5236dcbef77c378))
+* track existing dashboard display gaps ([2e69b68](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/2e69b68465238c2f1a71448cd4573ef688a30c99))
+
 ## [0.5.0](https://github.com/rknightion/grafana-cloud-agento11y-demo/compare/v0.4.3...v0.5.0) (2026-10-15)
 
 
