@@ -1,0 +1,11 @@
+# Context is apps/; only the regulatory runtime belongs in this image.
+*
+!regulatory/package.json
+!regulatory/package-lock.json
+!regulatory/src
+!regulatory/config
+!regulatory/corpus
+!regulatory/experiments
+**/node_modules
+**/*.test.mjs
+**/test

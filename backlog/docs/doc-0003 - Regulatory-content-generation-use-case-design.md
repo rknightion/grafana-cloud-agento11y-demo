@@ -3,7 +3,7 @@ id: doc-0003
 title: Regulatory content-generation use case design
 type: specification
 created_date: '2026-10-20 21:16'
-updated_date: '2026-10-20 21:32'
+updated_date: '2026-10-20T22:09:00Z'
 ---
 # Regulatory content-generation use case: design
 
@@ -209,3 +209,66 @@ decision. A live check before the first release needs an image tag: build one fr
 
 - Baseline for the no-diff proof: this doc assumes the mock-provider proof (no redeploy of
   v0.5.0). Say so if a live baseline is wanted instead.
+
+## Frozen implementation contracts for the regulatory build
+
+The following seams are shared by the app, chart, Terraform, experiments and dashboards.
+
+- Runtime: Node ESM, `apps/regulatory/src/server.mjs`; `AGENT_ROLE` selects orchestrator,
+  source, drafter, reviewer, readability or loadgen. HTTP roles expose `GET /healthz` and
+  `POST /v1/agent` on `PORT` (default 8080). `STUB_MODEL=1` runs without cloud calls.
+- Request: `document_type` (`icf` or `csr`), `study_id` (`XQZ-301` or `XQZ-204`), `section`,
+  optional `variant` (`grounded` or `concise`), optional `source_note` (injection probe only),
+  optional `conversation_id`. Each role validates these fields. Orchestrator calls the source,
+  drafter, reviewer and (ICF only) readability specialists through HTTP.
+- Response: `request_id`, `document_type`, `study_id`, `section`, `agent_version`,
+  `review_state` (`approved`, `needs_revision`, `escalated`), `text`, `metrics`
+  (`number_grounding`, `reading_grade` when applicable), `usage`. Internal specialist results
+  may add structured evidence and review fields. Returned review states simulate a review queue;
+  they are not human approval or regulatory validation.
+- Configuration: `SERVICE_NAMESPACE` is the regulatory resource prefix, independent of the
+  Kubernetes namespace. `OTEL_SERVICE_NAME`, `AGENT_TEAM`, `AGENT_VERSION`, `MODEL_PROFILE_ARN`,
+  `MODEL_KEY`, `MODEL_NAME`, `CONTENT_CAPTURE`, `AGENTO11Y_*` match the existing app conventions.
+  `SPECIALIST_URL_TEMPLATE` defaults to `http://{name}:8080/v1/agent`. Loadgen uses
+  `ORCHESTRATOR_URL` (base URL or full endpoint) and `REQUESTS_PER_MINUTE`.
+- Chart keys mirror the existing chart where applicable: `nameOverride`, `namespace` (telemetry
+  prefix), `images`, `serviceAccounts` (agents/loadgen/experiments), `secrets`
+  (grafanaOtlp/agento11y/experiments), `aws`, `agents`, `contentCapture`,
+  `traffic.enabled`, `traffic.requestsPerMinute`, `traffic.experimentsSchedule`.
+  The release namespace is the actual Kubernetes namespace. No site, Redis or Faro.
+- App metrics: `regulatory_requests_total` (document_type, section, review_state),
+  `regulatory_request_duration_seconds` histogram, `regulatory_number_grounding_ratio` histogram,
+  `regulatory_reading_grade` histogram, `regulatory_guard_events_total` (guard, outcome).
+  Document/section/version and team attributes accompany telemetry. Scores remain available with
+  content capture disabled. Logs carry `event`, document_type, section, review_state, agent_version;
+  free-form content is omitted in metadata mode. Cost/token panels use the SDK's generation metrics.
+- Evaluator suffixes under `replace(regulatory_name, "-", "_")`: `number_grounding`,
+  `citation_grounding`, `reading_grade`, `unsupported_claims`, `review_outcome`.
+  Hook rule suffixes: `patient_identifiers` (preflight redaction, priority 20),
+  `source_note_injection` (preflight detection, priority 10 with no short-circuit during warn-first rollout; later denial must move below 10).
+  Online rule suffixes: `draft_quality` and `review_quality`.
+- Experiments: `node experiments/run-experiment.mjs --suite <name> [--execute] [--scheduled]`;
+  no execute flag means a dry-run. Suites `section-prompts` and `guard-policy` are separate.
+  The guard-policy runner sends explicit preflight tool-result cases and verifies transformed
+  content, not postflight tool calls. Runtime experiment traffic respects `traffic.enabled`.
+- Fixture identity web check (2026-10-20): quoted searches for Brindlemoor Therapeutics,
+  brindanib, XQZ-301 and XQZ-204 returned no matching sponsor, drug or trial records. Search
+  absence is not proof of global uniqueness. Keep all fixtures marked fictional and use synthetic
+  identifier labels instead of realistic personal names.
+
+### Current local implementation limits
+
+The initial dashboard exposes SDK cost by agent, not cost allocated to document type/section.
+Document throughput, review states, grounding, reading grade and latency are app-derived.
+Do not infer document costs from unrelated SDK series. Live data and snapshots remain unverified.
+The local regulatory image builds, but Trivy reports unpatched CVE-2026-93687 in installed
+`braces` 3.0.3. The existing agents-only exception has not been reused. Publication remains gated
+until an approved remediation or a separate maintainer decision for this image.
+
+### Review corrections for this implementation batch
+
+The source-note remote hook begins as warn at priority 10 with short_circuit=false, following the standing rollout rule. App-local
+marker rejection remains fail closed. The guard-policy probe expects allow plus a failed matching
+source-note evaluation, so allow by itself never proves remote detection. Promotion to deny needs
+reviewed warn evidence and an explicit enforcement decision. The load generator runs continuously
+in its Deployment unless MAX_REQUESTS is explicitly supplied; tests/manual runs remain bounded.

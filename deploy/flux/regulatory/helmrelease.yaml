@@ -1,0 +1,34 @@
+# Flux HelmRelease for the regulatory workloads (charts/regulatory).
+#
+# Terraform (deploy_workloads = false) owns the namespace, the Secrets and the Pod Identity
+# association. The values come from a ConfigMap built from the module output:
+#
+#   tofu -chdir=examples/complete output -raw chart_values_regulatory > dossier-values.yaml
+#   kubectl -n dossier create configmap dossier-values \
+#     --from-file=values.yaml=dossier-values.yaml --dry-run=client -o yaml | kubectl apply -f -
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: dossier
+  namespace: dossier
+spec:
+  interval: 10m
+  releaseName: dossier
+  chart:
+    spec:
+      chart: ./charts/regulatory
+      reconcileStrategy: Revision
+      sourceRef:
+        kind: GitRepository
+        name: grafana-cloud-agento11y-demo
+        namespace: flux-system
+  valuesFrom:
+    - kind: ConfigMap
+      name: dossier-values
+      valuesKey: values.yaml
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3

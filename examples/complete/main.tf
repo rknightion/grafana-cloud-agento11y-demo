@@ -11,6 +11,12 @@ module "demo" {
     grafana.stack = grafana.stack
   }
 
+  use_cases                      = var.use_cases
+  regulatory_name                = var.regulatory_name
+  regulatory_namespace           = var.regulatory_namespace
+  regulatory_content_capture     = var.regulatory_content_capture
+  regulatory_requests_per_minute = var.regulatory_requests_per_minute
+
   cluster_name             = var.cluster_name
   agent_host_enabled       = var.agent_host_subnet_id != null
   agent_host_subnet_id     = var.agent_host_subnet_id

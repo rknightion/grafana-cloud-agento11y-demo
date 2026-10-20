@@ -71,3 +71,13 @@ open http://localhost:8080.
 - [Demo runbook](demo-runbook.md) for a presenter flow
 - [Data source tiers](data-sources.md) for what each dashboard tab actually shows
 - [Cost](cost.md) before leaving it running for more than a few hours
+
+## Regulatory authoring instead of, or alongside, Touchline
+
+Set `use_cases = ["regulatory"]` for the fictional ICF/CSR workflow, or
+`use_cases = ["touchline", "regulatory"]` for both. The default remains Touchline only.
+Regulatory requires an available `gc-agento11y-regulatory` image; older release tags may not
+contain it. Its separate namespace defaults to `dossier`, and `regulatory_content_capture` controls
+its capture independently of the gateway. The coding-agent host remains independent of
+`use_cases`. Follow [Regulatory authoring](regulatory.md) for inputs, requests and verification.
+There is no regulatory reader site to port-forward.

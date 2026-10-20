@@ -23,6 +23,18 @@
           "type": "yaml",
           "path": "charts/touchline/Chart.yaml",
           "jsonpath": "$.appVersion"
+        },
+        "charts/regulatory/values.yaml",
+        "charts/regulatory/README.md",
+        {
+          "type": "yaml",
+          "path": "charts/regulatory/Chart.yaml",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "yaml",
+          "path": "charts/regulatory/Chart.yaml",
+          "jsonpath": "$.appVersion"
         }
       ],
       "changelog-sections": [

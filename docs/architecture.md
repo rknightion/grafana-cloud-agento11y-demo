@@ -149,7 +149,8 @@ module never touches the stack's notification policy tree.
 
 ## Names
 
-Everything derives from `var.name` (default `touchline`).
+Touchline and shared gateway/host objects derive from `var.name` (default `touchline`).
+Regulatory objects derive from `regulatory_name` (default `dossier`), as described below.
 
 | Object | Name |
 |---|---|
@@ -163,3 +164,19 @@ Everything derives from `var.name` (default `touchline`).
 | Rule groups | `touchline-recording`, `touchline-alerts`; recorded metrics `touchline_*`; label `touchline_demo="true"` |
 | Contact point | `touchline-null` |
 | Agent Observability ids | `touchline_*` |
+
+## Regulatory workload
+
+The optional [regulatory authoring](regulatory.md) chart runs a separate orchestrator, source,
+drafter, reviewer and ICF readability service, plus loadgen, experiments and Alloy. Each document
+section uses fictional study fixtures and returns a simulated review outcome. Source guards run
+before model consumption; guarded tool values are captured only when regulatory content capture
+is enabled. In-app numeric grounding and reading-grade metrics work with capture off.
+
+The chart uses its own namespace, Secrets, service accounts, Pod Identity role and team inference
+profiles. Regulatory teams do not enter gateway/Cognito teams. It has no site, Redis or Faro.
+The regulatory prefix defaults to `dossier` and is independent of `var.name`; its telemetry uses
+`service.namespace=regulatory_name` even if the Kubernetes namespace differs. The architecture
+diagram and capture-mode table in [Regulatory authoring](regulatory.md) describe that path.
+`use_cases` controls the two in-app workloads; the coding-agent host and shared Grafana objects
+retain their independent settings.

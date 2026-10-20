@@ -63,3 +63,23 @@ under their own usage terms.
 
 - [Teardown](teardown.md) to remove everything, or pause instead
 - [Security](security.md) for what content capture actually turns on
+
+## Regulatory workload
+
+The optional regulatory chart adds five agent deployments, loadgen and its own Alloy. Running
+both use cases adds that compute to Touchline; a regulatory-only installation omits Touchline's
+site and Redis but keeps the host and shared infrastructure unless separately disabled. The
+Touchline estimates above are not a measured regulatory cost forecast.
+
+A document-section request fans out to source, drafting and review work, with an additional
+readability path for ICF. Model choice, input length, request rate and experiment/evaluator runs
+therefore determine spend. `regulatory_requests_per_minute` controls arrivals, not a dollar cap.
+The Touchline loadgen's daily guard and gateway developer caps do not cap regulatory traffic.
+Monitor the regulatory token/cost panels as estimates and check actual AWS billing. Full capture
+also adds log and Agent Observability storage; turning it off removes content scoring inputs
+but retains app grounding/readability metrics.
+
+`traffic_enabled = false` stops new scheduled regulatory traffic along with the other workloads;
+in-flight requests/jobs can finish and manual requests still work. Removing `regulatory` from
+`use_cases` removes that workload and its scoped infrastructure. See
+[Regulatory authoring](regulatory.md) and [Teardown](teardown.md).

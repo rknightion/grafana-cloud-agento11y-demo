@@ -183,7 +183,14 @@ def planned_hashes(checkout, cache, check_regulatory_digest=True):
     result = {r["address"]: digest({"values": r["values"], "unknown": unknowns[r["address"]]}) for r in resources}
     if len(result) != len(resources):
         raise ValueError("Duplicate planned address")
-    return {"resources": result, "outputs": {k: digest(v) for k, v in plan["planned_values"]["outputs"].items()}}
+    outputs = plan["planned_values"]["outputs"]
+    # An opt-in output that is null with the feature disabled has no deployed state value.
+    # Keep every existing output covered and reject a non-null default for the new workload.
+    if "chart_values_regulatory" in outputs:
+        if outputs["chart_values_regulatory"].get("value") is not None:
+            raise ValueError("Regulatory chart output must be null in the default plan")
+        outputs = {k: v for k, v in outputs.items() if k != "chart_values_regulatory"}
+    return {"resources": result, "outputs": {k: digest(v) for k, v in outputs.items()}}
 
 
 def main():

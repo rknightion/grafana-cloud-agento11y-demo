@@ -1,7 +1,7 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 # image name => "<build context> <Dockerfile>"
-images := "agents:apps:apps/agents/Dockerfile site:apps:apps/site/Dockerfile site-browser:apps:apps/site/Dockerfile.browser mcp-tools:apps:apps/mcp-tools/Dockerfile gateway:apps/gateway:apps/gateway/Dockerfile dev-workstation:.:apps/dev-workstation/Dockerfile"
+images := "agents:apps:apps/agents/Dockerfile site:apps:apps/site/Dockerfile site-browser:apps:apps/site/Dockerfile.browser mcp-tools:apps:apps/mcp-tools/Dockerfile gateway:apps/gateway:apps/gateway/Dockerfile dev-workstation:.:apps/dev-workstation/Dockerfile regulatory:apps:apps/regulatory/Dockerfile"
 
 # List recipes
 default:
@@ -10,16 +10,17 @@ default:
 # Install hooks, Node dependencies and Terraform providers
 setup:
     pre-commit install --hook-type pre-commit --hook-type commit-msg
-    for app in agents site mcp-tools; do (cd apps/$app && npm ci); done
+    for app in agents site mcp-tools regulatory; do (cd apps/$app && npm ci); done
     npm ci --prefix apps/dev-workstation/agents/pi --ignore-scripts
     tofu -chdir=terraform init -backend=false -input=false
     helm dependency build charts/touchline
+    helm dependency build charts/regulatory
 
 # Format Terraform, JSON and Node sources
 [group('check')]
 fmt:
     tofu fmt -recursive terraform examples
-    for app in agents site mcp-tools; do (cd apps/$app && npx --no-install prettier --write . 2>/dev/null || true); done
+    for app in agents site mcp-tools regulatory; do (cd apps/$app && npx --no-install prettier --write . 2>/dev/null || true); done
 
 # Fail if anything is unformatted
 [group('check')]
@@ -37,13 +38,16 @@ lint:
     helm template touchline charts/touchline -f charts/touchline/ci/test-values.yaml | kubeconform -strict -summary -
     # The images drop the npm CLI (docs/security.md), so no container may exec npm or npx.
     ! helm template touchline charts/touchline -f charts/touchline/ci/test-values.yaml | grep -nE 'command: \["(npm|npx)"'
+    helm lint charts/regulatory -f charts/regulatory/ci/test-values.yaml
+    helm template dossier charts/regulatory -f charts/regulatory/ci/test-values.yaml | kubeconform -strict -summary -
+    ! helm template dossier charts/regulatory -f charts/regulatory/ci/test-values.yaml | grep -nE 'command: \["(npm|npx)"'
     git ls-files -co --exclude-standard -z '*.sh' | xargs -0 -r shellcheck
     python3 tools/scrub_check.py
 
 # Run the Node test suites
 [group('check')]
 test:
-    for app in agents site mcp-tools; do (cd apps/$app && npm test); done
+    for app in agents site mcp-tools regulatory; do (cd apps/$app && npm test); done
     python3 -m unittest discover -s agent-host/render -p 'test_*.py'
     python3 -m unittest discover -s apps/dev-workstation/tests -p '*_test.py'
     python3 -m unittest discover -s apps/dev-workstation/agents/pi -p 'test_*.py'
@@ -144,3 +148,9 @@ login-tunnel dir="examples/complete":
     trap cleanup EXIT
     echo "Forwarding localhost:443 to the gateway; Ctrl-C closes the tunnel, the browser and its profile."
     aws ssm start-session --target "$id" --document-name AWS-StartPortForwardingSession --parameters portNumber=8443,localPortNumber=443
+
+# Render regulatory manifests from chart_values_regulatory (or the CI fixture by default).
+[group('gen')]
+render-regulatory values="charts/regulatory/ci/test-values.yaml":
+    mkdir -p deploy/kubectl/rendered
+    helm template dossier charts/regulatory -f {{ values }} > deploy/kubectl/rendered/regulatory.yaml

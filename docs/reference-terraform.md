@@ -20,8 +20,8 @@ here would need every consumer (docs, examples, the chart) updated in the same c
 ### Use cases
 
 The foundation accepts `use_cases = ["touchline"]` (default), `["regulatory"]`, or both.
-The set must be non-empty. Regulatory app provisioning is still being built: selecting regulatory
-alone currently removes the Touchline workload without installing a replacement app.
+The set must be non-empty. Regulatory selection provisions its own namespace, Bedrock application profiles, Pod Identity,
+Secrets, chart, evaluators and dashboard. It uses a separate prefix and telemetry capture setting.
 The coding-agent host, Cognito, gateway, shared folder, Bedrock profiles for `teams`, coding-agent
 protection and dashboards remain independent of this selection. `agent_host_enabled = false`
 still controls the host itself.
@@ -32,7 +32,8 @@ still controls the host itself.
 | `regulatory_name` | string | `"dossier"` | Regulatory resource prefix, same format as `name`. When enabled, neither name may equal or be a hyphen/underscore-delimited prefix of the other. |
 | `regulatory_namespace` | string | `"dossier"` | Dedicated Kubernetes DNS label, 1-63 characters. When enabled, must differ from `namespace` to avoid duplicate Alloy collection. |
 | `regulatory_agent_models` | map(string) | `{ orchestrator = "sonnet", source = "haiku", drafter = "sonnet", reviewer = "sonnet", readability = "haiku" }` | Exactly these five roles; values must reference `bedrock_models` keys when regulatory is enabled. Does not expand gateway or developer permissions. |
-| `regulatory_requests_per_minute` | number | `1` | Non-negative integer request rate for the forthcoming regulatory load generator. Zero pauses requests; the shared `traffic_enabled` switch also applies when that workload lands. |
+| `regulatory_requests_per_minute` | number | `1` | Non-negative integer request rate for the regulatory load generator. Zero pauses requests; `traffic_enabled=false` scales it to zero and suspends experiments. |
+| `regulatory_content_capture` | bool | `true` | Capture guarded regulatory content; false keeps operational metadata and in-app scores. Independent of `content_capture`. |
 
 Upgrades retain permanent resource address mappings. The default planned resources and values
 are checked offline against the pre-use-case module, with deterministic mock providers. No live
@@ -127,6 +128,7 @@ cannot replace the host.
 | `gateway_admin_read_key` | yes | Gateway admin read key for the spend API and admin UI over the tunnel. |
 | `agents_role_arn` | no | IAM role the Touchline in-app agents assume through EKS Pod Identity; null without Touchline. |
 | `bedrock_team_profiles` | no | Per-team application inference profile ARNs, keyed `<team>.<model>`. |
+| `chart_values_regulatory` | no | Values for the separate regulatory chart; null without regulatory. Includes Secret names, not credential values. |
 | `chart_values` | no | Null without Touchline; otherwise values for `charts/touchline` when you deploy it yourself (`deploy_workloads = false`). Contains no secrets: the chart reads the Terraform-created Secrets by name. |
 | `gateway_ca_pem` | no | Private CA that signs the gateway certificate, for `curl --cacert` over `just gateway-tunnel` only. Never add it to a system or browser trust store: it can sign a certificate for any hostname. |
 | `gateway_cert_pem` | no | The gateway's public leaf certificate. `just login-tunnel` derives its SPKI pin from this and passes it to a throwaway browser profile. |

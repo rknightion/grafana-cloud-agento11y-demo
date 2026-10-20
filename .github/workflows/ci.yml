@@ -42,7 +42,7 @@ jobs:
           echo "$HOME/go/bin" >> "$GITHUB_PATH"
       - name: Install dependencies
         run: |
-          for app in agents site mcp-tools; do (cd apps/$app && npm ci); done
+          for app in agents site mcp-tools regulatory; do (cd apps/$app && npm ci); done
           npm ci --prefix apps/dev-workstation/agents/pi --ignore-scripts
           tofu -chdir=terraform init -backend=false -input=false
       - name: just check

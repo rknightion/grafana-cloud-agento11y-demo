@@ -117,10 +117,21 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
   exact profile/model restrictions; never widen ARN patterns to work around policy size.
 
 - `use_cases` gates the in-app workload only; the gateway, coding-agent host, shared Grafana
-  folder and coding-agent protection remain independent. Regulatory provisioning follows the
-  foundation: selecting it alone currently suppresses Touchline but does not create the app yet.
+  folder and coding-agent protection remain independent. Regulatory has its own app, chart,
+  namespace, profiles, role, guards, evaluators and dashboard.
 - Permanent `terraform/moved.tf` mappings preserve upgrades from pre-use-case resource addresses.
   Never remove them. `chart_values` and `agents_role_arn` are null without Touchline.
 - Host user data now includes only gateway and dev-workstation digest pins. Existing deployments
   that pinned other images have one host replacement on upgrade; later regulatory digest changes
   cannot replace the host. That one replacement still resets the gateway ledger and sign-ins.
+
+- Regulatory `namespace` chart value is the telemetry prefix (`regulatory_name`); Helm's release
+  namespace is `regulatory_namespace`. Keep them distinct so custom namespaces retain correct
+  queries. `regulatory_content_capture` does not change the shared gateway content setting.
+- Regulatory review states are simulated, never human approval. Guard transport failures and
+  unsafe/untransformed subject identifiers fail closed before model input and content recording.
+  Metadata mode still emits in-app grounding and reading-grade metrics.
+- Regulatory source-note injection markers, preflight experiment cases and guard IDs are separate
+  from Touchline. New rules need serial apply and readback; local stub proof is not live scoring.
+- The regulatory image has no braces CVE exception. A failing image scan must be resolved upstream
+  or returned for a new maintainer decision; never reuse the agents-only exception.

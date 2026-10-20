@@ -37,7 +37,7 @@ output "gateway_admin_read_key" {
 
 output "agents_role_arn" {
   description = "IAM role the in-app agents assume through EKS Pod Identity."
-  value       = module.demo.agents_role_arn
+  value       = try(module.demo.agents_role_arn, null)
 }
 
 output "bedrock_team_profiles" {
@@ -47,7 +47,7 @@ output "bedrock_team_profiles" {
 
 output "chart_values" {
   description = "Values for charts/touchline when deploy_workloads = false (no secrets)."
-  value       = module.demo.chart_values
+  value       = try(module.demo.chart_values, null)
 }
 
 output "gateway_ca_pem" {
@@ -58,4 +58,9 @@ output "gateway_ca_pem" {
 output "gateway_cert_pem" {
   description = "Gateway leaf certificate; `just login-tunnel` pins its public key in a throwaway browser profile."
   value       = module.demo.gateway_cert_pem
+}
+
+output "chart_values_regulatory" {
+  description = "Values for charts/regulatory when deploy_workloads is false; null without regulatory."
+  value       = try(module.demo.chart_values_regulatory, null)
 }

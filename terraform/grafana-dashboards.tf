@@ -12,9 +12,9 @@ resource "grafana_folder" "this" {
 locals {
   grafana_dashboard_uids = { for d in local.grafana.dashboards : d => "${local.prefix}-${d}" }
 
-  grafana_dashboard_urls = {
+  grafana_dashboard_urls = merge({
     for d, uid in local.grafana_dashboard_uids : d => "${trimsuffix(data.grafana_cloud_stack.this.url, "/")}/d/${uid}"
-  }
+  }, local.regulatory_enabled ? { regulatory = local.regulatory_dashboard_url } : {})
 
   # Names on the AWS side that the Bedrock panels query, matching aws-bedrock.tf and
   # aws-metric-stream.tf: the invocation-log Firehose stamps these two static Loki labels.

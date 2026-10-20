@@ -41,6 +41,7 @@ Home = "index.md"
 [[site.nav]]
 Guides = [
     { "Demo Runbook" = "demo-runbook.md" },
+    { "Regulatory Document Authoring" = "regulatory.md" },
     { Screenshots = "screenshots.md" },
     { "Coding Agents and the Gateway" = "coding-agents.md" },
     { "Growing the Traffic Corpus" = "traffic-corpus.md" },
@@ -59,6 +60,7 @@ Operations = [
 Reference = [
     { Terraform = "reference-terraform.md" },
     { "Helm Chart" = "reference-helm.md" },
+    { "Regulatory Helm Chart" = "reference-regulatory-helm.md" },
 ]
 
 [assets]

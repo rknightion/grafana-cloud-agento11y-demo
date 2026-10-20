@@ -1,0 +1,13 @@
+[
+  { "document_type": "icf", "study_id": "XQZ-301", "section": "purpose", "variant": "grounded" },
+  { "document_type": "icf", "study_id": "XQZ-301", "section": "procedures", "variant": "concise" },
+  { "document_type": "icf", "study_id": "XQZ-204", "section": "risks", "variant": "grounded" },
+  { "document_type": "icf", "study_id": "XQZ-204", "section": "benefits", "variant": "concise" },
+  { "document_type": "icf", "study_id": "XQZ-301", "section": "alternatives", "variant": "grounded" },
+  { "document_type": "icf", "study_id": "XQZ-204", "section": "confidentiality", "variant": "grounded" },
+  { "document_type": "csr", "study_id": "XQZ-301", "section": "synopsis", "variant": "grounded" },
+  { "document_type": "csr", "study_id": "XQZ-301", "section": "study_design", "variant": "concise" },
+  { "document_type": "csr", "study_id": "XQZ-301", "section": "efficacy_results", "variant": "grounded" },
+  { "document_type": "csr", "study_id": "XQZ-204", "section": "safety_results", "variant": "grounded" },
+  { "document_type": "csr", "study_id": "XQZ-204", "section": "discussion", "variant": "concise" }
+]

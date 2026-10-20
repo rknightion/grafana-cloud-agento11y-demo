@@ -1,0 +1,43 @@
+# Counter alerts filter zero-valued increases before the new-series fallback.
+- uid: al-reg-guard
+  use_case: regulatory
+  title: Regulatory guard blocked or redacted source material
+  datasource: prom
+  expr: |-
+    (sum by (guard, outcome) (increase(regulatory_guard_events_total{service_namespace="${prefix}",outcome=~"deny|denied|redact|redacted|error"}[30m])) > 0) or sum by (guard, outcome) (regulatory_guard_events_total{service_namespace="${prefix}",outcome=~"deny|denied|redact|redacted|error"} unless regulatory_guard_events_total{service_namespace="${prefix}",outcome=~"deny|denied|redact|redacted|error"} offset 30m)
+  threshold: 0
+  severity: warning
+  dashboard: regulatory
+  summary: "Regulatory guard {{ $labels.guard }} returned {{ $labels.outcome }}"
+  description: >-
+    Operational counter from the fictional regulatory app. Deliberate experiment probes can trigger
+    this alert. Guard errors fail closed; no raw source contents are needed by this query.
+
+- uid: al-reg-escalation
+  use_case: regulatory
+  title: Regulatory document escalated for review
+  datasource: prom
+  expr: |-
+    (sum by (document_type, section) (increase(regulatory_requests_total{service_namespace="${prefix}",review_state="escalated"}[30m])) > 0) or sum by (document_type, section) (regulatory_requests_total{service_namespace="${prefix}",review_state="escalated"} unless regulatory_requests_total{service_namespace="${prefix}",review_state="escalated"} offset 30m)
+  threshold: 0
+  severity: warning
+  dashboard: regulatory
+  summary: "{{ $labels.document_type }} / {{ $labels.section }} has a simulated escalation"
+  description: >-
+    This is a simulated request outcome, not a durable human review queue or evidence of approval.
+
+- uid: al-reg-grounding
+  use_case: regulatory
+  title: Regulatory number grounding below target
+  datasource: prom
+  expr: |-
+    sum by (document_type, section) (rate(regulatory_number_grounding_ratio_sum{service_namespace="${prefix}",document_type="csr"}[30m])) / sum by (document_type, section) (rate(regulatory_number_grounding_ratio_count{service_namespace="${prefix}",document_type="csr"}[30m]))
+  op: lt
+  threshold: 0.95
+  for: 5m
+  severity: warning
+  dashboard: regulatory
+  summary: "{{ $labels.section }} number grounding is below 95%"
+  description: >-
+    Deterministic numeric matching over fictional source tables remains available with content
+    capture disabled. A matching number alone does not prove a supported clinical claim.

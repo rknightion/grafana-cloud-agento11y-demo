@@ -96,3 +96,33 @@ variable "manage_app_observability" {
   type        = bool
   default     = false
 }
+
+variable "use_cases" {
+  description = "Enabled in-app workloads: touchline, regulatory or both."
+  type        = set(string)
+  default     = ["touchline"]
+}
+
+variable "regulatory_name" {
+  description = "Independent regulatory resource prefix."
+  type        = string
+  default     = "dossier"
+}
+
+variable "regulatory_namespace" {
+  description = "Dedicated regulatory Kubernetes namespace."
+  type        = string
+  default     = "dossier"
+}
+
+variable "regulatory_content_capture" {
+  description = "Capture guarded regulatory content in telemetry."
+  type        = bool
+  default     = true
+}
+
+variable "regulatory_requests_per_minute" {
+  description = "Regulatory synthetic document requests per minute."
+  type        = number
+  default     = 1
+}

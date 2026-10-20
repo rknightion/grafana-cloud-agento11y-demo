@@ -220,7 +220,7 @@ variable "agento11y_cli_version" {
 }
 
 variable "images" {
-  description = "Container image registry, name prefix and tag for this repo's images. Every image reference is \"<registry>/<name_prefix><app>:<tag>\" (app in agents, site, site-browser, mcp-tools, gateway, dev-workstation). tag is a plain tag and defaults to this module's release; digests (image name => sha256:...) pins individual images immutably; verify an image with cosign before pinning it (docs/security.md). Override registry to use a private mirror (see `just images-push`); set name_prefix = \"\" for a mirror whose repositories are already `<registry>/<app>` with no shared prefix."
+  description = "Container image registry, name prefix and tag for this repo's images. Every image reference is \"<registry>/<name_prefix><app>:<tag>\" (app in agents, site, site-browser, mcp-tools, gateway, dev-workstation, regulatory). tag is a plain tag and defaults to this module's release; digests (image name => sha256:...) pins individual images immutably; verify an image with cosign before pinning it (docs/security.md). Override registry to use a private mirror (see `just images-push`); set name_prefix = \"\" for a mirror whose repositories are already `<registry>/<app>` with no shared prefix."
   type = object({
     registry    = optional(string, "ghcr.io/rknightion")
     name_prefix = optional(string, "gc-agento11y-")
@@ -319,8 +319,6 @@ variable "regulatory_agent_models" {
   }
 }
 
-# Reserved input for the separate regulatory load generator.
-# tflint-ignore: terraform_unused_declarations
 variable "regulatory_requests_per_minute" {
   description = "Regulatory document requests per minute while traffic_enabled is true; zero pauses request generation."
   type        = number
@@ -329,4 +327,10 @@ variable "regulatory_requests_per_minute" {
     condition     = var.regulatory_requests_per_minute >= 0 && floor(var.regulatory_requests_per_minute) == var.regulatory_requests_per_minute
     error_message = "regulatory_requests_per_minute must be a non-negative integer."
   }
+}
+
+variable "regulatory_content_capture" {
+  description = "Capture guarded regulatory prompts, responses and tool content. False retains operational metadata and in-app grounding/readability metrics. Independent of the shared gateway content_capture setting."
+  type        = bool
+  default     = true
 }

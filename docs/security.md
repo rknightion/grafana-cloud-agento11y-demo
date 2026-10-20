@@ -304,3 +304,34 @@ Enable it only in a dedicated sandbox account.
   `--certificate-github-workflow-repository` ties the signature to builds started from this
   repository, since the reusable workflow's identity alone is shared by every repository that
   calls it.
+
+## Regulatory authoring boundary
+
+The regulatory workload is a fictional demonstration, not a validated GxP system or a submission
+workflow. `approved` is a simulated review state, never evidence of human approval. Its study
+fixtures and identifiers are synthetic. Do not replace them with real patient, investigator or
+submission data.
+
+Regulatory profiles, Pod Identity and Secrets are isolated in their own Kubernetes namespace.
+Only its agents service account assumes the regulatory Bedrock role, with exact application
+profile restrictions; this does not expand gateway or developer IAM. The experiments service
+account holds stack Admin permission and must be protected like the existing experiments token.
+
+Tool results must pass preflight guards before model input or tool-content recording. Guard
+transport failures, denied results and unsafe transformations escalate the request. The source-note
+probe uses a separate marker list. Its remote rule starts as warn; the app still rejects known
+source-note markers before model input. Promote remote enforcement only after reviewed warn-only
+evidence. These controls demonstrate a narrow policy and do not prove
+complete prompt-injection resistance or detection of every identifier format.
+
+`regulatory_content_capture=false` keeps free-form regulatory content out of exported generations
+and logs while retaining operational metrics, calculated number grounding and reading grade.
+With capture enabled, telemetry records guarded evidence and generated text. This switch is
+independent of the coding-agent gateway setting. Account-wide Bedrock invocation logging has its
+own content boundary and remains unchanged. See [regulatory guide](regulatory.md).
+
+The image set is `agents`, `site`, `site-browser`, `mcp-tools`, `gateway`, `dev-workstation` and
+`regulatory`, published as `gc-agento11y-<name>`. Regulatory image builds use the same signing and
+scan workflow. The maintainer's existing braces exception applies only to the agents image and
+must not be extended to the regulatory image without a new decision. A failed scan does not
+establish image publication or release readiness.

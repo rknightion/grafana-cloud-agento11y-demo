@@ -62,3 +62,24 @@ every log group is owned by Terraform.
   retry.
 - **VPC destroy blocked by dependencies** (examples/eks-auto-mode): an orphaned load balancer or
   its security group. Delete them in the EC2 console and retry.
+
+## Remove only the regulatory workload
+
+For a temporary pause, `traffic_enabled = false` also scales regulatory loadgen to zero and
+suspends its experiment CronJob. In-flight jobs/requests may finish; manual API requests remain
+possible and fixed infrastructure continues to cost money.
+
+To remove regulatory while retaining Touchline, select only `use_cases = ["touchline"]`, inspect
+the plan and apply. With external Helm/GitOps, first remove the regulatory release/controller and
+let it prune. Regulatory namespace, three Secrets, Pod Identity, scoped profiles, evaluators,
+guards and dashboard are removed by Terraform; coding-agent/shared objects follow their own
+settings. Existing regulatory telemetry remains until stack retention expires it.
+
+If the cluster is already gone, the regulatory Kubernetes state addresses are
+`module.demo.helm_release.regulatory[0]`, `module.demo.kubernetes_namespace_v1.regulatory[0]`,
+`module.demo.kubernetes_secret_v1.regulatory_grafana_otlp[0]`,
+`module.demo.kubernetes_secret_v1.regulatory_agento11y[0]` and
+`module.demo.kubernetes_secret_v1.regulatory_experiments[0]`. Remove only addresses actually in
+state after confirming the cluster is gone, then retry destroy. Full destruction still removes
+the demo before the cluster and retains the shared App Observability/Knowledge Graph caveats
+above. See [Regulatory authoring](regulatory.md) for the verification boundary.

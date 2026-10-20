@@ -1,0 +1,71 @@
+# Prefix for Kubernetes objects; keep aligned with Terraform regulatory_name.
+nameOverride: dossier
+# Telemetry service.namespace; independent of Helm's release namespace.
+namespace: dossier
+deploymentEnvironment: demo
+images:
+  registry: ghcr.io/rknightion
+  namePrefix: gc-agento11y-
+  tag: "0.5.0" # x-release-please-version
+  digests: {}
+  pullSecret: ""
+serviceAccounts:
+  agents: dossier-agents
+  loadgen: dossier-loadgen
+  experiments: dossier-experiments
+# Existing Secrets only. This chart never creates credentials.
+secrets:
+  grafanaOtlp: dossier-grafana-otlp
+  agento11y: dossier-agento11y
+  experiments: dossier-experiments
+aws:
+  region: eu-west-1
+agentVersion: v1
+agents:
+  orchestrator:
+    modelProfileArn: ""
+    modelKey: sonnet
+    modelName: ""
+    team: medical-writing
+  source:
+    modelProfileArn: ""
+    modelKey: haiku
+    modelName: ""
+    team: clinical-science
+  drafter:
+    modelProfileArn: ""
+    modelKey: sonnet
+    modelName: ""
+    team: medical-writing
+  reviewer:
+    modelProfileArn: ""
+    modelKey: sonnet
+    modelName: ""
+    team: regulatory-affairs
+  readability:
+    modelProfileArn: ""
+    modelKey: haiku
+    modelName: ""
+    team: medical-writing
+agentResources:
+  requests: {cpu: 50m, memory: 256Mi}
+  limits: {cpu: "1", memory: 512Mi}
+# Full mode captures guarded content only; false retains operational metadata and scores.
+contentCapture: true
+traffic:
+  enabled: true
+  requestsPerMinute: 2
+  experimentsSchedule: "37 * * * *"
+loadgen:
+  resources:
+    requests: {cpu: 25m, memory: 128Mi}
+    limits: {cpu: 500m, memory: 256Mi}
+experiments:
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {cpu: "1", memory: 512Mi}
+alloy:
+  enabled: true
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {cpu: "1", memory: 512Mi}

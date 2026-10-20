@@ -228,3 +228,27 @@ own view to check both against."
 
 Set `traffic_enabled = false` and apply to stop Bedrock spend while keeping everything deployed,
 or destroy it ([teardown.md](teardown.md)).
+
+## Optional regulatory authoring flow
+
+Use this in place of the Touchline in-app section when `regulatory` is selected. Follow
+[Regulatory authoring](regulatory.md) to forward the orchestrator and submit a fictional CSR
+safety-results section, then an ICF risks section. There is no regulatory website/Faro step.
+
+1. Say that sponsor, compound, trials and identifiers are fictional, and that returned review
+   states simulate a workflow rather than human approval. Show the source table and the numeric
+   grounding result; explain that matching numbers alone do not validate a clinical claim.
+2. Open the regulatory dashboard from the `dashboards` output. Show throughput, section latency,
+   simulated review outcomes, grounding and ICF reading grade. Follow the actual request trace
+   through source, drafter and reviewer.
+3. Open the regulatory patient-identifier and source-note injection guard outcomes. Show the
+   guarded value rather than raw source content. A failed guard must stop the request.
+4. State the deployed `regulatory_content_capture` mode. With capture off, show operational
+   metadata and in-app scores; online content-score panels can be empty. With capture on, show
+   only a confirmed captured conversation and asynchronous evaluator results that have arrived.
+5. Show actual `section-prompts` and `guard-policy` experiment runs, if present, and their time
+   ranges. A dry-run preview is not an executed experiment.
+
+Keep the two-attempt rule for live actions. Present historical results with their actual range
+when available; do not present mock plans, local stub requests or rendered chart output as live
+cloud evidence. The regulatory guide lists the remaining end-to-end checks.

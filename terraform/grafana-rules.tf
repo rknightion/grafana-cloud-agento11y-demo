@@ -19,8 +19,8 @@ locals {
     spend_fraction_pct = local.grafana_spend_alert_fraction * 100
   }
 
-  grafana_recording_rules = yamldecode(templatefile("${path.module}/rules/recording.yaml.tftpl", local.grafana_rule_vars))
-  grafana_alert_rules     = yamldecode(templatefile("${path.module}/rules/alerts.yaml.tftpl", local.grafana_rule_vars))
+  grafana_recording_rules = concat(yamldecode(templatefile("${path.module}/rules/recording.yaml.tftpl", local.grafana_rule_vars)), local.regulatory_recording_rules)
+  grafana_alert_rules     = concat(yamldecode(templatefile("${path.module}/rules/alerts.yaml.tftpl", local.grafana_rule_vars)), local.regulatory_alert_rules)
 
   grafana_rule_datasources = {
     prom  = local.grafana.datasource_prom
@@ -59,12 +59,12 @@ resource "grafana_rule_group" "recording" {
   interval_seconds = 60
 
   dynamic "rule" {
-    for_each = [for rule in local.grafana_recording_rules : rule if rule.use_case == "shared" || local.touchline_enabled]
+    for_each = [for rule in local.grafana_recording_rules : rule if rule.use_case == "shared" || (rule.use_case == "touchline" && local.touchline_enabled) || (rule.use_case == "regulatory" && local.regulatory_enabled)]
     content {
       # Recording rules take record{} and none of condition / no_data_state / exec_err_state.
-      uid    = "${local.prefix}-${rule.value.uid}"
+      uid    = "${rule.value.use_case == "regulatory" ? var.regulatory_name : local.prefix}-${rule.value.uid}"
       name   = rule.value.metric
-      labels = local.grafana_rule_labels
+      labels = rule.value.use_case == "regulatory" ? { ("${replace(var.regulatory_name, "-", "_")}_demo") = "true", team = "medical-writing" } : local.grafana_rule_labels
 
       data {
         ref_id         = "A"
@@ -108,15 +108,15 @@ resource "grafana_rule_group" "alerts" {
   interval_seconds = 60
 
   dynamic "rule" {
-    for_each = [for rule in local.grafana_alert_rules : rule if rule.use_case == "shared" || local.touchline_enabled]
+    for_each = [for rule in local.grafana_alert_rules : rule if rule.use_case == "shared" || (rule.use_case == "touchline" && local.touchline_enabled) || (rule.use_case == "regulatory" && local.regulatory_enabled)]
     content {
-      uid            = "${local.prefix}-${rule.value.uid}"
+      uid            = "${rule.value.use_case == "regulatory" ? var.regulatory_name : local.prefix}-${rule.value.uid}"
       name           = rule.value.title
       condition      = "C"
       for            = lookup(rule.value, "for", "0s")
       no_data_state  = "OK"
       exec_err_state = "Error"
-      labels         = merge(local.grafana_rule_labels, { severity = rule.value.severity })
+      labels         = merge(rule.value.use_case == "regulatory" ? { ("${replace(var.regulatory_name, "-", "_")}_demo") = "true", team = "medical-writing" } : local.grafana_rule_labels, { severity = rule.value.severity })
       annotations = {
         summary       = rule.value.summary
         description   = rule.value.description

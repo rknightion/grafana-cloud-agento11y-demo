@@ -1,0 +1,10 @@
+{
+  "name": "section-prompts", "target": "orchestrator", "scheduled": true,
+  "description": "Compare grounded and concise section prompts on fictional ICF and CSR evidence.",
+  "variants": ["grounded", "concise"],
+  "evaluators": ["number_grounding", "citation_grounding", "reading_grade", "unsupported_claims"],
+  "cases": [
+    {"id": "icf-purpose", "input": {"document_type": "icf", "study_id": "XQZ-301", "section": "purpose"}},
+    {"id": "csr-efficacy", "input": {"document_type": "csr", "study_id": "XQZ-204", "section": "efficacy_results"}}
+  ]
+}

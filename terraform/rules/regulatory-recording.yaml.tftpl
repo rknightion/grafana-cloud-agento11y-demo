@@ -1,0 +1,49 @@
+# Added to the existing groups, filtered by use_case before provisioning.
+- uid: rec-reg-throughput
+  use_case: regulatory
+  metric: ${metric_prefix}_documents_per_hour
+  datasource: prom
+  expr: |-
+    sum by (document_type, section, review_state) (rate(regulatory_requests_total{service_namespace="${prefix}"}[10m])) * 3600
+
+- uid: rec-reg-approval
+  use_case: regulatory
+  metric: ${metric_prefix}_first_pass_approval_ratio
+  datasource: prom
+  expr: |-
+    (sum by (document_type, section) (rate(regulatory_requests_total{service_namespace="${prefix}",review_state="approved"}[30m])) or (0 * sum by (document_type, section) (rate(regulatory_requests_total{service_namespace="${prefix}"}[30m])))) / sum by (document_type, section) (rate(regulatory_requests_total{service_namespace="${prefix}"}[30m]))
+
+- uid: rec-reg-latency
+  use_case: regulatory
+  metric: ${metric_prefix}_document_p95_seconds
+  datasource: prom
+  expr: |-
+    histogram_quantile(0.95, sum by (le, document_type, section) (rate(regulatory_request_duration_seconds_bucket{service_namespace="${prefix}"}[10m])))
+
+- uid: rec-reg-grounding
+  use_case: regulatory
+  metric: ${metric_prefix}_number_grounding_ratio
+  datasource: prom
+  expr: |-
+    sum by (document_type, section) (rate(regulatory_number_grounding_ratio_sum{service_namespace="${prefix}"}[30m])) / sum by (document_type, section) (rate(regulatory_number_grounding_ratio_count{service_namespace="${prefix}"}[30m]))
+
+- uid: rec-reg-readability
+  use_case: regulatory
+  metric: ${metric_prefix}_reading_grade
+  datasource: prom
+  expr: |-
+    sum by (document_type, section) (rate(regulatory_reading_grade_sum{service_namespace="${prefix}",document_type="icf"}[30m])) / sum by (document_type, section) (rate(regulatory_reading_grade_count{service_namespace="${prefix}",document_type="icf"}[30m]))
+
+- uid: rec-reg-guards
+  use_case: regulatory
+  metric: ${metric_prefix}_guard_events_1h
+  datasource: prom
+  expr: |-
+    sum by (guard, outcome) (increase(regulatory_guard_events_total{service_namespace="${prefix}"}[1h]))
+
+- uid: rec-reg-agent-cost
+  use_case: regulatory
+  metric: ${metric_prefix}_agent_cost_usd_1h
+  datasource: prom
+  expr: |-
+    sum by (gen_ai_agent_name) (increase(agento11y_generation_cost_usd_total{gen_ai_agent_name=~"${agents_re}"}[1h]))

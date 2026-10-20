@@ -1,0 +1,198 @@
+{{- if .Values.alloy.enabled }}
+{{- $name := printf "%s-alloy" (include "regulatory.prefix" .) }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "regulatory.labels" . | nindent 4 }}
+automountServiceAccountToken: true
+---
+# The k8sattributes processor's filter block (below, in config.alloy) restricts it to watching
+# pods in .Release.Namespace only, so this can be a namespaced Role: get/list/watch on pods (to
+# resolve the sending pod from its connection IP) and replicasets (to walk the pod's
+# ownerReferences up to the owning Deployment for k8s.deployment.name). It never reads namespace
+# objects (no namespace labels/annotations are extracted), so "namespaces" is dropped too.
+#
+# The same pods get/list/watch also serves discovery.kubernetes below, which lists/watches pods
+# in this one namespace to find containers to tail (also namespace-scoped, never cluster-wide).
+# "pods/log" is a separate API subresource (the kubelet log-tailing endpoint proxied through the
+# API server) and needs its own rule; loki.source.kubernetes uses it to stream container stdout.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "regulatory.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "regulatory.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "regulatory.labels" . | nindent 4 }}
+data:
+  config.alloy: |
+    {{- include "regulatory.alloyConfig" . | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "regulatory.labels" . | nindent 4 }}
+    {{- include "regulatory.selectorLabels" $name | nindent 4 }}
+spec:
+  # One replica: this collector only relays this namespace's demo traffic and losing a few
+  # seconds of it on a restart is fine. A DaemonSet or > 1 replica would gain nothing here.
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "regulatory.selectorLabels" $name | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "regulatory.selectorLabels" $name | nindent 8 }}
+      annotations:
+        checksum/config: {{ include "regulatory.alloyConfig" . | sha256sum }}
+    spec:
+      serviceAccountName: {{ $name }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 473
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: alloy
+          image: docker.io/grafana/alloy:v1.12.1@sha256:c311595156fca7b1131683d383dae1acfd29e8879d347161d2a6f714ebac0c0b
+          imagePullPolicy: IfNotPresent
+          args:
+            - run
+            - /etc/alloy/config.alloy
+            - --storage.path=/var/lib/alloy/data
+          ports:
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+            - name: otlp-http
+              containerPort: 4318
+              protocol: TCP
+          env:
+            - name: GRAFANA_CLOUD_OTLP_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.grafanaOtlp }}
+                  key: endpoint
+            - name: GRAFANA_CLOUD_OTLP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.grafanaOtlp }}
+                  key: username
+            - name: GRAFANA_CLOUD_OTLP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.grafanaOtlp }}
+                  key: password
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alloy
+              readOnly: true
+            - name: data
+              mountPath: /var/lib/alloy/data
+          resources:
+            {{- toYaml .Values.alloy.resources | nindent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 473
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: config
+          configMap:
+            name: {{ $name }}
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "regulatory.labels" . | nindent 4 }}
+    {{- include "regulatory.selectorLabels" $name | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "regulatory.selectorLabels" $name | nindent 4 }}
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: otlp-grpc
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: otlp-http
+      protocol: TCP
+---
+# The OTLP receiver above has no authentication, so anything that can reach it can inject
+# telemetry. Restrict ingress to pods in this same namespace (every app this chart deploys, plus
+# nothing else); egress is left unrestricted (the collector still needs to reach Grafana Cloud and
+# the Kubernetes API).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "regulatory.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "regulatory.selectorLabels" $name | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        # No namespaceSelector: an empty podSelector peer matches every pod in the NetworkPolicy's
+        # own namespace only, never pods in another namespace.
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 4317
+        - protocol: TCP
+          port: 4318
+{{- end }}

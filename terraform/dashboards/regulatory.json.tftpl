@@ -1,0 +1,1110 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "${dashboard_uid}"
+  },
+  "spec": {
+    "editable": true,
+    "liveNow": false,
+    "preload": false,
+    "cursorSync": "Crosshair",
+    "timeSettings": {
+      "from": "now-3h",
+      "to": "now",
+      "timezone": "browser",
+      "autoRefresh": "1m"
+    },
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true,
+          "legacyOptions": {
+            "type": "dashboard"
+          }
+        }
+      }
+    ],
+    "title": "Regulatory authoring (${prefix})",
+    "description": "Fictional ICF and CSR section workflows, deterministic grounding and simulated review outcomes. Not validated for GxP.",
+    "tags": [
+      "${prefix}",
+      "regulatory",
+      "ai-observability"
+    ],
+    "links": [],
+    "variables": [],
+    "elements": {
+      "boundary": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Fictional study authoring and capture boundary",
+          "description": "Operational metadata remains available in both content modes.",
+          "links": [],
+          "transparent": true,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "",
+            "spec": {
+              "options": {
+                "mode": "markdown",
+                "content": "### Fictional demonstration only\n\nContent capture is **${capture_mode}**. These outputs simulate review and are not human approvals, submissions or regulatory validation. Review-state counts are recent completed outcomes, not a durable human queue.\n\nGrounding, reading grade, throughput and latency use in-app metadata metrics in both capture modes. Content-off mode omits free-form prompts and outputs; regex and LLM content evaluators cannot score them. SDK evaluation panels show pass/fail counts, not numeric scores. Open Agent Observability for captured examples and explanations.\n\nSDK costs are token-price estimates, not a billing ledger. Cost is available by agent only: document/section cost attribution is not emitted, so this dashboard does not invent it. Capture-on source telemetry records the guarded value, never raw patient identifiers.",
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                }
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "throughput": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Sections completed / hour",
+          "description": "Each request drafts one section. Throughput is grouped by document type, section and simulated outcome.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (document_type,section,review_state) (rate(regulatory_requests_total{service_namespace=\"${prefix}\"}[$__rate_interval])) * 3600",
+                        "legendFormat": "{{document_type}} / {{section}} / {{review_state}}",
+                        "range": true,
+                        "instant": false,
+                        "refId": "A"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "5m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": true,
+                  "displayMode": "table",
+                  "placement": "right",
+                  "calcs": [
+                    "lastNotNull"
+                  ]
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineWidth": 2,
+                    "fillOpacity": 15,
+                    "gradientMode": "none",
+                    "showPoints": "never",
+                    "pointSize": 5,
+                    "barAlignment": 0,
+                    "spanNulls": false,
+                    "axisSoftMin": 0,
+                    "stacking": {
+                      "mode": "none",
+                      "group": "A"
+                    }
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 2
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "approval": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "First-pass simulated approval ratio",
+          "description": "Approved completed requests divided by all completed requests; no traffic is no data, not 100%.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "${metric_prefix}_first_pass_approval_ratio",
+                        "legendFormat": "{{document_type}} / {{section}}",
+                        "range": true,
+                        "instant": false,
+                        "refId": "A"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "5m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": true,
+                  "displayMode": "table",
+                  "placement": "right",
+                  "calcs": [
+                    "lastNotNull"
+                  ]
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percentunit",
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineWidth": 2,
+                    "fillOpacity": 15,
+                    "gradientMode": "none",
+                    "showPoints": "never",
+                    "pointSize": 5,
+                    "barAlignment": 0,
+                    "spanNulls": false,
+                    "axisSoftMin": 0,
+                    "stacking": {
+                      "mode": "none",
+                      "group": "A"
+                    }
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 2
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "states": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Recent review outcomes (queue proxy)",
+          "description": "Completed outcomes in the selected range. These are not pending queue sizes or human decisions.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (document_type,review_state) (increase(regulatory_requests_total{service_namespace=\"${prefix}\"}[$__range]))",
+                        "legendFormat": "{{document_type}} / {{review_state}}",
+                        "range": false,
+                        "instant": true,
+                        "refId": "A"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "5m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": true
+                },
+                "orientation": "horizontal",
+                "displayMode": "basic",
+                "showUnfilled": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 2,
+                  "displayName": "$${__field.labels.document_type} / $${__field.labels.review_state}"
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "latency": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Section request latency p95",
+          "description": "End-to-end section latency, including specialist calls.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "histogram_quantile(0.95,sum by (le,document_type,section) (rate(regulatory_request_duration_seconds_bucket{service_namespace=\"${prefix}\"}[$__rate_interval])))",
+                        "legendFormat": "{{document_type}} / {{section}}",
+                        "range": true,
+                        "instant": false,
+                        "refId": "A"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "5m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": true,
+                  "displayMode": "table",
+                  "placement": "right",
+                  "calcs": [
+                    "lastNotNull"
+                  ]
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "s",
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineWidth": 2,
+                    "fillOpacity": 15,
+                    "gradientMode": "none",
+                    "showPoints": "never",
+                    "pointSize": 5,
+                    "barAlignment": 0,
+                    "spanNulls": false,
+                    "axisSoftMin": 0,
+                    "stacking": {
+                      "mode": "none",
+                      "group": "A"
+                    }
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 2
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "grounding": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Deterministic number grounding",
+          "description": "Mean fraction of numbers matched against fictional source facts. Matching does not establish supported clinical claims; available with content capture off.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (document_type,section) (rate(regulatory_number_grounding_ratio_sum{service_namespace=\"${prefix}\"}[$__rate_interval])) / sum by (document_type,section) (rate(regulatory_number_grounding_ratio_count{service_namespace=\"${prefix}\"}[$__rate_interval]))",
+                        "legendFormat": "{{document_type}} / {{section}}",
+                        "range": true,
+                        "instant": false,
+                        "refId": "A"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "5m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": true,
+                  "displayMode": "table",
+                  "placement": "right",
+                  "calcs": [
+                    "lastNotNull"
+                  ]
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percentunit",
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineWidth": 2,
+                    "fillOpacity": 15,
+                    "gradientMode": "none",
+                    "showPoints": "never",
+                    "pointSize": 5,
+                    "barAlignment": 0,
+                    "spanNulls": false,
+                    "axisSoftMin": 0,
+                    "stacking": {
+                      "mode": "none",
+                      "group": "A"
+                    }
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 2
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "readability": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "ICF estimated reading grade",
+          "description": "In-app reading-grade heuristic for lay-language sections. Not clinical or linguistic validation; metadata mode retains this measurement.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (document_type,section) (rate(regulatory_reading_grade_sum{service_namespace=\"${prefix}\",document_type=\"icf\"}[$__rate_interval])) / sum by (document_type,section) (rate(regulatory_reading_grade_count{service_namespace=\"${prefix}\",document_type=\"icf\"}[$__rate_interval]))",
+                        "legendFormat": "{{document_type}} / {{section}}",
+                        "range": true,
+                        "instant": false,
+                        "refId": "A"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "5m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": true,
+                  "displayMode": "table",
+                  "placement": "right",
+                  "calcs": [
+                    "lastNotNull"
+                  ]
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineWidth": 2,
+                    "fillOpacity": 15,
+                    "gradientMode": "none",
+                    "showPoints": "never",
+                    "pointSize": 5,
+                    "barAlignment": 0,
+                    "spanNulls": false,
+                    "axisSoftMin": 0,
+                    "stacking": {
+                      "mode": "none",
+                      "group": "A"
+                    }
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 2
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "guards": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "App guard outcomes",
+          "description": "Source-tool protection outcomes; deliberate guard-policy probes can produce denies/redactions.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (guard,outcome) (increase(regulatory_guard_events_total{service_namespace=\"${prefix}\"}[$__range]))",
+                        "legendFormat": "{{guard}} / {{outcome}}",
+                        "range": false,
+                        "instant": true,
+                        "refId": "A"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "5m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": true
+                },
+                "orientation": "horizontal",
+                "displayMode": "basic",
+                "showUnfilled": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 2,
+                  "displayName": "$${__field.labels.guard} / $${__field.labels.outcome}"
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "scores": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "Online evaluator pass/fail counts / hour",
+          "description": "Content evaluators require content capture. These are pass/fail counts, not score magnitudes.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (gen_ai_agent_name,rule,passed) (rate(agento11y_eval_scores_total{rule=~\"${quality_rules}\",gen_ai_agent_name=~\"${agents_re}\"}[$__rate_interval])) * 3600",
+                        "legendFormat": "{{gen_ai_agent_name}} / {{rule}} / passed={{passed}}",
+                        "range": true,
+                        "instant": false,
+                        "refId": "A"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "5m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": true,
+                  "displayMode": "table",
+                  "placement": "right",
+                  "calcs": [
+                    "lastNotNull"
+                  ]
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineWidth": 2,
+                    "fillOpacity": 15,
+                    "gradientMode": "none",
+                    "showPoints": "never",
+                    "pointSize": 5,
+                    "barAlignment": 0,
+                    "spanNulls": false,
+                    "axisSoftMin": 0,
+                    "stacking": {
+                      "mode": "none",
+                      "group": "A"
+                    }
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 2
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "cost": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "Estimated SDK generation cost / hour by agent",
+          "description": "Actual SDK cost series only; no fabricated document/section allocation. Stub model calls may not emit generation costs. Estimates exclude non-model infrastructure.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (gen_ai_agent_name) (rate(agento11y_generation_cost_usd_total{gen_ai_agent_name=~\"${agents_re}\"}[$__rate_interval])) * 3600",
+                        "legendFormat": "{{gen_ai_agent_name}}",
+                        "range": true,
+                        "instant": false,
+                        "refId": "A"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "5m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": true,
+                  "displayMode": "table",
+                  "placement": "right",
+                  "calcs": [
+                    "lastNotNull"
+                  ]
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "currencyUSD",
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineWidth": 2,
+                    "fillOpacity": 15,
+                    "gradientMode": "none",
+                    "showPoints": "never",
+                    "pointSize": 5,
+                    "barAlignment": 0,
+                    "spanNulls": false,
+                    "axisSoftMin": 0,
+                    "stacking": {
+                      "mode": "none",
+                      "group": "A"
+                    }
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 2
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "model-latency": {
+        "kind": "Panel",
+        "spec": {
+          "id": 11,
+          "title": "SDK generation latency p95 by agent",
+          "description": "Model-operation duration is distinct from the end-to-end section duration. Cloud model calls are required.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "histogram_quantile(0.95,sum by (le,gen_ai_agent_name) (rate(gen_ai_client_operation_duration_seconds_bucket{service_namespace=\"${prefix}\",service_name=~\"${agents_re}\"}[$__rate_interval])))",
+                        "legendFormat": "{{gen_ai_agent_name}}",
+                        "range": true,
+                        "instant": false,
+                        "refId": "A"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "5m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": true,
+                  "displayMode": "table",
+                  "placement": "right",
+                  "calcs": [
+                    "lastNotNull"
+                  ]
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "s",
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineWidth": 2,
+                    "fillOpacity": 15,
+                    "gradientMode": "none",
+                    "showPoints": "never",
+                    "pointSize": 5,
+                    "barAlignment": 0,
+                    "spanNulls": false,
+                    "axisSoftMin": 0,
+                    "stacking": {
+                      "mode": "none",
+                      "group": "A"
+                    }
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 2
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 5,
+              "element": {
+                "kind": "ElementReference",
+                "name": "boundary"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 5,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "throughput"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 5,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "approval"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 13,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "states"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 13,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "latency"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 21,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "grounding"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 21,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "readability"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 29,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "guards"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 29,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "scores"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 37,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "cost"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 37,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "model-latency"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,3 @@
+nameOverride: dossier
+namespace: dossier
+contentCapture: false

@@ -1,0 +1,217 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "regulatory",
+  "description": "Regulatory workload chart values. Image digest keys and agent roles are restricted to this workload.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "nameOverride",
+    "images",
+    "serviceAccounts",
+    "secrets",
+    "aws",
+    "agents",
+    "contentCapture",
+    "traffic",
+    "alloy"
+  ],
+  "properties": {
+    "nameOverride": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Prefix for every object this chart creates. Must equal Terraform's var.regulatory_name."
+    },
+    "namespace": {
+      "type": "string",
+      "minLength": 1
+    },
+    "images": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "registry",
+        "tag"
+      ],
+      "properties": {
+        "registry": {
+          "type": "string",
+          "minLength": 1
+        },
+        "namePrefix": {
+          "type": "string",
+          "description": "Image repository prefix, e.g. gc-agento11y-regulatory."
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "digests": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "regulatory"
+            ]
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$"
+          }
+        },
+        "pullSecret": {
+          "type": "string"
+        }
+      }
+    },
+    "serviceAccounts": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "agents",
+        "loadgen",
+        "experiments"
+      ],
+      "properties": {
+        "agents": {
+          "type": "string",
+          "minLength": 1
+        },
+        "loadgen": {
+          "type": "string",
+          "minLength": 1
+        },
+        "experiments": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "grafanaOtlp",
+        "agento11y",
+        "experiments"
+      ],
+      "properties": {
+        "grafanaOtlp": {
+          "type": "string",
+          "minLength": 1
+        },
+        "agento11y": {
+          "type": "string",
+          "minLength": 1
+        },
+        "experiments": {
+          "type": "string",
+          "description": "Existing Secret with grafana_url and token for experiment control-plane reads and writes.",
+          "minLength": 1
+        }
+      }
+    },
+    "agentVersion": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Prompt-set version recorded on agents, loadgen and experiments."
+    },
+    "aws": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "region"
+      ],
+      "properties": {
+        "region": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "agents": {
+      "type": "object",
+      "description": "One entry per in-app agent; keys become the Deployment/Service name suffix.",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "modelProfileArn",
+          "team"
+        ],
+        "properties": {
+          "modelProfileArn": {
+            "type": "string"
+          },
+          "modelKey": {
+            "type": "string",
+            "description": "MODEL_KEY: the bedrock_models key for this agent's default profile."
+          },
+          "modelName": {
+            "type": "string",
+            "description": "Bedrock model identifier used for generation telemetry."
+          },
+          "team": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "orchestrator",
+        "source",
+        "drafter",
+        "reviewer",
+        "readability"
+      ],
+      "propertyNames": {
+        "enum": [
+          "orchestrator",
+          "source",
+          "drafter",
+          "reviewer",
+          "readability"
+        ]
+      }
+    },
+    "contentCapture": {
+      "type": "boolean"
+    },
+    "traffic": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "enabled",
+        "experimentsSchedule",
+        "requestsPerMinute"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "experimentsSchedule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requestsPerMinute": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "alloy": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "loadgen": {
+      "type": "object"
+    }
+  }
+}

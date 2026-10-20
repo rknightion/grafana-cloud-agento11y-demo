@@ -8,8 +8,17 @@ locals {
   regulatory_enabled = contains(local.use_cases, "regulatory")
 
   # Independent of the coding-agent host and its gateway team/profile contract.
-  # Reserved seam for the separate regulatory chart.
-  # tflint-ignore: terraform_unused_declarations
+  regulatory_ids = { for key, suffix in {
+    evaluator_number_grounding   = "number_grounding"
+    evaluator_citation_grounding = "citation_grounding"
+    evaluator_reading_grade      = "reading_grade"
+    evaluator_unsupported_claims = "unsupported_claims"
+    evaluator_review_outcome     = "review_outcome"
+    guard_patient_identifiers    = "patient_identifiers"
+    guard_source_note_injection  = "source_note_injection"
+    rule_draft_quality           = "draft_quality"
+    rule_review_quality          = "review_quality"
+  } : key => "${replace(var.regulatory_name, "-", "_")}_${suffix}" }
   regulatory_service_names = { for role in ["orchestrator", "source", "drafter", "reviewer", "readability", "loadgen"] : role => "${var.regulatory_name}-${role}" }
   regulatory_agent_teams = {
     orchestrator = "medical-writing"
@@ -18,8 +27,6 @@ locals {
     reviewer     = "regulatory-affairs"
     readability  = "medical-writing"
   }
-  # Reserved seam for regulatory-only application profiles.
-  # tflint-ignore: terraform_unused_declarations
   regulatory_team_models = { for pair in setproduct(distinct(values(local.regulatory_agent_teams)), keys(var.bedrock_models)) :
     "${pair[0]}.${pair[1]}" => {
       team           = pair[0]

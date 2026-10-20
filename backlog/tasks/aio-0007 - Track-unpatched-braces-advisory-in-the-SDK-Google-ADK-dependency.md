@@ -5,7 +5,7 @@ status: Parked
 assignee:
   - '@codex'
 created_date: '2026-10-15 17:52'
-updated_date: '2026-10-15 20:13'
+updated_date: '2026-10-20T21:58:00Z'
 labels: []
 dependencies: []
 priority: medium
@@ -54,4 +54,6 @@ Full just check passed on v0.5.0. Approved suppression passes both main-branch i
 Approved exception is deployed and verified; upstream remediation is still pending. Resume before2026-11-15 to remove it with a compatible upstream fix or request a new explicit disposition. No other advisory suppression was added.
 
 Release v0.5.0 publication and deployment completed with the approved exception; verified expiry prevents suppression after its date. Full release CI and all image jobs succeeded. No automatic renewal; revisit upstream fix before2026-11-15.
+
+2026-10-20 regulatory build: the separate local regulatory image also contains braces 3.0.3 and Trivy reports exactly CVE-2026-93687 HIGH with no fixed version. No regulatory exception was added or reused. Existing approval remains agents image only. Regulatory source integration continues, but publication requires an upstream-compatible remediation or a separate maintainer disposition.
 <!-- SECTION:NOTES:END -->

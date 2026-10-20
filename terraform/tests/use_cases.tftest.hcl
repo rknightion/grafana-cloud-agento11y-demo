@@ -85,7 +85,7 @@ run "default_touchline" {
     error_message = "The default must retain the Touchline namespace, secrets, Pod Identity, chart and Faro."
   }
   assert {
-    condition     = contains(keys(output.dashboards), "agents")
+    condition     = contains(keys(output.dashboards), "agents") && length(kubernetes_namespace_v1.regulatory) == 0 && length(aws_iam_role.regulatory_agents) == 0 && length(aws_bedrock_inference_profile.regulatory_team_model) == 0 && output.chart_values_regulatory == null && length(grafana_folder.regulatory) == 0 && length(grafana_agento11y_evaluator.regulatory_number_grounding) == 0
     error_message = "The default must retain the Touchline agents dashboard."
   }
 }
@@ -168,6 +168,24 @@ run "regulatory_only" {
   assert {
     condition     = !contains(keys(output.dashboards), "agents")
     error_message = "Regulatory-only must omit the Touchline agents dashboard."
+  }
+  assert {
+    condition = (
+      length(kubernetes_namespace_v1.regulatory) == 1 &&
+      length(aws_iam_role.regulatory_agents) == 1 &&
+      length(aws_bedrock_inference_profile.regulatory_team_model) == 3 * length(var.bedrock_models) &&
+      length(kubernetes_secret_v1.regulatory_grafana_otlp) == 1 &&
+      length(kubernetes_secret_v1.regulatory_agento11y) == 1 &&
+      length(kubernetes_secret_v1.regulatory_experiments) == 1 &&
+      length(helm_release.regulatory) == 1 &&
+      length(grafana_folder.regulatory) == 1 &&
+      length(grafana_agento11y_evaluator.regulatory_number_grounding) == 1 &&
+      length(grafana_agento11y_hook_rule.regulatory_patient_identifiers) == 1 &&
+      grafana_asserts_trace_config.regulatory[0].priority == 9001 &&
+      contains(keys(output.dashboards), "regulatory") &&
+      contains([for rule in grafana_rule_group.alerts.rule : rule.uid], "dossier-al-reg-guard")
+    )
+    error_message = "Regulatory selection must create its isolated app, profiles, protection, presentation and trace mapping."
   }
 }
 
@@ -260,5 +278,30 @@ run "legacy_touchline_custom_inputs" {
   assert {
     condition     = length(helm_release.this) == 1 && length(local.regulatory_team_models) == 0
     error_message = "Disabled regulatory defaults must preserve existing customized Touchline configurations."
+  }
+}
+
+run "regulatory_external_release" {
+  command = plan
+  variables {
+    use_cases                  = ["regulatory"]
+    deploy_workloads           = false
+    traffic_enabled            = false
+    regulatory_content_capture = false
+    regulatory_name            = "document-demo"
+    regulatory_namespace       = "document-runtime"
+  }
+  assert {
+    condition = (
+      length(helm_release.regulatory) == 0 &&
+      length(kubernetes_namespace_v1.regulatory) == 1 &&
+      kubernetes_namespace_v1.regulatory[0].metadata[0].name == "document-runtime" &&
+      local.regulatory_chart_values.namespace == "document-demo" &&
+      !local.regulatory_chart_values.traffic.enabled &&
+      !local.regulatory_chart_values.contentCapture &&
+      output.chart_values_regulatory != null &&
+      local.regulatory_service_accounts.agents == "document-demo-agents"
+    )
+    error_message = "External deployment must retain isolated credentials and values while respecting pause/capture and namespace separation."
   }
 }

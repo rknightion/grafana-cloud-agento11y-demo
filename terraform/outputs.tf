@@ -59,3 +59,8 @@ output "gateway_cert_pem" {
   description = "The gateway's public leaf certificate. `just login-tunnel` derives its SPKI pin from this and passes it to a throwaway browser profile."
   value       = tls_locally_signed_cert.gateway.cert_pem
 }
+
+output "chart_values_regulatory" {
+  description = "Values for charts/regulatory when deploy_workloads is false; null when regulatory is disabled. Contains Secret names, not credentials."
+  value       = local.regulatory_enabled ? yamlencode(local.regulatory_chart_values) : null
+}

@@ -1,0 +1,59 @@
+{{- $name := printf "%s-loadgen" (include "regulatory.prefix" .) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "regulatory.labels" . | nindent 4 }}
+spec:
+  replicas: {{ ternary 1 0 (and .Values.traffic.enabled (gt (float64 .Values.traffic.requestsPerMinute) 0.0)) }}
+  selector:
+    matchLabels:
+      {{- include "regulatory.selectorLabels" $name | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "regulatory.selectorLabels" $name | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccounts.loadgen }}
+      {{- if .Values.images.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.images.pullSecret }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: loadgen
+          image: {{ include "regulatory.image" (dict "root" . "name" "regulatory") | quote }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: AGENT_ROLE
+              value: loadgen
+            - name: SERVICE_NAMESPACE
+              value: {{ .Values.namespace | quote }}
+            - name: AGENT_VERSION
+              value: {{ .Values.agentVersion | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ $name | quote }}
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: {{ include "regulatory.resourceAttributes" (dict "root" .) | quote }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://{{ include "regulatory.prefix" . }}-alloy:4318"
+            - name: ORCHESTRATOR_URL
+              value: "http://{{ include "regulatory.prefix" . }}-orchestrator:8080/v1/agent"
+            - name: REQUESTS_PER_MINUTE
+              value: {{ .Values.traffic.requestsPerMinute | quote }}
+            - name: CONTENT_CAPTURE
+              value: {{ .Values.contentCapture | quote }}
+          resources:
+            {{- toYaml .Values.loadgen.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 10001
+            capabilities:
+              drop: [ALL]
