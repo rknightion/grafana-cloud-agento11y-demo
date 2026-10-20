@@ -18,7 +18,8 @@ queue.
 ## Task interface
 
 `just check` is the gate (fmt-check, `tofu validate`, tflint, helm lint and kubeconform, shellcheck,
-scrub, Node tests). `just ci` adds image builds and needs Docker. `tofu -chdir=terraform validate`
+scrub, Node tests), including offline use-case plans and the default compatibility fixture.
+The mock-provider checks use OpenTofu 1.13.1 or newer. `just ci` adds image builds and needs Docker. `tofu -chdir=terraform validate`
 needs `tofu -chdir=terraform init -backend=false` after a provider lock bump.
 
 ## Releases
@@ -114,3 +115,12 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
 - Pi uses a managed IAM policy for its explicit team/profile union: three teams exceed IAM
   users’ 2,048-character inline-policy limit. Keep the 6,144-character managed-policy check and
   exact profile/model restrictions; never widen ARN patterns to work around policy size.
+
+- `use_cases` gates the in-app workload only; the gateway, coding-agent host, shared Grafana
+  folder and coding-agent protection remain independent. Regulatory provisioning follows the
+  foundation: selecting it alone currently suppresses Touchline but does not create the app yet.
+- Permanent `terraform/moved.tf` mappings preserve upgrades from pre-use-case resource addresses.
+  Never remove them. `chart_values` and `agents_role_arn` are null without Touchline.
+- Host user data now includes only gateway and dev-workstation digest pins. Existing deployments
+  that pinned other images have one host replacement on upgrade; later regulatory digest changes
+  cannot replace the host. That one replacement still resets the gateway ledger and sign-ins.

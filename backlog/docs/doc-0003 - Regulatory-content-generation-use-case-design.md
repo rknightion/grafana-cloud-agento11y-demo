@@ -3,7 +3,7 @@ id: doc-0003
 title: Regulatory content-generation use case design
 type: specification
 created_date: '2026-10-20 21:16'
-updated_date: '2026-10-20 21:24'
+updated_date: '2026-10-20 21:32'
 ---
 # Regulatory content-generation use case: design
 
@@ -117,6 +117,22 @@ Epic AC#2 therefore means: a regulatory-only deployment has no Touchline in-app 
 (namespace, agents, site, loadgen, `touchline`-only evaluators/rules/dashboards); agent-host and
 shared `var.name`-prefixed objects remain. A regulatory-only user who also sets
 `agent_host_enabled = false` gets nothing Touchline-named except the shared folder.
+
+### Implementation classification inventory
+
+This inventory is frozen before the gating implementation. All names below are Terraform
+addresses or local names; indexed resources retain their existing instance keys.
+
+| Classification | Objects | Behaviour |
+| --- | --- | --- |
+| Touchline only | `kubernetes_namespace_v1.this`; all four `kubernetes_secret_v1` objects; `helm_release.this`; `grafana_service_account.experiments` and its token | Conditional on Touchline; chart values output is null when disabled. |
+| Touchline only | `data.aws_iam_policy_document.agents_assume`; `aws_iam_role.agents`; `aws_iam_role_policy.agents_bedrock`; `aws_eks_pod_identity_association.agents` | Conditional Pod Identity resources; role output is null when disabled. |
+| Touchline only | `grafana_frontend_o11y_app.site`; `grafana_asserts_prom_rule_file.service_graph`; `grafana_asserts_trace_config.this` | Existing feature flags also require Touchline. |
+| Touchline only | Evaluators `agents_quality`, `injected_tool_result`, `tool_result_markers`, `responsible_gambling`, `tool_result_grounded`, `response_not_empty`, `injection_resisted`, `session_helpfulness`; guards `agents_redact_tool_pii`, `agents_injected_tool_result`; evaluation rules `agents_quality`, `compliance_responsible_gambling`, `specialists_tool_grounding`, `news_injection_resistance`, `orchestrator_session_helpfulness`; collection and rule action `rg_review` | Conditional individual objects, with permanent moved blocks. |
+| Mixed, filter per item | `local.grafana.dashboards`; recording and alert rule groups | Only dashboard `agents`, recording rules `rec-agent-cost` and `rec-agents-p95`, and alerts `al-guard` and `al-agents-cost` require Touchline. `rec-guard` includes coding-agent outcomes and remains. |
+| Always on / existing flags | All remaining objects in `aws-agent-host`, `aws-developer-bedrock`, `aws-bedrock`, `aws-cognito`, `aws-metric-stream`, `grafana-cloud`, `grafana-ingest`, `grafana-datasource`, `grafana-appo11y`; the folder, contact point, remaining dashboards and rules; KG onboarding objects; shared evaluators and coding-agent guards/rules; `terraform_data.team_checks` | Preserve existing flags and addresses. Bedrock team profiles remain the existing gateway/developer team matrix, not a filtered or regulatory-expanded matrix. |
+| Existing locals, unchanged maps | `service_names`, `agent_teams`, `team_models`, `teams`, `developers`, `service_accounts`, shared `bedrock_invoke` | Retain shared host/gateway contract. Chart locals are conditional; only the first team precondition is relaxed without Touchline. |
+| Regulatory only (foundation) | `regulatory_service_names`, `regulatory_agent_teams`, `regulatory_team_models` and validated regulatory inputs | Separate namespace and prefix; actual resources belong to the subsequent provisioning subtask. No regulatory teams enter Cognito or gateway IAM. |
 
 ### Terraform seams
 

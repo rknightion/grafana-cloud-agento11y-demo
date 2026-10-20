@@ -17,6 +17,30 @@ here would need every consumer (docs, examples, the chart) updated in the same c
 | `name` | string | `"touchline"` | Prefix for every AWS, Kubernetes and Grafana object this module creates. Must be unique per AWS account and per Grafana stack: two deployments with the same name collide on account-global IAM roles, Secrets Manager paths and the stack's prefixed Grafana objects (dashboards, rules, evaluators), and one apply or destroy then changes the other's resources. Must match `^[a-z][a-z0-9-]{1,20}$`. |
 | `tags` | map(string) | `{}` | Tags applied to every AWS resource. |
 
+### Use cases
+
+The foundation accepts `use_cases = ["touchline"]` (default), `["regulatory"]`, or both.
+The set must be non-empty. Regulatory app provisioning is still being built: selecting regulatory
+alone currently removes the Touchline workload without installing a replacement app.
+The coding-agent host, Cognito, gateway, shared folder, Bedrock profiles for `teams`, coding-agent
+protection and dashboards remain independent of this selection. `agent_host_enabled = false`
+still controls the host itself.
+
+| Variable | Type | Default | Description |
+|---|---|---|---|
+| `use_cases` | set(string) | `["touchline"]` | In-app workloads selected from `touchline` and `regulatory`. |
+| `regulatory_name` | string | `"dossier"` | Regulatory resource prefix, same format as `name`. When enabled, neither name may equal or be a hyphen/underscore-delimited prefix of the other. |
+| `regulatory_namespace` | string | `"dossier"` | Dedicated Kubernetes DNS label, 1-63 characters. When enabled, must differ from `namespace` to avoid duplicate Alloy collection. |
+| `regulatory_agent_models` | map(string) | `{ orchestrator = "sonnet", source = "haiku", drafter = "sonnet", reviewer = "sonnet", readability = "haiku" }` | Exactly these five roles; values must reference `bedrock_models` keys when regulatory is enabled. Does not expand gateway or developer permissions. |
+| `regulatory_requests_per_minute` | number | `1` | Non-negative integer request rate for the forthcoming regulatory load generator. Zero pauses requests; the shared `traffic_enabled` switch also applies when that workload lands. |
+
+Upgrades retain permanent resource address mappings. The default planned resources and values
+are checked offline against the pre-use-case module, with deterministic mock providers. No live
+cloud state is used for this proof. Host user data now retains only `gateway` and `dev-workstation`
+digest pins: an existing deployment that pinned other images has one host replacement on upgrade,
+resetting its gateway spend ledger and requiring developer sign-in again. Future regulatory pins
+cannot replace the host.
+
 ### Where it runs
 
 | Variable | Type | Default | Description |
@@ -101,9 +125,9 @@ here would need every consumer (docs, examples, the chart) updated in the same c
 | `developers` | no | Each developer's team, keyed by developer name. |
 | `developer_passwords` | yes | Generated Cognito passwords, for signing in by hand if the login bot fails. |
 | `gateway_admin_read_key` | yes | Gateway admin read key for the spend API and admin UI over the tunnel. |
-| `agents_role_arn` | no | IAM role the in-app agents assume through EKS Pod Identity. |
+| `agents_role_arn` | no | IAM role the Touchline in-app agents assume through EKS Pod Identity; null without Touchline. |
 | `bedrock_team_profiles` | no | Per-team application inference profile ARNs, keyed `<team>.<model>`. |
-| `chart_values` | no | Values for `charts/touchline` when you deploy it yourself (`deploy_workloads = false`). Contains no secrets: the chart reads the Terraform-created Secrets by name. |
+| `chart_values` | no | Null without Touchline; otherwise values for `charts/touchline` when you deploy it yourself (`deploy_workloads = false`). Contains no secrets: the chart reads the Terraform-created Secrets by name. |
 | `gateway_ca_pem` | no | Private CA that signs the gateway certificate, for `curl --cacert` over `just gateway-tunnel` only. Never add it to a system or browser trust store: it can sign a certificate for any hostname. |
 | `gateway_cert_pem` | no | The gateway's public leaf certificate. `just login-tunnel` derives its SPKI pin from this and passes it to a throwaway browser profile. |
 

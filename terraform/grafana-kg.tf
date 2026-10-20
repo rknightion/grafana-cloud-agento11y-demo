@@ -94,7 +94,7 @@ resource "grafana_asserts_stack" "this" {
 # false there is nothing to depend on and this is a no-op.
 resource "grafana_asserts_prom_rule_file" "service_graph" {
   provider   = grafana.stack
-  count      = local.grafana_kg_enabled ? 1 : 0
+  count      = local.grafana_kg_enabled && local.touchline_enabled ? 1 : 0
   depends_on = [grafana_asserts_stack.this]
 
   name   = "${local.prefix}-service-graph"
@@ -152,7 +152,7 @@ resource "grafana_asserts_prom_rule_file" "service_graph" {
 # span-level label instead (unverified whether that difference matters to Asserts' own scoring).
 resource "grafana_asserts_trace_config" "this" {
   provider = grafana.stack
-  count    = local.grafana_kg_enabled ? 1 : 0
+  count    = local.grafana_kg_enabled && local.touchline_enabled ? 1 : 0
 
   name            = local.prefix
   priority        = 9000

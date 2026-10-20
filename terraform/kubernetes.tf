@@ -4,8 +4,26 @@
 
 resource "terraform_data" "team_checks" {
   lifecycle {
+    # Cross-input checks live here to retain the module's OpenTofu/Terraform 1.8 interface.
+    # Disabled regulatory defaults must not invalidate existing Touchline model selections.
     precondition {
-      condition     = alltrue([for t in values(local.agent_teams) : contains(var.teams, t)])
+      condition = !local.regulatory_enabled || (
+        var.regulatory_name != var.name &&
+        !startswith(replace(var.regulatory_name, "-", "_"), "${replace(var.name, "-", "_")}_") &&
+        !startswith(replace(var.name, "-", "_"), "${replace(var.regulatory_name, "-", "_")}_")
+      )
+      error_message = "name and regulatory_name must differ and neither may be a hyphen/underscore-delimited prefix of the other."
+    }
+    precondition {
+      condition     = !local.regulatory_enabled || var.regulatory_namespace != var.namespace
+      error_message = "regulatory_namespace must differ from namespace to prevent duplicate Alloy collection."
+    }
+    precondition {
+      condition     = !local.regulatory_enabled || alltrue([for model in values(var.regulatory_agent_models) : contains(keys(var.bedrock_models), model)])
+      error_message = "regulatory_agent_models values must be bedrock_models keys when regulatory is enabled."
+    }
+    precondition {
+      condition     = !local.touchline_enabled || alltrue([for t in values(local.agent_teams) : contains(var.teams, t)])
       error_message = "The in-app agents belong to teams ${join(", ", distinct(values(local.agent_teams)))}; keep all of them in var.teams."
     }
     precondition {
@@ -16,6 +34,8 @@ resource "terraform_data" "team_checks" {
 }
 
 resource "kubernetes_namespace_v1" "this" {
+  count = local.touchline_enabled ? 1 : 0
+
   metadata {
     name = var.namespace
     labels = {
@@ -25,9 +45,11 @@ resource "kubernetes_namespace_v1" "this" {
 }
 
 resource "kubernetes_secret_v1" "grafana_otlp" {
+  count = local.touchline_enabled ? 1 : 0
+
   metadata {
     name      = "${local.prefix}-grafana-otlp"
-    namespace = kubernetes_namespace_v1.this.metadata[0].name
+    namespace = kubernetes_namespace_v1.this[0].metadata[0].name
   }
   data = {
     endpoint = local.grafana_ingest.otlp_endpoint
@@ -37,9 +59,11 @@ resource "kubernetes_secret_v1" "grafana_otlp" {
 }
 
 resource "kubernetes_secret_v1" "agento11y" {
+  count = local.touchline_enabled ? 1 : 0
+
   metadata {
     name      = "${local.prefix}-agento11y"
-    namespace = kubernetes_namespace_v1.this.metadata[0].name
+    namespace = kubernetes_namespace_v1.this[0].metadata[0].name
   }
   data = {
     endpoint  = local.grafana_ingest.agento11y_endpoint
@@ -49,9 +73,11 @@ resource "kubernetes_secret_v1" "agento11y" {
 }
 
 resource "kubernetes_secret_v1" "faro" {
+  count = local.touchline_enabled ? 1 : 0
+
   metadata {
     name      = "${local.prefix}-faro"
-    namespace = kubernetes_namespace_v1.this.metadata[0].name
+    namespace = kubernetes_namespace_v1.this[0].metadata[0].name
   }
   data = {
     collector_url = local.grafana_ingest.faro_collector_url
@@ -61,47 +87,53 @@ resource "kubernetes_secret_v1" "faro" {
 # The scheduled experiments publish their test suite through the Grafana API, which needs a stack
 # service account (Admin: Agent Observability eval writes are Admin-only by default).
 resource "grafana_service_account" "experiments" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
   name     = "${local.prefix}-experiments"
   role     = "Admin"
 }
 
 resource "grafana_service_account_token" "experiments" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider           = grafana.stack
   name               = "${local.prefix}-experiments"
-  service_account_id = grafana_service_account.experiments.id
+  service_account_id = grafana_service_account.experiments[0].id
 }
 
 resource "kubernetes_secret_v1" "experiments" {
+  count = local.touchline_enabled ? 1 : 0
+
   metadata {
     name      = "${local.prefix}-experiments"
-    namespace = kubernetes_namespace_v1.this.metadata[0].name
+    namespace = kubernetes_namespace_v1.this[0].metadata[0].name
   }
   data = {
     grafana_url = local.grafana_stack.url
-    token       = grafana_service_account_token.experiments.key
+    token       = grafana_service_account_token.experiments[0].key
   }
 }
 
 locals {
   model_profile_arn = { for k, p in aws_bedrock_inference_profile.team_model : k => p.arn }
 
-  chart_values = {
+  chart_values = local.touchline_enabled ? {
     nameOverride = local.prefix
     namespace    = var.namespace
     images = {
       registry   = var.images.registry
       namePrefix = var.images.name_prefix
       tag        = var.images.tag
-      digests    = var.images.digests
+      digests    = { for k, v in var.images.digests : k => v if contains(["agents", "site", "site-browser", "mcp-tools", "gateway", "dev-workstation"], k) }
       pullSecret = var.images.pull_secret == null ? "" : var.images.pull_secret
     }
     serviceAccounts = local.service_accounts
     secrets = {
-      grafanaOtlp = kubernetes_secret_v1.grafana_otlp.metadata[0].name
-      agento11y   = kubernetes_secret_v1.agento11y.metadata[0].name
-      faro        = kubernetes_secret_v1.faro.metadata[0].name
-      experiments = kubernetes_secret_v1.experiments.metadata[0].name
+      grafanaOtlp = kubernetes_secret_v1.grafana_otlp[0].metadata[0].name
+      agento11y   = kubernetes_secret_v1.agento11y[0].metadata[0].name
+      faro        = kubernetes_secret_v1.faro[0].metadata[0].name
+      experiments = kubernetes_secret_v1.experiments[0].metadata[0].name
     }
     aws = { region = data.aws_region.current.region }
     agents = { for role, team in local.agent_teams : role => merge(
@@ -124,14 +156,14 @@ locals {
       siteRequestsPerMinute = var.site_requests_per_minute
     }
     site = { ingress = var.site_ingress }
-  }
+  } : null
 }
 
 resource "helm_release" "this" {
-  count = var.deploy_workloads ? 1 : 0
+  count = var.deploy_workloads && local.touchline_enabled ? 1 : 0
 
   name      = local.prefix
-  namespace = kubernetes_namespace_v1.this.metadata[0].name
+  namespace = kubernetes_namespace_v1.this[0].metadata[0].name
   chart     = local.chart_path
   # The chart version never changes between module releases, so hash the chart itself: any
   # template edit then shows up as a values change and triggers an upgrade.

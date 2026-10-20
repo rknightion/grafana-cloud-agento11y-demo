@@ -30,6 +30,8 @@ fmt-check:
 [group('check')]
 lint:
     tofu -chdir=terraform validate
+    tofu -chdir=terraform test
+    python3 tools/check_use_case_plan.py
     tflint --chdir=terraform
     helm lint charts/touchline -f charts/touchline/ci/test-values.yaml
     helm template touchline charts/touchline -f charts/touchline/ci/test-values.yaml | kubeconform -strict -summary -

@@ -51,6 +51,8 @@ locals {
 # ------------------------------------------------------------------------------------ evaluators
 
 resource "grafana_agento11y_evaluator" "agents_quality" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   evaluator_id = "${local.grafana_gp}_answer_quality"
@@ -66,6 +68,8 @@ resource "grafana_agento11y_evaluator" "agents_quality" {
 }
 
 resource "grafana_agento11y_evaluator" "injected_tool_result" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   evaluator_id = "${local.grafana_gp}_injected_tool_result"
@@ -80,6 +84,8 @@ resource "grafana_agento11y_evaluator" "injected_tool_result" {
 }
 
 resource "grafana_agento11y_evaluator" "tool_result_markers" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   evaluator_id = "${local.grafana_gp}_tool_result_markers"
@@ -186,6 +192,8 @@ resource "grafana_agento11y_evaluator" "content_safety" {
 }
 
 resource "grafana_agento11y_evaluator" "responsible_gambling" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   evaluator_id = "${local.grafana_gp}_responsible_gambling"
@@ -200,6 +208,8 @@ resource "grafana_agento11y_evaluator" "responsible_gambling" {
 }
 
 resource "grafana_agento11y_evaluator" "tool_result_grounded" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   evaluator_id = "${local.grafana_gp}_tool_result_grounded"
@@ -221,6 +231,8 @@ resource "grafana_agento11y_evaluator" "tool_result_grounded" {
 
 # Deterministic empty-answer gate: the cheap first step of the sequential injection-resistance rule.
 resource "grafana_agento11y_evaluator" "response_not_empty" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   evaluator_id = "${local.grafana_gp}_response_not_empty"
@@ -243,6 +255,8 @@ resource "grafana_agento11y_evaluator" "response_not_empty" {
 }
 
 resource "grafana_agento11y_evaluator" "injection_resisted" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   evaluator_id = "${local.grafana_gp}_injection_resisted"
@@ -264,6 +278,8 @@ resource "grafana_agento11y_evaluator" "injection_resisted" {
 
 # Conversation scope: judges the whole session once it has been idle, not one answer.
 resource "grafana_agento11y_evaluator" "session_helpfulness" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   evaluator_id = "${local.grafana_gp}_session_helpfulness"
@@ -449,6 +465,8 @@ resource "grafana_agento11y_hook_rule" "claude_code_redact_tool_secrets" {
 # Redacts contact details in the in-app agents' preflight input; the agents send the full prompt, so
 # transforms apply (unlike the Claude Code plugin).
 resource "grafana_agento11y_hook_rule" "agents_redact_tool_pii" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   rule_id        = "${local.grafana_gp}_agents_redact_tool_pii"
@@ -483,6 +501,8 @@ resource "grafana_agento11y_hook_rule" "claude_code_content_safety" {
 }
 
 resource "grafana_agento11y_hook_rule" "agents_injected_tool_result" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   rule_id        = local.grafana_ids.guard_agents_injection
@@ -493,8 +513,8 @@ resource "grafana_agento11y_hook_rule" "agents_injected_tool_result" {
   short_circuit  = false
   match          = local.grafana_agents_match
   evaluator_ids = [
-    grafana_agento11y_evaluator.tool_result_markers.evaluator_id,
-    grafana_agento11y_evaluator.injected_tool_result.evaluator_id,
+    grafana_agento11y_evaluator.tool_result_markers[0].evaluator_id,
+    grafana_agento11y_evaluator.injected_tool_result[0].evaluator_id,
   ]
 }
 
@@ -661,27 +681,33 @@ resource "grafana_agento11y_hook_rule" "coding_agent_redact_tool_secrets" {
 # ------------------------------------------------------------------------ online evaluation rules
 
 resource "grafana_agento11y_evaluation_rule" "agents_quality" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   rule_id       = local.grafana_ids.eval_agents_quality
   selector      = "all_assistant_generations"
   sample_rate   = 0.1
   match         = local.grafana_agents_match
-  evaluator_ids = [grafana_agento11y_evaluator.agents_quality.evaluator_id, grafana_agento11y_evaluator.pii_judge.evaluator_id]
+  evaluator_ids = [grafana_agento11y_evaluator.agents_quality[0].evaluator_id, grafana_agento11y_evaluator.pii_judge.evaluator_id]
 }
 
 resource "grafana_agento11y_evaluation_rule" "compliance_responsible_gambling" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   rule_id       = "${local.grafana_gp}_compliance_responsible_gambling"
   selector      = "all_assistant_generations"
   sample_rate   = 0.25
   match         = jsonencode({ agent_name = [local.service_names.compliance] })
-  evaluator_ids = [grafana_agento11y_evaluator.responsible_gambling.evaluator_id]
+  evaluator_ids = [grafana_agento11y_evaluator.responsible_gambling[0].evaluator_id]
 }
 
 # Conversations where every evaluator on the rule failed land in a review queue.
 resource "grafana_agento11y_collection" "rg_review" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   name        = "${local.grafana_gp}_rg_review"
@@ -689,11 +715,13 @@ resource "grafana_agento11y_collection" "rg_review" {
 }
 
 resource "grafana_agento11y_rule_action" "rg_review" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
-  rule_id        = grafana_agento11y_evaluation_rule.compliance_responsible_gambling.rule_id
+  rule_id        = grafana_agento11y_evaluation_rule.compliance_responsible_gambling[0].rule_id
   condition      = "all_evaluators_fail"
-  collection_ids = [grafana_agento11y_collection.rg_review.id]
+  collection_ids = [grafana_agento11y_collection.rg_review[0].id]
 }
 
 resource "grafana_agento11y_evaluation_rule" "claude_code" {
@@ -715,17 +743,21 @@ resource "grafana_agento11y_evaluation_rule" "claude_code" {
 # scored; turn.* variables are empty in experiment scoring. The specialists are called by the
 # orchestrator, so whether each emits a user_visible_turn depends on the platform's turn detection.
 resource "grafana_agento11y_evaluation_rule" "specialists_tool_grounding" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   rule_id       = "${local.grafana_gp}_specialists_tool_grounding"
   selector      = "user_visible_turn"
   sample_rate   = 0.2
   match         = jsonencode({ agent_name = [local.service_names.odds, local.service_names.news, local.service_names.compliance] })
-  evaluator_ids = [grafana_agento11y_evaluator.tool_result_grounded.evaluator_id]
+  evaluator_ids = [grafana_agento11y_evaluator.tool_result_grounded[0].evaluator_id]
 }
 
 # Sequential: the deterministic not-empty gate runs first, so the judge only sees real answers.
 resource "grafana_agento11y_evaluation_rule" "news_injection_resistance" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   rule_id        = "${local.grafana_gp}_news_injection_resistance"
@@ -734,12 +766,14 @@ resource "grafana_agento11y_evaluation_rule" "news_injection_resistance" {
   sample_rate    = 0.25
   match          = jsonencode({ agent_name = [local.service_names.news, local.service_names.orchestrator] })
   evaluator_ids = [
-    grafana_agento11y_evaluator.response_not_empty.evaluator_id,
-    grafana_agento11y_evaluator.injection_resisted.evaluator_id,
+    grafana_agento11y_evaluator.response_not_empty[0].evaluator_id,
+    grafana_agento11y_evaluator.injection_resisted[0].evaluator_id,
   ]
 }
 
 resource "grafana_agento11y_evaluation_rule" "orchestrator_session_helpfulness" {
+  count = local.touchline_enabled ? 1 : 0
+
   provider = grafana.stack
 
   rule_id          = "${local.grafana_gp}_orchestrator_session_helpfulness"
@@ -747,7 +781,7 @@ resource "grafana_agento11y_evaluation_rule" "orchestrator_session_helpfulness" 
   min_idle_seconds = 600
   sample_rate      = 0.1
   match            = jsonencode({ agent_name = [local.service_names.orchestrator] })
-  evaluator_ids    = [grafana_agento11y_evaluator.session_helpfulness.evaluator_id]
+  evaluator_ids    = [grafana_agento11y_evaluator.session_helpfulness[0].evaluator_id]
 }
 
 # Demo-scoped names protect other users even when their generations have no namespace tag.

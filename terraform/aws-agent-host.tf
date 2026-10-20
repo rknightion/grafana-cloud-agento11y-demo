@@ -142,7 +142,7 @@ locals {
     images_name_prefix = var.images.name_prefix
     images_tag         = var.images.tag
     # Optional per-image digest pins ({gateway = "sha256:...", "dev-workstation" = "sha256:..."}).
-    images_digests_json = jsonencode(var.images.digests)
+    images_digests_json = jsonencode({ for k, v in var.images.digests : k => v if contains(["gateway", "dev-workstation"], k) })
     bundle_bucket       = var.agent_host_enabled ? aws_s3_bucket.agent_host_bundle[0].id : ""
     bundle_json = jsonencode({ for path, f in local.agent_host_bundle_files : path => {
       mode = f.mode, sha256 = f.sha256, key = "bundle/${f.sha256}/${basename(path)}"

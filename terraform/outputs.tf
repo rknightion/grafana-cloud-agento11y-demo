@@ -37,7 +37,7 @@ output "gateway_admin_read_key" {
 
 output "agents_role_arn" {
   description = "IAM role the in-app agents assume through EKS Pod Identity."
-  value       = aws_iam_role.agents.arn
+  value       = try(aws_iam_role.agents[0].arn, null)
 }
 
 output "bedrock_team_profiles" {
@@ -47,7 +47,7 @@ output "bedrock_team_profiles" {
 
 output "chart_values" {
   description = "Values for charts/touchline when you deploy it yourself (deploy_workloads = false). Contains no secrets: the chart reads the Terraform-created Secrets by name."
-  value       = yamlencode(local.chart_values)
+  value       = local.touchline_enabled ? yamlencode(local.chart_values) : null
 }
 
 output "gateway_ca_pem" {

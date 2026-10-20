@@ -7,7 +7,7 @@
 
 resource "grafana_frontend_o11y_app" "site" {
   provider = grafana.cloud
-  count    = var.frontend_observability_enabled ? 1 : 0
+  count    = var.frontend_observability_enabled && local.touchline_enabled ? 1 : 0
 
   stack_id = data.grafana_cloud_stack.this.id
   name     = local.service_names.site_web

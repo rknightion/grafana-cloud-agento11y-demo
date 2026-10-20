@@ -2,102 +2,119 @@
 # Each rule: uid suffix (prefixed with the demo name), recorded metric, source datasource
 # (prom | logs | spend) and query. A literal dollar-brace must be written with a doubled dollar.
 - uid: rec-cc-cost-hr
+  use_case: shared
   metric: ${metric_prefix}_claude_code_cost_usd_per_hour
   datasource: prom
   expr: |-
     sum by (user_email, user_groups, model) (rate(claude_code_cost_usage_USD_total{service_name="claude-code", service_namespace="${prefix}"}[10m])) * 3600
 
 - uid: rec-cc-cost-24h
+  use_case: shared
   metric: ${metric_prefix}_claude_code_cost_usd_24h
   datasource: prom
   expr: |-
     sum by (user_email, user_groups) (increase(claude_code_cost_usage_USD_total{service_name="claude-code", service_namespace="${prefix}"}[24h]))
 
 - uid: rec-cc-tokens
+  use_case: shared
   metric: ${metric_prefix}_claude_code_tokens_per_minute
   datasource: prom
   expr: |-
     sum by (user_email, model, type) (rate(claude_code_token_usage_tokens_total{service_name="claude-code", service_namespace="${prefix}"}[10m])) * 60
 
 - uid: rec-cc-sessions
+  use_case: shared
   metric: ${metric_prefix}_claude_code_sessions_1h
   datasource: prom
   expr: |-
     sum by (user_email) (increase(claude_code_session_count_total{service_name="claude-code", service_namespace="${prefix}"}[1h]))
 
 - uid: rec-cc-edits
+  use_case: shared
   metric: ${metric_prefix}_claude_code_edit_decisions_1h
   datasource: prom
   expr: |-
     sum by (user_email, tool_name, decision) (increase(claude_code_code_edit_tool_decision_total{service_name="claude-code", service_namespace="${prefix}"}[1h]))
 
 - uid: rec-agent-cost
+  use_case: touchline
   metric: ${metric_prefix}_agent_cost_usd_1h
   datasource: prom
   expr: |-
     sum by (gen_ai_agent_name) (increase(agento11y_generation_cost_usd_total{gen_ai_agent_name=~"${agents_re}"}[1h]))
 
 - uid: rec-guard
+  use_case: shared
   metric: ${metric_prefix}_guard_outcomes_1h
   datasource: prom
   expr: |-
     sum by (rule_id, outcome) (increase(agento11y_hook_rule_outcomes_total{rule_id=~"${rule_re}"}[1h]))
 
 - uid: rec-bedrock-inv
+  use_case: shared
   metric: ${metric_prefix}_bedrock_invocations_5m
   datasource: prom
   expr: |-
     sum by (dimension_ModelId) (sum_over_time(aws_bedrock_invocations_sum{dimension_ModelId!=""}[5m]))
 
 - uid: rec-bedrock-tok
+  use_case: shared
   metric: ${metric_prefix}_bedrock_tokens_5m
   datasource: prom
   expr: |-
     label_replace(sum by (dimension_ModelId) (sum_over_time(aws_bedrock_input_token_count_sum{dimension_ModelId!=""}[5m])), "direction", "input", "", "") or label_replace(sum by (dimension_ModelId) (sum_over_time(aws_bedrock_output_token_count_sum{dimension_ModelId!=""}[5m])), "direction", "output", "", "")
 
 - uid: rec-bedrock-lat
+  use_case: shared
   metric: ${metric_prefix}_bedrock_latency_ms
   datasource: prom
   expr: |-
     avg by (dimension_ModelId) (avg_over_time(aws_bedrock_invocation_latency_average{dimension_ModelId!=""}[15m]))
 
 - uid: rec-agents-p95
+  use_case: touchline
   metric: ${metric_prefix}_agents_operation_p95_seconds
   datasource: prom
   expr: |-
     histogram_quantile(0.95, sum by (le, gen_ai_agent_name) (rate(gen_ai_client_operation_duration_seconds_bucket{service_namespace="${prefix}", service_name=~"${agents_re}"}[10m])))
 
 - uid: rec-gw-inf
+  use_case: shared
   metric: ${metric_prefix}_gateway_inference_5m
   datasource: logs
   expr: |-
     sum by (model, email, status, upstream) (count_over_time(${gateway_audit} | evt="inference" [5m]))
 
 - uid: rec-gw-err
+  use_case: shared
   metric: ${metric_prefix}_gateway_inference_errors_5m
   datasource: logs
   expr: |-
     sum by (model, email, status) (count_over_time(${gateway_audit} | evt="inference" | status >= 400 [5m]))
 
 - uid: rec-gw-ratio
+  use_case: shared
   metric: ${metric_prefix}_gateway_error_ratio_15m
   datasource: logs
   expr: |-
     (sum by (model) (count_over_time(${gateway_audit} | evt="inference" | status >= 400 [15m])) or (0 * sum by (model) (count_over_time(${gateway_audit} | evt="inference" [15m])))) / sum by (model) (count_over_time(${gateway_audit} | evt="inference" [15m]))
 
 - uid: rec-gw-p95
+  use_case: shared
   metric: ${metric_prefix}_gateway_latency_p95_ms
   datasource: logs
   expr: |-
     quantile_over_time(0.95, ${gateway_audit} | evt="inference" | unwrap ms [10m]) by (model)
 
 - uid: rec-gw-signin
+  use_case: shared
   metric: ${metric_prefix}_gateway_signins_1h
   datasource: logs
   expr: |-
     sum by (evt) (count_over_time(${gateway_audit} | evt=~"device.authorize|device.verify|session.mint|managed.serve" [1h]))
 
 - uid: rec-gw-spend
+  use_case: shared
   metric: ${metric_prefix}_gateway_spend_usd
   datasource: spend
   expr: |-

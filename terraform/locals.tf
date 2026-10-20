@@ -3,6 +3,31 @@
 locals {
   prefix = var.name
 
+  use_cases          = var.use_cases
+  touchline_enabled  = contains(local.use_cases, "touchline")
+  regulatory_enabled = contains(local.use_cases, "regulatory")
+
+  # Independent of the coding-agent host and its gateway team/profile contract.
+  # Reserved seam for the separate regulatory chart.
+  # tflint-ignore: terraform_unused_declarations
+  regulatory_service_names = { for role in ["orchestrator", "source", "drafter", "reviewer", "readability", "loadgen"] : role => "${var.regulatory_name}-${role}" }
+  regulatory_agent_teams = {
+    orchestrator = "medical-writing"
+    source       = "clinical-science"
+    drafter      = "medical-writing"
+    reviewer     = "regulatory-affairs"
+    readability  = "medical-writing"
+  }
+  # Reserved seam for regulatory-only application profiles.
+  # tflint-ignore: terraform_unused_declarations
+  regulatory_team_models = { for pair in setproduct(distinct(values(local.regulatory_agent_teams)), keys(var.bedrock_models)) :
+    "${pair[0]}.${pair[1]}" => {
+      team           = pair[0]
+      model          = pair[1]
+      source_profile = var.bedrock_models[pair[1]]
+    } if local.regulatory_enabled
+  }
+
   service_names = {
     orchestrator = "${var.name}-orchestrator"
     news         = "${var.name}-news"
@@ -55,7 +80,7 @@ locals {
     contact_point     = "${var.name}-null"
     metric_prefix     = replace(var.name, "-", "_")
     demo_label        = "${replace(var.name, "-", "_")}_demo"
-    dashboards        = ["agents", "bedrock", "claude-code", "gateway", "codex", "pi", "coding-agents"]
+    dashboards        = [for d in ["agents", "bedrock", "claude-code", "gateway", "codex", "pi", "coding-agents"] : d if d != "agents" || local.touchline_enabled]
     guard_prefix      = replace(var.name, "-", "_")
     datasource_prom   = "grafanacloud-prom"
     datasource_logs   = "grafanacloud-logs"

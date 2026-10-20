@@ -7,6 +7,7 @@
 # the right-hand branch, which catches a counter whose first sample already holds the denies.
 
 - uid: al-guard-deny
+  use_case: shared
   title: Guard denied a Claude Code prompt
   datasource: prom
   expr: |-
@@ -22,6 +23,7 @@
     unattended.
 
 - uid: al-gw-spend
+  use_case: shared
   title: Developer gateway spend today above ${spend_fraction_pct}% of the organization daily cap
   datasource: spend
   expr: |-
@@ -36,6 +38,7 @@
     organization daily cap (USD ${spend_cap_usd}), so steady demo traffic crosses it within hours.
 
 - uid: al-guard
+  use_case: touchline
   title: Guard rule warned or blocked an agent action
   datasource: prom
   expr: |-
@@ -49,6 +52,7 @@
     call or a tool result.
 
 - uid: al-cc-spend-today
+  use_case: shared
   title: Developer Claude Code spend today above $1
   datasource: prom
   expr: |-
@@ -62,6 +66,7 @@
     metric. In production this would sit at a per-team budget.
 
 - uid: al-cc-cost-hour
+  use_case: shared
   title: Claude Code burn rate above $0.25 per hour
   datasource: prom
   expr: |-
@@ -76,6 +81,7 @@
     the daily budget does.
 
 - uid: al-gw-errors
+  use_case: shared
   title: Claude apps gateway returned inference errors
   datasource: logs
   range: 1800
@@ -89,6 +95,7 @@
     Any non-2xx inference response from the demo gateway, from the gateway audit log in Loki.
 
 - uid: al-cc-edit-reject
+  use_case: shared
   title: Claude Code edit rejected by a developer
   datasource: prom
   expr: |-
@@ -101,6 +108,7 @@
     Rejected edits are a quality signal: the agent proposed changes a human refused.
 
 - uid: al-bedrock-throttle
+  use_case: shared
   title: Bedrock throttling requests
   datasource: prom
   expr: |-
@@ -114,6 +122,7 @@
     load across inference profiles.
 
 - uid: al-bedrock-5xx
+  use_case: shared
   title: Bedrock server errors
   datasource: prom
   expr: |-
@@ -128,6 +137,7 @@
     issue; check the AWS Health dashboard.
 
 - uid: al-bedrock-latency
+  use_case: shared
   title: Bedrock invocation latency above 30s
   datasource: prom
   expr: |-
@@ -141,6 +151,7 @@
     Average Bedrock invocation latency over 15m. Realistic threshold, expected to stay normal.
 
 - uid: al-gw-ratio
+  use_case: shared
   title: Gateway error ratio above 20%
   datasource: logs
   range: 900
@@ -155,6 +166,7 @@
     Sustained share of failed inference requests through the gateway. Realistic SLO-style threshold.
 
 - uid: al-gw-p95
+  use_case: shared
   title: Gateway p95 latency above 60s
   datasource: logs
   expr: |-
@@ -168,6 +180,7 @@
     End-to-end latency through the demo gateway including Bedrock. Realistic threshold.
 
 - uid: al-agents-cost
+  use_case: touchline
   title: In-app agent cost above $2 per hour
   datasource: prom
   expr: |-

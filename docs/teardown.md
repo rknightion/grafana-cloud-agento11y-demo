@@ -48,8 +48,12 @@ every log group is owned by Terraform.
 
 - **Kubernetes provider cannot reach the cluster**: the cluster is gone or your credentials
   expired. Refresh them (`aws sso login` or equivalent) and retry. If the cluster really is gone,
-  remove the Kubernetes objects from state (`tofu state rm` on `module.demo.helm_release.this`,
-  `module.demo.kubernetes_namespace_v1.this` and the `kubernetes_secret_v1` resources) and run
+  remove the Kubernetes objects from state (`tofu state rm` on `module.demo.helm_release.this[0]`,
+  `module.demo.kubernetes_namespace_v1.this[0]` and the four counted Secrets:
+  `module.demo.kubernetes_secret_v1.grafana_otlp[0]`,
+  `module.demo.kubernetes_secret_v1.agento11y[0]`,
+  `module.demo.kubernetes_secret_v1.faro[0]`,
+  `module.demo.kubernetes_secret_v1.experiments[0]`) and run
   destroy again.
 - **Namespace stuck terminating**: a finalizer on something the chart did not create. Check
   `kubectl get all,ingress -n touchline` and remove the leftover object.

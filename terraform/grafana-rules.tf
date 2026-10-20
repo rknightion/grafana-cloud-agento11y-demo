@@ -59,7 +59,7 @@ resource "grafana_rule_group" "recording" {
   interval_seconds = 60
 
   dynamic "rule" {
-    for_each = local.grafana_recording_rules
+    for_each = [for rule in local.grafana_recording_rules : rule if rule.use_case == "shared" || local.touchline_enabled]
     content {
       # Recording rules take record{} and none of condition / no_data_state / exec_err_state.
       uid    = "${local.prefix}-${rule.value.uid}"
@@ -108,7 +108,7 @@ resource "grafana_rule_group" "alerts" {
   interval_seconds = 60
 
   dynamic "rule" {
-    for_each = local.grafana_alert_rules
+    for_each = [for rule in local.grafana_alert_rules : rule if rule.use_case == "shared" || local.touchline_enabled]
     content {
       uid            = "${local.prefix}-${rule.value.uid}"
       name           = rule.value.title

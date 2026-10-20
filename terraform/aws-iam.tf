@@ -2,6 +2,8 @@
 # accounts (created by the chart) have no AWS access.
 
 data "aws_iam_policy_document" "agents_assume" {
+  count = local.touchline_enabled ? 1 : 0
+
   statement {
     effect  = "Allow"
     actions = ["sts:AssumeRole", "sts:TagSession"]
@@ -34,22 +36,28 @@ data "aws_iam_policy_document" "agents_assume" {
 }
 
 resource "aws_iam_role" "agents" {
+  count = local.touchline_enabled ? 1 : 0
+
   name               = "${local.prefix}-agents"
   description        = "Assumed through EKS Pod Identity by ${var.namespace}/${local.service_accounts.agents}"
-  assume_role_policy = data.aws_iam_policy_document.agents_assume.json
+  assume_role_policy = data.aws_iam_policy_document.agents_assume[0].json
   tags               = var.tags
 }
 
 resource "aws_iam_role_policy" "agents_bedrock" {
+  count = local.touchline_enabled ? 1 : 0
+
   name   = "${local.prefix}-agents-bedrock"
-  role   = aws_iam_role.agents.id
+  role   = aws_iam_role.agents[0].id
   policy = data.aws_iam_policy_document.bedrock_invoke.json
 }
 
 resource "aws_eks_pod_identity_association" "agents" {
+  count = local.touchline_enabled ? 1 : 0
+
   cluster_name    = var.cluster_name
   namespace       = var.namespace
   service_account = local.service_accounts.agents
-  role_arn        = aws_iam_role.agents.arn
+  role_arn        = aws_iam_role.agents[0].arn
   tags            = var.tags
 }

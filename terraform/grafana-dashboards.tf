@@ -53,7 +53,7 @@ locals {
   # Raw template values. Each is JSON-string-escaped below because it lands inside a JSON string.
   grafana_dashboard_values = merge(
     { for k, v in local.service_names : "svc_${k}" => v },
-    { for d, uid in local.grafana_dashboard_uids : "dash_${replace(d, "-", "_")}" => uid },
+    { for d in ["agents", "bedrock", "claude-code", "gateway", "codex", "pi", "coding-agents"] : "dash_${replace(d, "-", "_")}" => "${local.prefix}-${d}" },
     {
       prefix        = local.prefix
       metric_prefix = local.grafana.metric_prefix
@@ -89,6 +89,8 @@ locals {
       gateway_caller_re = ".*:assumed-role/${local.prefix}-agent-host[^/]*/.*"
     },
   )
+  grafana_dashboard_specs = { for d in local.grafana.dashboards : d => jsondecode(templatefile("${path.module}/dashboards/${d}.json.tftpl", local.grafana_dashboard_vars)).spec }
+
   grafana_dashboard_vars = {
     for k, v in local.grafana_dashboard_values : k => trimsuffix(trimprefix(jsonencode(v), "\""), "\"")
   }
@@ -104,6 +106,8 @@ resource "grafana_apps_dashboard_dashboard_v2" "this" {
   }
 
   spec {
-    json = jsonencode(jsondecode(templatefile("${path.module}/dashboards/${each.key}.json.tftpl", local.grafana_dashboard_vars)).spec)
+    json = jsonencode(merge(local.grafana_dashboard_specs[each.key], {
+      links = [for link in local.grafana_dashboard_specs[each.key].links : link if local.touchline_enabled || try(link.url, "") != "/d/${local.prefix}-agents"]
+    }))
   }
 }

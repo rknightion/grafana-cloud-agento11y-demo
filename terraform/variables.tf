@@ -268,3 +268,65 @@ variable "knowledge_graph_enabled" {
   type        = bool
   default     = true
 }
+
+# --- Opt-in regulatory document-authoring workload -----------------------------------------------
+
+variable "use_cases" {
+  description = "Enabled in-app use cases. The coding-agent host and shared gateway remain independent."
+  type        = set(string)
+  default     = ["touchline"]
+  validation {
+    condition     = length(var.use_cases) > 0 && length(setsubtract(var.use_cases, ["touchline", "regulatory"])) == 0
+    error_message = "use_cases must be a non-empty set containing only touchline and/or regulatory."
+  }
+}
+
+variable "regulatory_name" {
+  description = "Independent prefix for regulatory resources; must not overlap name or its guard prefix."
+  type        = string
+  default     = "dossier"
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]{1,20}$", var.regulatory_name))
+    error_message = "regulatory_name must be 2-21 lowercase letters, digits or hyphens, starting with a letter."
+  }
+}
+
+variable "regulatory_namespace" {
+  description = "Dedicated Kubernetes namespace for regulatory pods and Alloy; must differ from namespace."
+  type        = string
+  default     = "dossier"
+  validation {
+    condition     = length(var.regulatory_namespace) <= 63 && can(regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?$", var.regulatory_namespace))
+    error_message = "regulatory_namespace must be a Kubernetes DNS label of 1-63 characters."
+  }
+}
+
+variable "regulatory_agent_models" {
+  description = "bedrock_models key for each regulatory agent; independent of agent_models and gateway permissions."
+  type        = map(string)
+  default = {
+    orchestrator = "sonnet"
+    source       = "haiku"
+    drafter      = "sonnet"
+    reviewer     = "sonnet"
+    readability  = "haiku"
+  }
+  validation {
+    condition = (
+      toset(keys(var.regulatory_agent_models)) == toset(["orchestrator", "source", "drafter", "reviewer", "readability"])
+    )
+    error_message = "regulatory_agent_models must map exactly orchestrator, source, drafter, reviewer and readability."
+  }
+}
+
+# Reserved input for the separate regulatory load generator.
+# tflint-ignore: terraform_unused_declarations
+variable "regulatory_requests_per_minute" {
+  description = "Regulatory document requests per minute while traffic_enabled is true; zero pauses request generation."
+  type        = number
+  default     = 1
+  validation {
+    condition     = var.regulatory_requests_per_minute >= 0 && floor(var.regulatory_requests_per_minute) == var.regulatory_requests_per_minute
+    error_message = "regulatory_requests_per_minute must be a non-negative integer."
+  }
+}
