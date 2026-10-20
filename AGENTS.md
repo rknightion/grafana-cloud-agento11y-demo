@@ -135,3 +135,10 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
   from Touchline. New rules need serial apply and readback; local stub proof is not live scoring.
 - The regulatory image has no braces CVE exception. A failing image scan must be resolved upstream
   or returned for a new maintainer decision; never reuse the agents-only exception.
+
+- Regulatory source-note remote detection starts as warn at priority 10 with short_circuit=false;
+  the app still rejects known markers before model input. Guard-policy experiments require a
+  failed evaluation for the exact rule. Promotion to deny needs reviewed warning outcomes and
+  the detector moved into the below-10 deny tier.
+- The regulatory Deployment load generator runs continuously until shutdown. MAX_REQUESTS is
+  an explicit test/manual bound only; zero requests per minute sends nothing and scales it to 0.
