@@ -142,3 +142,6 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
   the detector moved into the below-10 deny tier.
 - The regulatory Deployment load generator runs continuously until shutdown. MAX_REQUESTS is
   an explicit test/manual bound only; zero requests per minute sends nothing and scales it to 0.
+- `apps/regulatory/.npmrc` matches agents' legacy-peer-deps setting to exclude the SDK's unused
+  optional Strands integration. Keep lockfile generation, clean installs and Docker resolution
+  aligned; automatic peer installation adds hundreds of unused packages and extra audit findings.
