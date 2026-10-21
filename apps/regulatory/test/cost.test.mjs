@@ -11,9 +11,10 @@ test('HTTP pipeline exports actual per-generation cost by document/section witho
   const telemetry = { meter: provider.getMeter('regulatory-cost-test'), tracer: trace.getTracer('cost-test'), shutdown: async () => {} };
   const urls = {}, servers = [], services = [];
   const profile = 'eu.anthropic.claude-sonnet-4-6';
+  let truncateDraft = false;
   try {
     for (const role of ['source', 'drafter', 'reviewer', 'readability', 'orchestrator']) {
-      const service = createAgentService({ role, env: { AWS_REGION: 'eu-west-1', MODEL_NAME: profile, CONTENT_CAPTURE: 'false' }, client, telemetry, log() {}, model: { shutdown() {}, async generate() { return { text: role === 'reviewer' ? '{"review_state":"approved"}' : 'This is fictional. You can leave.', usage: { inputTokens: 1000, outputTokens: 200 } }; } }, fetchImpl: async (url, options) => fetch(urls[/dossier-([^:]+)/.exec(String(url))[1]], options) });
+      const service = createAgentService({ role, env: { AWS_REGION: 'eu-west-1', MODEL_NAME: profile, CONTENT_CAPTURE: 'false' }, client, telemetry, log() {}, model: { shutdown() {}, async generate() { return { stopReason: truncateDraft && role === 'drafter' ? 'max_tokens' : 'end_turn', text: role === 'reviewer' ? '{"review_state":"approved"}' : 'This is fictional. You can leave.', usage: { inputTokens: 1000, outputTokens: 200 } }; } }, fetchImpl: async (url, options) => fetch(urls[/dossier-([^:]+)/.exec(String(url))[1]], options) });
       const server = createAgentHttpServer(service); await new Promise((r) => server.listen(0, '127.0.0.1', r)); urls[role] = `http://127.0.0.1:${server.address().port}/v1/agent`; services.push(service); servers.push(server);
     }
     async function send(payload, url = urls.orchestrator) { const response = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) }); assert.equal(response.status, 200); return response.json(); }
@@ -27,8 +28,12 @@ test('HTTP pipeline exports actual per-generation cost by document/section witho
     assert.deepEqual(cost.dataPoints.filter((p) => p.attributes.document_type === 'icf').map((p) => p.attributes.agent_role).sort(), ['drafter', 'readability', 'reviewer']);
     for (const point of cost.dataPoints) { assert.ok(Math.abs(point.value - 0.0066) < 1e-12); assert.equal(point.attributes.model_name, profile); assert.ok(['synopsis', 'purpose'].includes(point.attributes.section)); assert.deepEqual(Object.keys(point.attributes).sort(), ['agent_role', 'document_type', 'model_name', 'section']); }
     assert.ok(unpriced.dataPoints.every((point) => point.value === 0));
+    truncateDraft = true;
+    const failed = await send({ document_type: 'csr', study_id: 'XQZ-301', section: 'synopsis' });
+    assert.equal(failed.review_state, 'escalated'); assert.equal(failed.text, ''); assert.equal(failed.usage.length, 1); assert.equal(failed.usage[0].outputTokens, 200); assert.equal(failed.usage[0].stopReason, 'max_tokens');
+    truncateDraft = false;
     // The model is a process configuration value, never an unbounded request attribute.
-    const unknown = createAgentService({ role: 'drafter', env: { AWS_REGION: 'eu-west-1', MODEL_NAME: 'unpriced-model' }, client, telemetry, log() {}, model: { shutdown() {}, async generate() { return { text: 'Fictional.', usage: { inputTokens: 500, outputTokens: 100 } }; } } }); services.push(unknown);
+    const unknown = createAgentService({ role: 'drafter', env: { AWS_REGION: 'eu-west-1', MODEL_NAME: 'unpriced-model' }, client, telemetry, log() {}, model: { shutdown() {}, async generate() { return { stopReason: 'end_turn', text: 'Fictional.', usage: { inputTokens: 500, outputTokens: 100 } }; } } }); services.push(unknown);
     await unknown.run({ document_type: 'csr', study_id: 'XQZ-301', section: 'synopsis' }); await provider.forceFlush();
     const final = exporter.getMetrics().at(-1).scopeMetrics.flatMap((scope) => scope.metrics);
     assert.ok(!final.find((m) => m.descriptor.name === 'regulatory_estimated_cost_usd_total').dataPoints.some((point) => point.attributes.model_name === 'unpriced-model'));

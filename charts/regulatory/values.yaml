@@ -20,7 +20,7 @@ secrets:
   experiments: dossier-experiments
 aws:
   region: eu-west-1
-agentVersion: v1
+agentVersion: v2
 agents:
   orchestrator:
     modelProfileArn: ""
@@ -50,7 +50,8 @@ agents:
 agentResources:
   requests: {cpu: 50m, memory: 256Mi}
   limits: {cpu: "1", memory: 512Mi}
-# Full mode captures guarded content only; false retains operational metadata and scores.
+# Capture controls app-exported generation/tool content, not preflight guard requests.
+# False retains operational metadata and scores; guards still receive source content.
 contentCapture: true
 traffic:
   enabled: true

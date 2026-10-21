@@ -95,7 +95,8 @@ flowchart LR
 ```
 
 Specialists communicate over HTTP; model calls use the regulatory teams' Bedrock application
-inference profiles. This chart has no site, Redis or Faro app. Each use case has its own namespace,
+inference profiles. The chart defaults `agentVersion` to `v2`, exported as `agent_version` to
+identify the prompt set. This chart has no site, Redis or Faro app. Each use case has its own namespace,
 Alloy, service accounts and experiments schedule. Regulatory agents' IAM permissions cover only
 their own profile/model combinations. Loadgen and experiments do not receive Bedrock permissions.
 
@@ -107,7 +108,7 @@ their own profile/model combinations. Loadgen and experiments do not receive Bed
 | Deterministic numeric grounding and ICF reading grade | Available | Available |
 | App-derived document/section cost estimates and unpriced coverage | Available | Available |
 | SDK usage and model cost | Available when exported | Available when exported |
-| Free-form prompt, source, draft and response content in app telemetry | Omitted | Guarded content captured |
+| Free-form prompt, source, draft and response content in app-exported generation/tool telemetry | Omitted | Guarded content captured |
 | Online content evaluators | No content to score; empty panels are expected | Can score captured content asynchronously |
 | Preflight source controls | Enforced | Enforced |
 
@@ -118,9 +119,11 @@ redaction and source-note injection detection have separate rules: patient redac
 source material. A guard failure must not be presented as a successful redact-and-continue result.
 
 Operational metadata includes study identifiers and bounded document/section labels. Metadata mode
-still sends the guarded source to the model for inference and returns draft text to the caller;
-it controls telemetry capture, not whether drafting occurs. It also does not change shared gateway
-capture or account-wide Bedrock invocation logging. See [Security](security.md) before enabling
+suppresses content in the app's exported generation and tool telemetry. The app still sends source
+content to the configured guard service for preflight evaluation, sends guarded evidence to the
+model for inference and returns draft text to the caller. This setting makes no promise about the
+guard service's retention. It also does not change shared gateway capture or account-wide Bedrock
+invocation logging. See [Security](security.md) before enabling
 any additional content path. Keep real patient or investigator data out of this demo in either mode.
 
 ## Exercise and inspect

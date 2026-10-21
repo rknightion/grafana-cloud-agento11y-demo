@@ -152,8 +152,8 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
   count, never a fake zero cost; stub tokens and orchestrator aggregates are excluded.
 - The pinned experiment SDK stringifies recordIO input; serialize structured request/source
   evidence to JSON explicitly or judges receive only the literal [object Object].
-- A new cost counter series must take its raw-value unless-offset branch before increase, so
-  later increments do not hide the first returned generation's cost. Preserve observed zeros.
+- Selected-range counter totals use last_over_time unless-offset before increase, then aggregate,
+  so first increments from new or retired pods are retained. Preserve observed zeros.
 - Gateway and workstation runtime apt layers enforce the Bookworm jq/libjq1 security floor
   1.6-2.1+deb12u3 or newer. Keep the minimum checks and normal image scan gates; do not suppress
   a fixed-version vulnerability as unfixed.
@@ -161,3 +161,7 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
   only that exact wrapper around a JSON object, then validate the review-state enum; text outside
   the wrapper, malformed JSON and invalid states still escalate. Do not silently discard costs
   of a returned generation when subsequent review parsing fails.
+
+- Regulatory prompt set v2 uses short role-specific outputs. Preserve actual Bedrock usage and
+  stopReason before rejecting incomplete completions; absent usage remains unknown, and partial
+  model content never becomes a successful document.

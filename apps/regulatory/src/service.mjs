@@ -60,8 +60,14 @@ export function createAgentService(options = {}) {
       // Count each actual returned generation once, even if later validation/review escalates.
       // Orchestrator usage aggregates are never priced again.
       recordCost(request, identity.name, output.usage);
-      if (typeof output.text !== 'string' || output.text.length > 16000) throw new Error('Invalid model output');
-      recorder.setResult({ input: [{ role: 'user', content: JSON.stringify(safe) }], output: [{ role: 'assistant', content: output.text }], responseModel: identity.name, usage: { ...output.usage, totalTokens: output.usage.inputTokens + output.usage.outputTokens } });
+      const validText = typeof output.text === 'string' && output.text.length > 0 && output.text.length <= 16000;
+      const validUsage = Number.isSafeInteger(output.usage?.inputTokens) && output.usage.inputTokens >= 0 && Number.isSafeInteger(output.usage?.outputTokens) && output.usage.outputTokens >= 0;
+      recorder.setResult({ input: [{ role: 'user', content: JSON.stringify(safe) }], output: [{ role: 'assistant', content: validText ? output.text : '' }], responseModel: identity.name, usage: output.usage, stopReason: output.stopReason });
+      if (!validText || !validUsage || output.stopReason !== 'end_turn') {
+        const error = new Error('Incomplete model response');
+        error.usage = [{ agent: name, ...output.usage, ...(output.stopReason ? { stopReason: output.stopReason } : {}) }];
+        throw error;
+      }
     }));
     return output;
   }
@@ -81,13 +87,14 @@ export function createAgentService(options = {}) {
       const result = { request_id: randomUUID(), document_type: request.document_type, study_id: request.study_id, section: request.section, agent_version: version, review_state: 'escalated', text: '', metrics: {}, usage: [] };
       try {
         if (role === 'orchestrator') {
-          const source = await specialist('source', request); if (source.review_state === 'escalated') throw new Error('Source escalated');
-          const draft = await specialist('drafter', { ...request, evidence: source.evidence }); if (draft.review_state === 'escalated') throw new Error('Draft escalated');
-          const reviewed = await specialist('reviewer', { ...request, evidence: source.evidence, draft: draft.text });
+          const source = await specialist('source', request); result.usage.push(...source.usage); if (source.review_state === 'escalated') throw new Error('Source escalated');
+          const draft = await specialist('drafter', { ...request, evidence: source.evidence }); result.usage.push(...draft.usage); if (draft.review_state === 'escalated') throw new Error('Draft escalated');
+          const reviewed = await specialist('reviewer', { ...request, evidence: source.evidence, draft: draft.text }); result.usage.push(...reviewed.usage);
           const readable = request.document_type === 'icf' ? await specialist('readability', { ...request, evidence: source.evidence, draft: draft.text }) : undefined;
           result.text = draft.text; result.metrics = reviewed.metrics; result.review_state = [reviewed, readable].some((r) => r?.review_state === 'escalated') ? 'escalated' : [reviewed, readable].some((r) => r?.review_state === 'needs_revision') ? 'needs_revision' : 'approved';
           if (readable) result.metrics = { ...result.metrics, ...readable.metrics };
-          result.usage = [source, draft, reviewed, readable].filter(Boolean).flatMap((r) => r.usage);
+          if (readable) result.usage.push(...readable.usage);
+          if (result.review_state === 'escalated') result.text = '';
         } else if (role === 'source') {
           result.evidence = {};
           for (const [key, tool] of Object.entries({ study: get_study, table: get_table, rules: get_section_rules, prior: get_prior_approved_text })) result.evidence[key] = await guard(tool(request), request, ({ study: 'get_study', table: 'get_table', rules: 'get_section_rules', prior: 'get_prior_approved_text' })[key]);
@@ -102,7 +109,7 @@ export function createAgentService(options = {}) {
           if (role === 'reviewer') { let reviewed; try { reviewed = parseReviewResult(generated.text); } catch { throw new Error('Reviewer response invalid'); } if (!['approved', 'needs_revision', 'escalated'].includes(reviewed.review_state)) throw new Error('Reviewer state invalid'); if (reviewed.review_state !== 'approved') result.review_state = reviewed.review_state; }
           if (request.document_type === 'icf') { result.metrics.reading_grade = readability_grade({ text: result.text }); if (result.metrics.reading_grade > 8 && result.review_state === 'approved') result.review_state = 'needs_revision'; }
         }
-      } catch { result.text = ''; result.review_state = 'escalated'; delete result.evidence; span.setStatus({ code: SpanStatusCode.ERROR, message: 'Regulatory request escalated' }); }
+      } catch (error) { if (error.usage) result.usage.push(...error.usage); result.text = ''; result.review_state = 'escalated'; delete result.evidence; span.setStatus({ code: SpanStatusCode.ERROR, message: 'Regulatory request escalated' }); }
       finally {
         span.setAttribute('review_state', result.review_state);
         if (role === 'orchestrator') { const attrs = { document_type: request.document_type, section: request.section }; metric.requests_total.add(1, { ...attrs, review_state: result.review_state }); metric.request_duration_seconds.record((performance.now() - began) / 1000, attrs); if (Number.isFinite(result.metrics.number_grounding)) metric.number_grounding_ratio.record(result.metrics.number_grounding, attrs); if (Number.isFinite(result.metrics.reading_grade)) metric.reading_grade.record(result.metrics.reading_grade, attrs); }

@@ -83,7 +83,7 @@ test('reviewer accepts a single fenced JSON object but rejects extra text and in
     ['Explanation first.\n```json\n{"review_state":"approved"}\n```', 'escalated'],
     ['```json\n{"review_state":"invalid"}\n```', 'escalated'],
   ]) {
-    const service = createAgentService({ role: 'reviewer', env: { STUB_MODEL: '1' }, telemetry, log() {}, client: noop, model: { shutdown() {}, async generate() { return { text, usage: { inputTokens: 10, outputTokens: 10 } }; } } });
+    const service = createAgentService({ role: 'reviewer', env: { STUB_MODEL: '1' }, telemetry, log() {}, client: noop, model: { shutdown() {}, async generate() { return { stopReason: 'end_turn', text, usage: { inputTokens: 10, outputTokens: 10 } }; } } });
     try {
       const result = await service.run({ ...request, draft: 'This fictional study requires review.' });
       assert.equal(result.review_state, expected);

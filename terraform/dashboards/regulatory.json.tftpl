@@ -293,7 +293,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum by (document_type,review_state) (increase(regulatory_requests_total{service_namespace=\"${prefix}\"}[$__range]))",
+                        "expr": "sum by (document_type,review_state) ((last_over_time(regulatory_requests_total{service_namespace=\"${prefix}\"}[$__range]) unless regulatory_requests_total{service_namespace=\"${prefix}\"} offset $__range) or increase(regulatory_requests_total{service_namespace=\"${prefix}\"}[$__range]))",
                         "legendFormat": "{{document_type}} / {{review_state}}",
                         "range": false,
                         "instant": true,
@@ -727,7 +727,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum by (document_type,section) ((regulatory_estimated_cost_usd_total{service_namespace=\"${prefix}\"} unless regulatory_estimated_cost_usd_total{service_namespace=\"${prefix}\"} offset $__range) or increase(regulatory_estimated_cost_usd_total{service_namespace=\"${prefix}\"}[$__range]))",
+                        "expr": "sum by (document_type,section) ((last_over_time(regulatory_estimated_cost_usd_total{service_namespace=\"${prefix}\"}[$__range]) unless regulatory_estimated_cost_usd_total{service_namespace=\"${prefix}\"} offset $__range) or increase(regulatory_estimated_cost_usd_total{service_namespace=\"${prefix}\"}[$__range]))",
                         "legendFormat": "{{document_type}} / {{section}}",
                         "range": false,
                         "instant": true,
@@ -801,7 +801,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum by (document_type,section,agent_role,model_name) ((regulatory_unpriced_generations_total{service_namespace=\"${prefix}\"} unless regulatory_unpriced_generations_total{service_namespace=\"${prefix}\"} offset $__range) or increase(regulatory_unpriced_generations_total{service_namespace=\"${prefix}\"}[$__range]))",
+                        "expr": "sum by (document_type,section,agent_role,model_name) ((last_over_time(regulatory_unpriced_generations_total{service_namespace=\"${prefix}\"}[$__range]) unless regulatory_unpriced_generations_total{service_namespace=\"${prefix}\"} offset $__range) or increase(regulatory_unpriced_generations_total{service_namespace=\"${prefix}\"}[$__range]))",
                         "legendFormat": "{{document_type}} / {{section}} / {{agent_role}} / {{model_name}}",
                         "range": false,
                         "instant": true,
@@ -965,7 +965,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum by (guard,outcome) (increase(regulatory_guard_events_total{service_namespace=\"${prefix}\"}[$__range]))",
+                        "expr": "sum by (guard,outcome) ((last_over_time(regulatory_guard_events_total{service_namespace=\"${prefix}\"}[$__range]) unless regulatory_guard_events_total{service_namespace=\"${prefix}\"} offset $__range) or increase(regulatory_guard_events_total{service_namespace=\"${prefix}\"}[$__range]))",
                         "legendFormat": "{{guard}} / {{outcome}}",
                         "range": false,
                         "instant": true,

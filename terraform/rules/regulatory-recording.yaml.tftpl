@@ -39,7 +39,7 @@
   metric: ${metric_prefix}_guard_events_1h
   datasource: prom
   expr: |-
-    sum by (guard, outcome) (increase(regulatory_guard_events_total{service_namespace="${prefix}"}[1h]))
+    sum by (guard, outcome) ((last_over_time(regulatory_guard_events_total{service_namespace="${prefix}"}[1h]) unless regulatory_guard_events_total{service_namespace="${prefix}"} offset 1h) or increase(regulatory_guard_events_total{service_namespace="${prefix}"}[1h]))
 
 - uid: rec-reg-agent-cost
   use_case: regulatory
@@ -60,4 +60,4 @@
   metric: ${metric_prefix}_unpriced_generations_1h
   datasource: prom
   expr: |-
-    sum by (document_type, section, agent_role, model_name) ((regulatory_unpriced_generations_total{service_namespace="${prefix}"} unless regulatory_unpriced_generations_total{service_namespace="${prefix}"} offset 1h) or increase(regulatory_unpriced_generations_total{service_namespace="${prefix}"}[1h]))
+    sum by (document_type, section, agent_role, model_name) ((last_over_time(regulatory_unpriced_generations_total{service_namespace="${prefix}"}[1h]) unless regulatory_unpriced_generations_total{service_namespace="${prefix}"} offset 1h) or increase(regulatory_unpriced_generations_total{service_namespace="${prefix}"}[1h]))

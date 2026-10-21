@@ -12,7 +12,7 @@ export function serviceNamespace(env = process.env) { return (env.SERVICE_NAMESP
 export function agentName(role, env = process.env) { return `${serviceNamespace(env)}-${role}`; }
 export function selfAgentName(role, env = process.env) { return (env.OTEL_SERVICE_NAME || agentName(role, env)).trim(); }
 export function agentTeam(role, env = process.env) { return (env.AGENT_TEAM || TEAMS[role]).trim(); }
-export function agentVersion(env = process.env) { return (env.AGENT_VERSION || 'v1').trim(); }
+export function agentVersion(env = process.env) { return (env.AGENT_VERSION || 'v2').trim(); }
 export function captureMode(env = process.env) {
   // The regulatory switch is authoritative: an inherited SDK override cannot re-enable content.
   if (!boolEnv(env.CONTENT_CAPTURE, true)) return 'metadata_only';

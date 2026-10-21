@@ -3,7 +3,7 @@ id: doc-0003
 title: Regulatory content-generation use case design
 type: specification
 created_date: '2026-10-20 21:16'
-updated_date: '2026-10-21T02:03:00Z'
+updated_date: '2026-10-21T02:40:00Z'
 ---
 # Regulatory content-generation use case: design
 
@@ -289,7 +289,16 @@ of live acceptance. No automatic renewal is authorized.
 The owner explicitly requested continued autonomous delivery beyond publication. Existing
 consumer configuration fixes the target to the existing lab stack, region and shared cluster;
 no new stack was selected. The separate encrypted demo state was read and is empty. A fresh
-paused regulatory-only preflight plan has89creates, no changes/deletes, no EC2 host, no metric
+paused regulatory-only preflight plan has 89 creates, no changes/deletes, no EC2 host, no metric
 stream and no account-wide Bedrock invocation logging. Final source/image pins must be reviewed
 and verified before apply. Consumer lifecycle evidence is tracked in the private infrastructure
 board; no private names, account identifiers or credentials belong in this public board.
+
+### Live continuation correction
+
+The isolated regulatory deployment and stored guard/online scoring evidence now exist. The guard
+suite completed with all three stored checks passing. The first section-prompt experiment stored
+a scored trial before failing on an incomplete model completion. Prompt set v2 bounds role
+outputs and retains actual usage and stop reason before escalation. Counter totals retain first
+events from retired pods. Both capture-mode snapshots and clean teardown remain required; no
+completed live acceptance is claimed yet.

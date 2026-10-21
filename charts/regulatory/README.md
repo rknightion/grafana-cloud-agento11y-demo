@@ -27,8 +27,8 @@ helm upgrade --install dossier ./charts/regulatory --namespace dossier --values 
 | `secrets.experiments` | `dossier-experiments` | Existing Secret: `grafana_url`, `token`. |
 | `aws.region` | `eu-west-1` | Bedrock region. |
 | `agents` | Five roles | `orchestrator`, `source`, `drafter`, `reviewer`, `readability`, each with team/model settings. |
-| `agentVersion` | `v1` | Prompt-set governance label. |
-| `contentCapture` | `true` | Full guarded content capture; false retains metadata and in-app scores. |
+| `agentVersion` | `v2` | Prompt-set governance label. |
+| `contentCapture` | `true` | Capture guarded generation/tool content in app telemetry; false retains metadata and in-app scores. |
 | `traffic.enabled` | `true` | False scales loadgen to zero and suspends experiments. |
 | `traffic.requestsPerMinute` | `2` | Synthetic document requests per minute. |
 | `traffic.experimentsSchedule` | `37 * * * *` | Scheduled section-prompt/guard-policy experiments. |
@@ -38,6 +38,9 @@ Pod Identity uses its own projected token. Agents and loadgen do not mount the g
 API token. Experiments can create Leases and get/update/patch their single named Lease; Alloy can
 read only pods, pod logs and ReplicaSets in the release namespace. All containers have resource
 bounds and non-root security contexts. Secrets contain synthetic-demo credentials only; never use
-real patient or regulated data. Metadata mode omits free-form content while grounding and reading
-grade remain available. With Alloy disabled, configure an alternative collector before generating
-traffic: the default app exporter points at the chart's Alloy Service.
+real patient or regulated data. Metadata mode suppresses content in the app's exported generation
+and tool telemetry while grounding and reading grade remain available. The app still sends source
+content to the configured guard service for preflight evaluation and guarded evidence to the model.
+This capture setting makes no promise about the guard service's retention. With Alloy disabled,
+configure an alternative collector before generating traffic: the default app exporter points at
+the chart's Alloy Service.
