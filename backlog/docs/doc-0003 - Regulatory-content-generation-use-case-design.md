@@ -3,7 +3,7 @@ id: doc-0003
 title: Regulatory content-generation use case design
 type: specification
 created_date: '2026-10-20 21:16'
-updated_date: '2026-10-21T02:40:00Z'
+updated_date: '2026-10-21T02:57:00Z'
 ---
 # Regulatory content-generation use case: design
 
@@ -284,21 +284,36 @@ uses its own ignore file. All other image scan gates remain unchanged, and upstr
 tracked on the existing braces advisory task. This permits publication, not deployment or proof
 of live acceptance. No automatic renewal is authorized.
 
-### Active continuation after publication
+### Live acceptance completed 2026-10-21
 
-The owner explicitly requested continued autonomous delivery beyond publication. Existing
-consumer configuration fixes the target to the existing lab stack, region and shared cluster;
-no new stack was selected. The separate encrypted demo state was read and is empty. A fresh
-paused regulatory-only preflight plan has 89 creates, no changes/deletes, no EC2 host, no metric
-stream and no account-wide Bedrock invocation logging. Final source/image pins must be reviewed
-and verified before apply. Consumer lifecycle evidence is tracked in the private infrastructure
-board; no private names, account identifiers or credentials belong in this public board.
+The owner authorized autonomous continuation through a bounded live proof on the existing private
+consumer target. Final dashboard source is 7530badaaa684bc7690a27c090ef7ac102a27f82; runtime source
+is 80431c41ee435ad77f0aa6303b51437fa0d83aa8, signed multiarch image
+`sha256:fcad970a28e566e082b8174bb6a2d1bb6b3187bab776089863468478f24d934e`.
+Regulatory image builds/scans/signing succeeded in workflow 39534401369. Full local gates and
+source CI 39534400964 / 39535235286 passed. CodeRabbit completed the runtime/query review;
+the final declarative axis/point fix was validated without another review.
 
-### Live continuation correction
+- Guard experiment stored three passing final checks for redaction, matched source-note warning
+  and benign evidence. The app injection probe escalated with zero model usage in both modes.
+- Section experiment `regulatory-352453df-3a9d-42eb-a179-16b07c77dc52` completed all four trials,
+  storing 16 evaluator scores plus four final scores. Two trials passed and two failed quality
+  thresholds; token and cost coverage were complete. The nonzero Job exit reflects the quality
+  gate, not a protocol failure. Earlier protocol failures were retained as baseline evidence.
+- Capture-on exports guarded content with no raw fixture identifiers. Metadata-only CSR/ICF
+  generation messages contain blank content while preserving usage. The retrieved off-mode trace
+  contains no model/tool content or fixture text. New off-mode pods independently emitted all
+  operational metrics, including grounding, reading grade, latency, costs and guard outcomes.
+- Bounded loadgen runs in each mode sent two successful requests with no failed requests.
+  Both final 14-panel snapshots were visually checked: complete legible boundary, correct ratio
+  axes, visible sparse samples, no errors or No data. All 13 metric queries returned finite
+  series. Retained online content-score history is capture-on evidence, not off-mode scoring.
+- A fresh isolated destroy plan removed exactly 89 managed resources. Apply confirmed 89
+  destroyed, and state lists zero addresses. Direct readback confirms namespace/dashboard/IAM
+  role/Pod Identity association and all 12 inference profiles absent; the shared cluster remains
+  ACTIVE. The shared infrastructure root was never applied. Historical telemetry and stored
+  experiment results follow the stack's existing retention and were not erased.
 
-The isolated regulatory deployment and stored guard/online scoring evidence now exist. The guard
-suite completed with all three stored checks passing. The first section-prompt experiment stored
-a scored trial before failing on an incomplete model completion. Prompt set v2 bounds role
-outputs and retains actual usage and stop reason before escalation. Counter totals retain first
-events from retired pods. Both capture-mode snapshots and clean teardown remain required; no
-completed live acceptance is claimed yet.
+Detailed private target, plan, snapshot and readback evidence remains with the consumer board;
+no private identifiers or credentials belong in this public board. The approved braces exception
+still expires 2026-11-15 and has no automatic renewal.

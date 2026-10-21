@@ -1,11 +1,11 @@
 ---
 id: AIO-0018
 title: Add opt-in regulatory content-generation use case
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-10-20 21:16'
-updated_date: '2026-10-21T00:35:00Z'
+updated_date: '2026-10-21T02:57:00Z'
 labels: []
 dependencies: []
 documentation:
@@ -24,16 +24,16 @@ The demo only shows Touchline Times (sports and betting). Prospects in regulated
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [x] #1 use_cases = ["touchline"] (the default) plans with no changes against an existing Touchline deployment
-- [ ] #2 use_cases = ["regulatory"] and ["touchline","regulatory"] both validate, and a live regulatory-only deployment shows traffic, dashboards, evaluators, guards and experiments with no Touchline objects
+- [x] #2 use_cases = ["regulatory"] and ["touchline","regulatory"] both validate, and a live regulatory-only deployment shows traffic, dashboards, evaluators, guards and experiments with no Touchline objects
 - [x] #3 Docs explain the use case, the opt-in, what telemetry holds per content_capture mode and the teardown
 - [x] #4 use_cases = ["touchline"] (the default) plans 0 to add, 0 to change, 0 to destroy against the base commit, proven by the mock-provider test in doc-0003; moves only through committed moved blocks
-- [ ] #5 use_cases = ["regulatory"] and ["touchline","regulatory"] plan correctly in the mock-provider tests, and a live regulatory-only deployment shows traffic, dashboards, evaluators, guards and experiments with no Touchline in-app workload objects (agent-host and shared var.name objects remain, see doc-0003)
+- [x] #5 use_cases = ["regulatory"] and ["touchline","regulatory"] plan correctly in the mock-provider tests, and a live regulatory-only deployment shows traffic, dashboards, evaluators, guards and experiments with no Touchline in-app workload objects (agent-host and shared var.name objects remain, see doc-0003)
 - [x] #6 Docs explain the use case, the opt-in, what telemetry holds per content capture mode and the teardown
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 just check
+- [x] #1 just check
 <!-- DOD:END -->
 
 ## Implementation Notes
@@ -45,3 +45,9 @@ Remaining regulatory source work landed in3b05093ff1324d1380ac83c9aef8728e20327e
 
 Regulatory image publication is now unblocked under the separately approved2026-10-21 exception (expires2026-11-15). Packaging task complete: both architectures and merged signature verified at immutable digest sha256:355b651a54090b1d53be31241e18364b3b3ffebe812de965be6910a83d7a428e, image run39521935151. Overall all-images workflow failed on unrelated gateway/workstation jobs; regulatory jobs succeeded. Next live acceptance still needs authorized target deployment/stack, capture-mode readback, scores, snapshots and teardown; no deployment occurred.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Regulatory authoring use case completed through parallel app, controls, infrastructure, packaging, dashboard, documentation and compatibility work. Default Touchline compatibility and all use-case combinations pass the repository mock-provider gate. Real regulatory-only deployment verified scoped workloads, guards, stored evaluations/experiments, bounded loadgen, cost/latency/quality metrics and both capture boundaries with reviewed snapshots. Live findings fixed strict fenced reviewer JSON, bounded prompt v2, incomplete-completion usage accounting, first-event counters and sparse dashboard rendering. Section quality result is 2/4 passing trials, not an all-green model-quality claim. Full local gate, exact-source CI and CodeRabbit passed. Fresh isolated teardown destroyed all 89 resources; state empty, key resources absent and shared cluster ACTIVE. Detailed sanitized acceptance is in the design and completed end-to-end task. Approved braces exception remains separately tracked with its existing expiry.
+<!-- SECTION:FINAL_SUMMARY:END -->

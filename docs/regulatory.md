@@ -199,6 +199,12 @@ incur model/evaluator cost. `section-prompts` compares section drafting variants
 postflight tool-call result cannot establish preflight source redaction. Scheduled runs use
 `--scheduled --execute`. Use the experiment's actual run and time range when presenting results.
 
+A completed experiment can still fail its quality gate. If any stored section score is below
+0.8, the CLI exits 1 and a Kubernetes Job reports `Failed`, even when every trial completed.
+Read the stored experiment status, trials and scores to distinguish quality failures from
+protocol or model failures. Keep failed quality results as evidence. Content-judge suites skip
+scheduled execution when capture is disabled; use operational metrics to demonstrate that mode.
+
 ## Upgrade, disable and remove
 
 Keep `regulatory_name` and the Kubernetes namespace stable when upgrading. Changing either affects

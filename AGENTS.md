@@ -165,3 +165,8 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
 - Regulatory prompt set v2 uses short role-specific outputs. Preserve actual Bedrock usage and
   stopReason before rejecting incomplete completions; absent usage remains unknown, and partial
   model content never becomes a successful document.
+
+- Regulatory section experiments finalize completed trials even when quality scores fail. CLI
+  exit 1 and a Failed Job can mean a quality-gate failure; read the stored experiment/trial state
+  before diagnosing a protocol failure. Metadata-only generations retain blank message envelopes
+  and usage, so verify empty content rather than demanding absent input/output arrays.
