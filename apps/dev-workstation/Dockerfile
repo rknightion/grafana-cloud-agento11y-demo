@@ -80,11 +80,15 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Upgrade first to take Debian security fixes the base image has not been rebuilt with yet (Trivy
 # gates the build).
+# Minimum Bookworm jq security update; changing it invalidates cached vulnerable apt layers.
+ARG JQ_MIN_VERSION=1.6-2.1+deb12u3
 # hadolint ignore=DL3005,DL3008
 RUN apt-get update \
     && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends \
-       ca-certificates curl git gpgv jq less openssl procps python3 python3-yaml tini tmux \
+       ca-certificates curl git gpgv jq libjq1 less openssl procps python3 python3-yaml tini tmux \
+    && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' jq)" ge "$JQ_MIN_VERSION" \
+    && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' libjq1)" ge "$JQ_MIN_VERSION" \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=uv /uv /uvx /usr/local/bin/

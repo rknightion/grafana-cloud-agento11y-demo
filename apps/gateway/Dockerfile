@@ -21,10 +21,14 @@ RUN set -eu; \
 
 FROM debian:bookworm-slim@sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587
 # Install current security fixes for base packages as well as the runtime dependencies.
+# Minimum Bookworm jq security update; changing it invalidates cached vulnerable apt layers.
+ARG JQ_MIN_VERSION=1.6-2.1+deb12u3
 # hadolint ignore=DL3005,DL3008
 RUN apt-get update \
     && apt-get upgrade -y --no-install-recommends \
-    && apt-get install -y --no-install-recommends ca-certificates curl gpgv jq tini \
+    && apt-get install -y --no-install-recommends ca-certificates curl gpgv jq libjq1 tini \
+    && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' jq)" ge "$JQ_MIN_VERSION" \
+    && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' libjq1)" ge "$JQ_MIN_VERSION" \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 10001 gateway \
     && useradd --uid 10001 --gid 10001 --home-dir /home/gateway --create-home --shell /usr/sbin/nologin gateway \

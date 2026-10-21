@@ -154,3 +154,6 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
   evidence to JSON explicitly or judges receive only the literal [object Object].
 - A new cost counter series must take its raw-value unless-offset branch before increase, so
   later increments do not hide the first returned generation's cost. Preserve observed zeros.
+- Gateway and workstation runtime apt layers enforce the Bookworm jq/libjq1 security floor
+  1.6-2.1+deb12u3 or newer. Keep the minimum checks and normal image scan gates; do not suppress
+  a fixed-version vulnerability as unfixed.
