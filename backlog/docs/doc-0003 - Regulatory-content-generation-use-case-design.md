@@ -3,7 +3,7 @@ id: doc-0003
 title: Regulatory content-generation use case design
 type: specification
 created_date: '2026-10-20 21:16'
-updated_date: '2026-10-21T01:56:00Z'
+updated_date: '2026-10-21T02:03:00Z'
 ---
 # Regulatory content-generation use case: design
 
@@ -287,7 +287,7 @@ of live acceptance. No automatic renewal is authorized.
 ### Active continuation after publication
 
 The owner explicitly requested continued autonomous delivery beyond publication. Existing
-consumer configuration fixes the target to rkaidev, eu-west-1 and the shared robknight cluster;
+consumer configuration fixes the target to the existing lab stack, region and shared cluster;
 no new stack was selected. The separate encrypted demo state was read and is empty. A fresh
 paused regulatory-only preflight plan has89creates, no changes/deletes, no EC2 host, no metric
 stream and no account-wide Bedrock invocation logging. Final source/image pins must be reviewed
