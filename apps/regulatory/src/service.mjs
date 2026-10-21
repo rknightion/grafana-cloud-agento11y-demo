@@ -7,6 +7,15 @@ import { startTelemetry, withTeam } from './telemetry.mjs';
 import { createAgentClient, IDENTIFIERS, INJECTION_MARKERS } from './agent-client.mjs';
 import { createModel } from './models.mjs';
 import { createCostRecorder } from './cost.mjs';
+// Models can render an otherwise valid JSON object inside one Markdown code fence.
+// Accept only that exact wrapper; explanatory text or malformed JSON still fails closed.
+function parseReviewResult(text) {
+  const value = text.trim();
+  const fenced = /^```(?:json)?[ \t]*\r?\n([\s\S]*?)\r?\n```$/i.exec(value);
+  const result = JSON.parse(fenced ? fenced[1] : value);
+  if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error('Reviewer response invalid');
+  return result;
+}
 export class HttpError extends Error { constructor(code, message) { super(message); this.statusCode = code; } }
 export function validateRequest(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value) || !SECTIONS[value.document_type]?.includes(value.section) || !STUDY_IDS.includes(value.study_id)) throw new HttpError(400, 'Invalid fictional document, section or study');
@@ -90,7 +99,7 @@ export function createAgentService(options = {}) {
           result.usage = [{ agent: name, ...generated.usage }];
           result.metrics.number_grounding = numberGrounding(result.text, evidence.table);
           result.review_state = result.metrics.number_grounding < 1 ? 'needs_revision' : 'approved';
-          if (role === 'reviewer') { let reviewed; try { reviewed = JSON.parse(generated.text); } catch { throw new Error('Reviewer response invalid'); } if (!['approved', 'needs_revision', 'escalated'].includes(reviewed.review_state)) throw new Error('Reviewer state invalid'); if (reviewed.review_state !== 'approved') result.review_state = reviewed.review_state; }
+          if (role === 'reviewer') { let reviewed; try { reviewed = parseReviewResult(generated.text); } catch { throw new Error('Reviewer response invalid'); } if (!['approved', 'needs_revision', 'escalated'].includes(reviewed.review_state)) throw new Error('Reviewer state invalid'); if (reviewed.review_state !== 'approved') result.review_state = reviewed.review_state; }
           if (request.document_type === 'icf') { result.metrics.reading_grade = readability_grade({ text: result.text }); if (result.metrics.reading_grade > 8 && result.review_state === 'approved') result.review_state = 'needs_revision'; }
         }
       } catch { result.text = ''; result.review_state = 'escalated'; delete result.evidence; span.setStatus({ code: SpanStatusCode.ERROR, message: 'Regulatory request escalated' }); }

@@ -75,3 +75,18 @@ test('preflight parts-based transformations are consumed before model and tool r
     assert.doesNotMatch(JSON.stringify(recorded), /SUBJECT-XQZ|SYNTHETIC-INVESTIGATOR/);
   } finally { await service.shutdown(); }
 });
+
+test('reviewer accepts a single fenced JSON object but rejects extra text and invalid states', async () => {
+  const telemetry = { tracer: trace.getTracer('test'), meter: { createCounter: () => ({ add() {} }), createHistogram: () => ({ record() {} }) }, shutdown: async () => {} };
+  for (const [text, expected] of [
+    ['```json\n{"review_state":"approved","rationale":"Fictional evidence checked."}\n```', 'approved'],
+    ['Explanation first.\n```json\n{"review_state":"approved"}\n```', 'escalated'],
+    ['```json\n{"review_state":"invalid"}\n```', 'escalated'],
+  ]) {
+    const service = createAgentService({ role: 'reviewer', env: { STUB_MODEL: '1' }, telemetry, log() {}, client: noop, model: { shutdown() {}, async generate() { return { text, usage: { inputTokens: 10, outputTokens: 10 } }; } } });
+    try {
+      const result = await service.run({ ...request, draft: 'This fictional study requires review.' });
+      assert.equal(result.review_state, expected);
+    } finally { await service.shutdown(); }
+  }
+});

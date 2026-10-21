@@ -157,3 +157,7 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
 - Gateway and workstation runtime apt layers enforce the Bookworm jq/libjq1 security floor
   1.6-2.1+deb12u3 or newer. Keep the minimum checks and normal image scan gates; do not suppress
   a fixed-version vulnerability as unfixed.
+- Bedrock reviewer output may wrap otherwise valid JSON in one Markdown JSON fence. Accept
+  only that exact wrapper around a JSON object, then validate the review-state enum; text outside
+  the wrapper, malformed JSON and invalid states still escalate. Do not silently discard costs
+  of a returned generation when subsequent review parsing fails.
