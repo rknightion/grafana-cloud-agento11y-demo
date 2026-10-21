@@ -75,7 +75,28 @@ A document-section request fans out to source, drafting and review work, with an
 readability path for ICF. Model choice, input length, request rate and experiment/evaluator runs
 therefore determine spend. `regulatory_requests_per_minute` controls arrivals, not a dollar cap.
 The Touchline loadgen's daily guard and gateway developer caps do not cap regulatory traffic.
-Monitor the regulatory token/cost panels as estimates and check actual AWS billing. Full capture
+The regulatory dashboard attributes actual generation token-price estimates by document type,
+section, agent role and model using `regulatory_estimated_cost_usd_total`. It shows USD/hour and
+estimated USD in the selected range. These are observed model-call estimates, not an allocation
+from unrelated SDK series, a per-document billing ledger or a forecast. The selected-range
+estimate and unpriced count include an already nonzero first sample for a new series. USD/hour uses `rate()` and needs multiple scrapes; a first increment can be absent
+from that rate. These window aggregates are not an exact transaction ledger.
+
+`regulatory_unpriced_generations_total` counts generations without known prices or usable usage.
+The dashboard shows this separately by document type, section, role and model. A nonzero count
+means estimates are partial; missing cost never means free inference. Zero coverage counts are
+meaningful only after the app has emitted an observed zero series; an empty panel means coverage
+has not been observed. Counts do not establish a percentage of priced calls. Priced real model
+returns emit an observed zero unpriced count. Stub calls emit neither counter; an empty cost/coverage panel in stub mode
+is expected. Transport failures without reported usage also emit no estimate, so zero unpriced
+counts do not prove complete AWS billing coverage. An actual model return is counted before
+later review/output validation, including returns rejected downstream.
+
+The app estimates uncached standard on-demand tokens only, using its explicit model/region price
+allowlist. The runtime does not request prompt caching. Unknown model/region combinations or
+invalid reported usage increment the unpriced counter instead of inventing prices. Both counters
+remain available with content capture disabled. They exclude infrastructure, online-evaluator billing
+and AWS billing adjustments. Check actual AWS billing for total spend. Full capture
 also adds log and Agent Observability storage; turning it off removes content scoring inputs
 but retains app grounding/readability metrics.
 

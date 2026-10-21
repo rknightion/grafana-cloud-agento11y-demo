@@ -3,7 +3,7 @@ id: doc-0003
 title: Regulatory content-generation use case design
 type: specification
 created_date: '2026-10-20 21:16'
-updated_date: '2026-10-21T00:32:00Z'
+updated_date: '2026-10-21T01:56:00Z'
 ---
 # Regulatory content-generation use case: design
 
@@ -258,9 +258,12 @@ The following seams are shared by the app, chart, Terraform, experiments and das
 
 ### Current local implementation limits
 
-The initial dashboard exposes SDK cost by agent, not cost allocated to document type/section.
-Document throughput, review states, grounding, reading grade and latency are app-derived.
-Do not infer document costs from unrelated SDK series. Live data and snapshots remain unverified.
+The dashboard now exposes app-derived estimated generation cost by document type, section,
+agent role and model, plus explicit unpriced-generation counts. Verified pricing is limited to
+standard uncached EU Haiku4.5/Sonnet4.6 requests invoked in eu-west-1. Synthetic stub tokens and
+orchestrator aggregates are excluded; unknown pricing is never represented as free usage.
+Document throughput, review states, grounding, reading grade and latency remain app-derived.
+Live data and snapshots remain unverified until the continuing live proof records them.
 The local regulatory image builds, but Trivy reports unpatched CVE-2026-93687 in installed
 `braces` 3.0.3. The existing agents-only exception has not been reused. Publication remains gated
 until an approved remediation or a separate maintainer decision for this image.
@@ -280,3 +283,13 @@ The maintainer approved the prepared separate exception for CVE-2026-93687 only,
 uses its own ignore file. All other image scan gates remain unchanged, and upstream removal is
 tracked on the existing braces advisory task. This permits publication, not deployment or proof
 of live acceptance. No automatic renewal is authorized.
+
+### Active continuation after publication
+
+The owner explicitly requested continued autonomous delivery beyond publication. Existing
+consumer configuration fixes the target to rkaidev, eu-west-1 and the shared robknight cluster;
+no new stack was selected. The separate encrypted demo state was read and is empty. A fresh
+paused regulatory-only preflight plan has89creates, no changes/deletes, no EC2 host, no metric
+stream and no account-wide Bedrock invocation logging. Final source/image pins must be reviewed
+and verified before apply. Consumer lifecycle evidence is tracked in the private infrastructure
+board; no private names, account identifiers or credentials belong in this public board.

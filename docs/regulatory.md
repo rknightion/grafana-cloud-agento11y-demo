@@ -105,7 +105,8 @@ their own profile/model combinations. Loadgen and experiments do not receive Bed
 |---|---|---|
 | Request counts, duration, document type, section, version, simulated review state | Available | Available |
 | Deterministic numeric grounding and ICF reading grade | Available | Available |
-| SDK usage and estimated model cost | Available when exported | Available when exported |
+| App-derived document/section cost estimates and unpriced coverage | Available | Available |
+| SDK usage and model cost | Available when exported | Available when exported |
 | Free-form prompt, source, draft and response content in app telemetry | Omitted | Guarded content captured |
 | Online content evaluators | No content to score; empty panels are expected | Can score captured content asynchronously |
 | Preflight source controls | Enforced | Enforced |

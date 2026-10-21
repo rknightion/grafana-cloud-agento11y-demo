@@ -6,6 +6,7 @@ import { SECTIONS, STUDY_IDS, get_study, get_table, get_section_rules, get_prior
 import { startTelemetry, withTeam } from './telemetry.mjs';
 import { createAgentClient, IDENTIFIERS, INJECTION_MARKERS } from './agent-client.mjs';
 import { createModel } from './models.mjs';
+import { createCostRecorder } from './cost.mjs';
 export class HttpError extends Error { constructor(code, message) { super(message); this.statusCode = code; } }
 export function validateRequest(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value) || !SECTIONS[value.document_type]?.includes(value.section) || !STUDY_IDS.includes(value.study_id)) throw new HttpError(400, 'Invalid fictional document, section or study');
@@ -20,6 +21,7 @@ export function createAgentService(options = {}) {
   if (!ROLES.includes(role)) throw new Error('Invalid AGENT_ROLE');
   const telemetry = options.telemetry ?? startTelemetry(role), client = options.client ?? createAgentClient(role, telemetry, env), model = options.model ?? createModel(env);
   const name = selfAgentName(role, env), version = agentVersion(env), team = agentTeam(role, env), capture = captureMode(env);
+  const recordCost = createCostRecorder(telemetry.meter, env, role);
   const metric = Object.fromEntries(['requests_total', 'request_duration_seconds', 'number_grounding_ratio', 'reading_grade', 'guard_events_total'].map((key) => [key, key.endsWith('_total') ? telemetry.meter.createCounter(`regulatory_${key}`) : telemetry.meter.createHistogram(`regulatory_${key}`, key.includes('seconds') ? { unit: 's' } : {})]));
   function log(event, fields) { const span = trace.getSpan(context.active())?.spanContext(); (options.log ?? ((entry) => console.log(JSON.stringify(entry))))({ event, trace_id: span?.traceId, span_id: span?.spanId, agent_version: version, ...fields }); }
   async function guard(value, request, toolName = 'specialist_evidence') {
@@ -46,6 +48,9 @@ export function createAgentService(options = {}) {
     let output;
     await withTeam(team, () => client.startGeneration({ id: randomUUID(), conversationId: request.conversation_id, conversationTitle: 'Fictional regulatory document', agentName: name, agentVersion: version, model: identity, mode: 'SYNC', operationName: 'generateText', contentCapture: capture, metadata: { team, document_type: request.document_type, section: request.section }, tags: { team, document_type: request.document_type, section: request.section } }, async (recorder) => {
       output = await model.generate({ role, request, evidence: safe.evidence, draft: safe.draft });
+      // Count each actual returned generation once, even if later validation/review escalates.
+      // Orchestrator usage aggregates are never priced again.
+      recordCost(request, identity.name, output.usage);
       if (typeof output.text !== 'string' || output.text.length > 16000) throw new Error('Invalid model output');
       recorder.setResult({ input: [{ role: 'user', content: JSON.stringify(safe) }], output: [{ role: 'assistant', content: output.text }], responseModel: identity.name, usage: { ...output.usage, totalTokens: output.usage.inputTokens + output.usage.outputTokens } });
     }));

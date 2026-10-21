@@ -146,3 +146,11 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
 - `apps/regulatory/.npmrc` matches agents' legacy-peer-deps setting to exclude the SDK's unused
   optional Strands integration. Keep lockfile generation, clean installs and Docker resolution
   aligned; automatic peer installation adds hundreds of unused packages and extra audit findings.
+
+- Regulatory cost estimates use bounded document/section/role/model dimensions and only verified
+  uncached EU Haiku4.5/Sonnet4.6 rates in eu-west-1. Unknown pricing emits an unpriced-generation
+  count, never a fake zero cost; stub tokens and orchestrator aggregates are excluded.
+- The pinned experiment SDK stringifies recordIO input; serialize structured request/source
+  evidence to JSON explicitly or judges receive only the literal [object Object].
+- A new cost counter series must take its raw-value unless-offset branch before increase, so
+  later increments do not hide the first returned generation's cost. Preserve observed zeros.

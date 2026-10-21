@@ -110,3 +110,36 @@ test('warn-first source-note probe requires an actual failed matching evaluation
   assert.equal(guardPassed(probe, { action: 'allow', evaluations: [{ ruleId: 'dossier_source_note_injection', passed: true }] }), false);
   assert.equal(guardPassed(probe, { action: 'allow', evaluations: [{ ruleId: 'dossier_source_note_injection', passed: false }] }), true);
 });
+
+test('paid-path runner exports serialized source evidence through the pinned SDK transport', async (t) => {
+  const previous = process.env.AGENTO11Y_ENABLE_EXPERIMENTAL_FEATURES;
+  process.env.AGENTO11Y_ENABLE_EXPERIMENTAL_FEATURES = 'true';
+  t.after(() => { if (previous === undefined) delete process.env.AGENTO11Y_ENABLE_EXPERIMENTAL_FEATURES; else process.env.AGENTO11Y_ENABLE_EXPERIMENTAL_FEATURES = previous; });
+  let exported;
+  let trialId;
+  const network = async (url, options) => {
+    const pathname = new URL(url).pathname;
+    const body = options?.body ? JSON.parse(options.body) : {};
+    let reply = {};
+    if (pathname.endsWith('experiment-runs:upsert') || pathname.endsWith(':finalize')) reply = { experiment_id: 'regulatory-source-proof' };
+    else if (pathname.endsWith('/trials') && options.method === 'POST') trialId = body.trial_id;
+    else if (pathname.endsWith('generations:export')) { exported = body.generations[0]; reply = { results: [{ accepted: true }] }; }
+    else if (pathname.endsWith(':evaluate')) reply = { evaluation_id: 'eval-1', status: 'success' };
+    else if (pathname.endsWith('/scores')) reply = { items: [{ trial_id: trialId, evaluator_id: 'dossier_number_grounding', score_key: 'score', value: { number: 1 } }] };
+    else if (pathname.endsWith('scores:export')) reply = { accepted: body.scores.length };
+    else if (options.method !== 'PATCH') assert.fail(`Unexpected network request ${options.method} ${pathname}`);
+    return new Response(JSON.stringify(reply), { status: 200 });
+  };
+  const client = new ExperimentsClient({ endpoint: 'http://127.0.0.1:1', tenantId: 'test', ingestToken: 'test', fetchImpl: network, retry: { maxRetries: 0 } });
+  const suite = await loadSuite();
+  suite.variants = ['grounded']; suite.cases = [suite.cases[0]]; suite.evaluators = ['number_grounding'];
+  const result = await executeSuite(suite, { client, runId: 'regulatory-source-proof',
+    env: { AGENTO11Y_ENDPOINT: 'http://127.0.0.1:1', AGENTO11Y_AUTH_TENANT_ID: 'test', AGENTO11Y_AUTH_TOKEN: 'test', ORCHESTRATOR_URL: 'http://localhost:1' },
+    fetchImpl: async () => new Response(JSON.stringify({ text: 'A fictional section.', agent_version: 'v1', review_state: 'approved', metrics: { number_grounding: 1 } })) });
+  assert.equal(result.passed, true);
+  const recorded = JSON.parse(exported.input[0].parts[0].text);
+  assert.equal(recorded.request.document_type, 'icf');
+  assert.equal(recorded.source_evidence.table.study_id, 'XQZ-301');
+  assert.ok(recorded.source_evidence.rules.constraints.length);
+  assert.equal(exported.conversation_id, 'regulatory-source-proof-icf-purpose-grounded');
+});

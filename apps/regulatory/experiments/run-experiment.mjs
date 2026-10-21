@@ -131,7 +131,7 @@ export async function executeSuite(suite, { env = process.env, fetchImpl = fetch
           continue;
         }
         trial.bindConversation(conversationId);
-        trial.recordIO({ input: { request: testCase.input, source_evidence: { table: get_table(testCase.input), rules: get_section_rules(testCase.input), prior: get_prior_approved_text(testCase.input) } }, output: reply.text, agentName: `${env.SERVICE_NAMESPACE ?? 'dossier'}-orchestrator`, agentVersion: reply.agent_version });
+        trial.recordIO({ input: JSON.stringify({ request: testCase.input, source_evidence: { table: get_table(testCase.input), rules: get_section_rules(testCase.input), prior: get_prior_approved_text(testCase.input) } }), output: reply.text, agentName: `${env.SERVICE_NAMESPACE ?? 'dossier'}-orchestrator`, agentVersion: reply.agent_version });
         const scores = {};
         for (const suffix of suite.evaluators) {
           const evaluatorId = `${prefix(env)}_${suffix}`;

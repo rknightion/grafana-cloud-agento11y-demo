@@ -72,7 +72,7 @@
             "spec": {
               "options": {
                 "mode": "markdown",
-                "content": "### Fictional demonstration only\n\nContent capture is **${capture_mode}**. These outputs simulate review and are not human approvals, submissions or regulatory validation. Review-state counts are recent completed outcomes, not a durable human queue.\n\nGrounding, reading grade, throughput and latency use in-app metadata metrics in both capture modes. Content-off mode omits free-form prompts and outputs; regex and LLM content evaluators cannot score them. SDK evaluation panels show pass/fail counts, not numeric scores. Open Agent Observability for captured examples and explanations.\n\nSDK costs are token-price estimates, not a billing ledger. Cost is available by agent only: document/section cost attribution is not emitted, so this dashboard does not invent it. Capture-on source telemetry records the guarded value, never raw patient identifiers.",
+                "content": "### Fictional demonstration only\n\nContent capture is **${capture_mode}**. These outputs simulate review and are not human approvals, submissions or regulatory validation. Review-state counts are recent completed outcomes, not a durable human queue.\n\nGrounding, reading grade, throughput and latency use in-app metadata metrics in both capture modes. Content-off mode omits free-form prompts and outputs; regex and LLM content evaluators cannot score them. SDK evaluation panels show pass/fail counts, not numeric scores. Open Agent Observability for captured examples and explanations.\n\nGeneration costs are token-price estimates attributed by document type, section, role and model at each actual call, not a billing ledger. Unpriced-generation counts expose missing price or usage coverage; do not read missing costs as zero. Metadata-only capture retains these cost counters. Capture-on source telemetry records the guarded value, never raw patient identifiers.",
                 "code": {
                   "language": "plaintext",
                   "showLineNumbers": false,
@@ -611,6 +611,334 @@
           }
         }
       },
+      "cost": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "Estimated generation cost / hour by document and section",
+          "description": "Actual generation token-price estimates attributed at the model call. Partial cost when prices or usage are unavailable; check unpriced generations. Excludes infrastructure, online evaluators and billing adjustments.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (document_type,section) (rate(regulatory_estimated_cost_usd_total{service_namespace=\"${prefix}\"}[$__rate_interval])) * 3600",
+                        "legendFormat": "{{document_type}} / {{section}}",
+                        "range": true,
+                        "instant": false,
+                        "refId": "A"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "5m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": true,
+                  "displayMode": "table",
+                  "placement": "right",
+                  "calcs": [
+                    "lastNotNull"
+                  ]
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "currencyUSD",
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineWidth": 2,
+                    "fillOpacity": 15,
+                    "gradientMode": "none",
+                    "showPoints": "never",
+                    "pointSize": 5,
+                    "barAlignment": 0,
+                    "spanNulls": false,
+                    "axisSoftMin": 0,
+                    "stacking": {
+                      "mode": "none",
+                      "group": "A"
+                    }
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 2
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "section-cost": {
+        "kind": "Panel",
+        "spec": {
+          "id": 12,
+          "title": "Estimated cost in selected range",
+          "description": "Token-price estimates from actual attributed model calls, not AWS billed cost. Estimates can be partial: unpriced generations are excluded, never treated as free. Includes an already nonzero first sample when the series is new within the selected range. Counts model returns even if later validation rejects them. Stub calls emit no spend; transport failures without reported usage are unmeasured.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (document_type,section) ((regulatory_estimated_cost_usd_total{service_namespace=\"${prefix}\"} unless regulatory_estimated_cost_usd_total{service_namespace=\"${prefix}\"} offset $__range) or increase(regulatory_estimated_cost_usd_total{service_namespace=\"${prefix}\"}[$__range]))",
+                        "legendFormat": "{{document_type}} / {{section}}",
+                        "range": false,
+                        "instant": true,
+                        "refId": "A"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "5m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": true
+                },
+                "orientation": "horizontal",
+                "displayMode": "basic",
+                "showUnfilled": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "currencyUSD",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 2,
+                  "displayName": "$${__field.labels.document_type} / $${__field.labels.section}"
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "unpriced": {
+        "kind": "Panel",
+        "spec": {
+          "id": 13,
+          "title": "Unpriced generations in selected range",
+          "description": "Generations missing known prices or usage. A nonzero count means cost estimates are incomplete. Zero requires an observed zero series; no data means coverage is unobserved. This is a count, not a percentage. Includes an already nonzero first sample when the series is new within the selected range. Priced model returns emit zero; stub calls and transport errors without usage emit neither counter. Zero does not establish complete AWS billing coverage.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (document_type,section,agent_role,model_name) ((regulatory_unpriced_generations_total{service_namespace=\"${prefix}\"} unless regulatory_unpriced_generations_total{service_namespace=\"${prefix}\"} offset $__range) or increase(regulatory_unpriced_generations_total{service_namespace=\"${prefix}\"}[$__range]))",
+                        "legendFormat": "{{document_type}} / {{section}} / {{agent_role}} / {{model_name}}",
+                        "range": false,
+                        "instant": true,
+                        "refId": "A"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "5m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": true
+                },
+                "orientation": "horizontal",
+                "displayMode": "basic",
+                "showUnfilled": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 2,
+                  "displayName": "$${__field.labels.document_type} / $${__field.labels.section} / $${__field.labels.agent_role} / $${__field.labels.model_name}"
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "role-cost": {
+        "kind": "Panel",
+        "spec": {
+          "id": 14,
+          "title": "Estimated generation cost / hour by role and model",
+          "description": "Actual per-generation estimates summed by role and model. Counts exclude unpriced calls; estimates do not include infrastructure or evaluator billing.",
+          "links": [],
+          "transparent": false,
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "${ds_prom}"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (agent_role,model_name) (rate(regulatory_estimated_cost_usd_total{service_namespace=\"${prefix}\"}[$__rate_interval])) * 3600",
+                        "legendFormat": "{{agent_role}} / {{model_name}}",
+                        "range": true,
+                        "instant": false,
+                        "refId": "A"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "5m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "showLegend": true,
+                  "displayMode": "table",
+                  "placement": "right",
+                  "calcs": [
+                    "lastNotNull"
+                  ]
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "currencyUSD",
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineWidth": 2,
+                    "fillOpacity": 15,
+                    "gradientMode": "none",
+                    "showPoints": "never",
+                    "pointSize": 5,
+                    "barAlignment": 0,
+                    "spanNulls": false,
+                    "axisSoftMin": 0,
+                    "stacking": {
+                      "mode": "none",
+                      "group": "A"
+                    }
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "decimals": 2
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
       "guards": {
         "kind": "Panel",
         "spec": {
@@ -749,96 +1077,6 @@
               "fieldConfig": {
                 "defaults": {
                   "unit": "short",
-                  "custom": {
-                    "drawStyle": "line",
-                    "lineWidth": 2,
-                    "fillOpacity": 15,
-                    "gradientMode": "none",
-                    "showPoints": "never",
-                    "pointSize": 5,
-                    "barAlignment": 0,
-                    "spanNulls": false,
-                    "axisSoftMin": 0,
-                    "stacking": {
-                      "mode": "none",
-                      "group": "A"
-                    }
-                  },
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "decimals": 2
-                },
-                "overrides": []
-              }
-            }
-          }
-        }
-      },
-      "cost": {
-        "kind": "Panel",
-        "spec": {
-          "id": 10,
-          "title": "Estimated SDK generation cost / hour by agent",
-          "description": "Actual SDK cost series only; no fabricated document/section allocation. Stub model calls may not emit generation costs. Estimates exclude non-model infrastructure.",
-          "links": [],
-          "transparent": false,
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "refId": "A",
-                    "hidden": false,
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "prometheus",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "${ds_prom}"
-                      },
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "sum by (gen_ai_agent_name) (rate(agento11y_generation_cost_usd_total{gen_ai_agent_name=~\"${agents_re}\"}[$__rate_interval])) * 3600",
-                        "legendFormat": "{{gen_ai_agent_name}}",
-                        "range": true,
-                        "instant": false,
-                        "refId": "A"
-                      }
-                    }
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {
-                "interval": "5m"
-              }
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "timeseries",
-            "version": "",
-            "spec": {
-              "options": {
-                "legend": {
-                  "showLegend": true,
-                  "displayMode": "table",
-                  "placement": "right",
-                  "calcs": [
-                    "lastNotNull"
-                  ]
-                },
-                "tooltip": {
-                  "mode": "multi",
-                  "sort": "desc"
-                }
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "currencyUSD",
                   "custom": {
                     "drawStyle": "line",
                     "lineWidth": 2,
@@ -1060,7 +1298,7 @@
               "height": 8,
               "element": {
                 "kind": "ElementReference",
-                "name": "guards"
+                "name": "cost"
               }
             }
           },
@@ -1073,7 +1311,7 @@
               "height": 8,
               "element": {
                 "kind": "ElementReference",
-                "name": "scores"
+                "name": "section-cost"
               }
             }
           },
@@ -1086,7 +1324,7 @@
               "height": 8,
               "element": {
                 "kind": "ElementReference",
-                "name": "cost"
+                "name": "unpriced"
               }
             }
           },
@@ -1095,6 +1333,45 @@
             "spec": {
               "x": 12,
               "y": 37,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "role-cost"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 45,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "guards"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 45,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "scores"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 53,
               "width": 12,
               "height": 8,
               "element": {
