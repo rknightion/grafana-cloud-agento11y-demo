@@ -5,7 +5,7 @@ status: Parked
 assignee:
   - '@codex'
 created_date: '2026-10-15 17:52'
-updated_date: '2026-10-21T00:32:00Z'
+updated_date: '2026-10-21T00:35:00Z'
 labels: []
 dependencies: []
 priority: medium
@@ -58,4 +58,6 @@ Release v0.5.0 publication and deployment completed with the approved exception;
 2026-10-20 regulatory build: the separate local regulatory image also contains braces 3.0.3 and Trivy reports exactly CVE-2026-93687 HIGH with no fixed version. No regulatory exception was added or reused. Existing approval remains agents image only. Regulatory source integration continues, but publication requires an upstream-compatible remediation or a separate maintainer disposition.
 
 Maintainer approved a separate regulatory-image exception on2026-10-21: CVE-2026-93687 only, app/regulatory/node_modules/braces/package.json only, expires2026-11-15. Its own YAML is wired only to the regulatory matrix entry. Agents exception remains separate; every other scanner gate remains enforced. Remove both on compatible upstream remediation or return for explicit disposition before expiry.
+
+2026-10-21 regulatory publication verified: exact approved exception passes both architecture jobs, merged digest sha256:355b651a54090b1d53be31241e18364b3b3ffebe812de965be6910a83d7a428e published and cosign-verified. Expired/wrong-package-path negative scans each expose the advisory again. Keep upstream-remediation task parked; neither exception renews automatically.
 <!-- SECTION:NOTES:END -->

@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-10-20 21:16'
-updated_date: '2026-10-20T22:15:00Z'
+updated_date: '2026-10-21T00:35:00Z'
 labels: []
 dependencies: []
 documentation:
@@ -42,4 +42,6 @@ The demo only shows Touchline Times (sports and betting). Prospects in regulated
 Terraform use-case gating foundation is complete. The default mock-provider plan matches the exact pre-change base across 140 resource entries and 12 outputs after permanent moved mappings. Regulatory app, packaging, provisioning, observability and end-to-end validation remain outstanding; no live deployment was made.
 
 Remaining regulatory source work landed in3b05093ff1324d1380ac83c9aef8728e20327ee6 through six parallel implementation/documentation lanes and root integration. App and Terraform provisioning are complete; source CI39506282163 passes, including private scrub. Packaging, controls, dashboards and end-to-end tasks retain exact live/publication acceptance boundaries. Regulatory image builds fail security scanning with CVE-2026-93687 in braces; signing/publish skipped. Code-scanning alert20 confirms the regulatory package path. No scanner exception was added; no live deployment or teardown occurred. SDK cost by agent is present; document/section cost allocation is still missing.
+
+Regulatory image publication is now unblocked under the separately approved2026-10-21 exception (expires2026-11-15). Packaging task complete: both architectures and merged signature verified at immutable digest sha256:355b651a54090b1d53be31241e18364b3b3ffebe812de965be6910a83d7a428e, image run39521935151. Overall all-images workflow failed on unrelated gateway/workstation jobs; regulatory jobs succeeded. Next live acceptance still needs authorized target deployment/stack, capture-mode readback, scores, snapshots and teardown; no deployment occurred.
 <!-- SECTION:NOTES:END -->

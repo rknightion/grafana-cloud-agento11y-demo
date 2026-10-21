@@ -55,6 +55,13 @@ checkout or a chart version alone does not prove that its matching image has bee
 The image is `gc-agento11y-regulatory`, with the shared `images.tag` or an explicit
 `images.digests.regulatory` digest. Do not assume older published tags contain this image.
 
+The first verified regulatory edge build is source commit `eb80dd7` (21 October 2026), published
+for Linux amd64 and arm64 and verified with cosign. Its immutable multi-architecture digest is
+`sha256:355b651a54090b1d53be31241e18364b3b3ffebe812de965be6910a83d7a428e`.
+Pin it through `images.digests.regulatory`; preserve the shared `images.tag` to avoid replacing
+the coding-agent host. This edge publication is not a versioned release or live deployment.
+
+
 Terraform creates the namespace, three Secrets (OTLP, Agent Observability and experiments), scoped
 Pod Identity and the Helm release. With `deploy_workloads = false`, it creates prerequisites and
 returns `chart_values_regulatory` for a separate Helm/GitOps installation:
