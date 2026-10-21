@@ -3,7 +3,7 @@ id: doc-0003
 title: Regulatory content-generation use case design
 type: specification
 created_date: '2026-10-20 21:16'
-updated_date: '2026-10-20T22:09:00Z'
+updated_date: '2026-10-21T00:32:00Z'
 ---
 # Regulatory content-generation use case: design
 
@@ -272,3 +272,11 @@ marker rejection remains fail closed. The guard-policy probe expects allow plus 
 source-note evaluation, so allow by itself never proves remote detection. Promotion to deny needs
 reviewed warn evidence and an explicit enforcement decision. The load generator runs continuously
 in its Deployment unless MAX_REQUESTS is explicitly supplied; tests/manual runs remain bounded.
+
+### Regulatory image exception approved 2026-10-21
+
+The maintainer approved the prepared separate exception for CVE-2026-93687 only, installed path
+`app/regulatory/node_modules/braces/package.json`, expiry 2026-11-15. The regulatory matrix entry
+uses its own ignore file. All other image scan gates remain unchanged, and upstream removal is
+tracked on the existing braces advisory task. This permits publication, not deployment or proof
+of live acceptance. No automatic renewal is authorized.

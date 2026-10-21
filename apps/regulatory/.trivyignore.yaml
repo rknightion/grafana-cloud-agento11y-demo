@@ -1,0 +1,13 @@
+vulnerabilities:
+  - id: CVE-2026-93687
+    paths:
+      - app/regulatory/node_modules/braces/package.json
+    statement: >-
+      Maintainer-approved 2026-10-21 regulatory-image exception. braces 3.0.3
+      has no patched release. It is installed through the SDK's unused Google
+      ADK integration. The regulatory app imports the SDK root and experiments
+      entrypoint; the local import probe loaded none of the Google ADK,
+      MikroORM, globby, micromatch or braces chain. Applies only to this advisory,
+      installed package path and image. Track upstream removal in AIO-0007
+      (braces dependency advisory).
+    expired_at: 2026-11-15

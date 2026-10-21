@@ -133,8 +133,9 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
   Metadata mode still emits in-app grounding and reading-grade metrics.
 - Regulatory source-note injection markers, preflight experiment cases and guard IDs are separate
   from Touchline. New rules need serial apply and readback; local stub proof is not live scoring.
-- The regulatory image has no braces CVE exception. A failing image scan must be resolved upstream
-  or returned for a new maintainer decision; never reuse the agents-only exception.
+- The regulatory image has a separately maintainer-approved CVE-2026-93687 exception dated
+  2026-10-21, scoped only to its installed braces package path and expiring 2026-11-15. Keep it
+  separate from the agents exception, remove it when fixed, and never renew without a new decision.
 
 - Regulatory source-note remote detection starts as warn at priority 10 with short_circuit=false;
   the app still rejects known markers before model input. Guard-policy experiments require a

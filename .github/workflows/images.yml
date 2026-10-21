@@ -36,7 +36,7 @@ jobs:
       matrix:
         include:
           - { name: agents, context: apps, dockerfile: agents/Dockerfile, trivy-ignore-file: apps/agents/.trivyignore.yaml }
-          - { name: regulatory, context: apps, dockerfile: regulatory/Dockerfile }
+          - { name: regulatory, context: apps, dockerfile: regulatory/Dockerfile, trivy-ignore-file: apps/regulatory/.trivyignore.yaml }
           - { name: site, context: apps, dockerfile: site/Dockerfile }
           # site-browser and dev-workstation carry Playwright's/apt's debian OS packages: every
           # remaining HIGH/CRITICAL there has no fixed version yet (verified against the live

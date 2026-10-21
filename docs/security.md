@@ -332,6 +332,8 @@ own content boundary and remains unchanged. See [regulatory guide](regulatory.md
 
 The image set is `agents`, `site`, `site-browser`, `mcp-tools`, `gateway`, `dev-workstation` and
 `regulatory`, published as `gc-agento11y-<name>`. Regulatory image builds use the same signing and
-scan workflow. The maintainer's existing braces exception applies only to the agents image and
-must not be extended to the regulatory image without a new decision. A failed scan does not
+scan workflow. The maintainer separately approved the regulatory image's CVE-2026-93687 exception on
+21 October 2026, limited to its installed braces package path and expiring 15 November 2026.
+The agents image retains its separate exception. Remove each when a compatible fix is adopted;
+renewal requires a new decision. A failed scan does not
 establish image publication or release readiness.
