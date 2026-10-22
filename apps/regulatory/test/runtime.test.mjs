@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createAgentService, createAgentHttpServer } from '../src/service.mjs';
 import { localGuard } from '../src/agent-client.mjs';
-import { context, trace } from '@opentelemetry/api';
+import { context, trace, SpanKind } from '@opentelemetry/api';
 import { InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
 import { InMemoryMetricExporter } from '@opentelemetry/sdk-metrics';
 import { startTelemetry } from '../src/telemetry.mjs';
@@ -29,6 +29,9 @@ test('HTTP pipeline guards identifiers, rejects injections, computes metadata sc
     assert.ok(logs.every((entry) => entry.trace_id && entry.span_id && !entry.text));
     await telemetry.tracerProvider.forceFlush(); await telemetry.meterProvider.forceFlush();
     assert.ok(traces.getFinishedSpans().some((span) => span.attributes.review_state === 'approved'));
+    // Tempo's service graph pairs a caller CLIENT span with the callee's span; every specialist run must hang off one.
+    const spans = traces.getFinishedSpans(), clientIds = new Set(spans.filter((span) => span.kind === SpanKind.CLIENT && span.name === 'POST /v1/agent').map((span) => span.spanContext().spanId));
+    for (const role of ['source', 'drafter', 'reviewer', 'readability']) assert.ok(spans.some((span) => span.name === `regulatory.${role}` && clientIds.has(span.parentSpanContext?.spanId ?? span.parentSpanId)), `${role} has no CLIENT parent`);
     const exported = JSON.stringify(metrics.getMetrics()); assert.match(exported, /regulatory_number_grounding_ratio/); assert.match(exported, /regulatory_requests_total/);
   } finally { for (const server of servers) { server.closeAllConnections(); await new Promise((resolve) => server.close(resolve)); } for (const service of services) await service.shutdown(); await telemetry.shutdown(); }
 });

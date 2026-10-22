@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
-import { context, propagation, trace, SpanStatusCode } from '@opentelemetry/api';
+import { context, propagation, trace, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { ROLES, selfAgentName, agentTeam, agentVersion, captureMode, modelConfig, specialistUrl } from './config.mjs';
 import { SECTIONS, STUDY_IDS, get_study, get_table, get_section_rules, get_prior_approved_text, readability_grade, numberGrounding } from './fixtures.mjs';
 import { startTelemetry, withTeam } from './telemetry.mjs';
@@ -72,13 +72,22 @@ export function createAgentService(options = {}) {
     return output;
   }
   async function specialist(target, request) {
-    const headers = { 'content-type': 'application/json' }; propagation.inject(context.active(), headers);
-    const response = await (options.fetchImpl ?? fetch)(specialistUrl(target, env), { method: 'POST', headers, body: JSON.stringify(request), signal: AbortSignal.timeout(45000) });
-    if (!response.ok) throw new Error('Specialist unavailable');
-    const text = await response.text(); if (text.length > 48000) throw new Error('Specialist response too large');
-    const result = JSON.parse(text);
-    if (result.document_type !== request.document_type || result.study_id !== request.study_id || result.section !== request.section || !['approved', 'needs_revision', 'escalated'].includes(result.review_state)) throw new Error('Invalid specialist response');
-    return result;
+    const url = specialistUrl(target, env);
+    const send = async (span) => {
+      try {
+        const headers = { 'content-type': 'application/json' }; propagation.inject(context.active(), headers);
+        const response = await (options.fetchImpl ?? fetch)(url, { method: 'POST', headers, body: JSON.stringify(request), signal: AbortSignal.timeout(45000) });
+        span.setAttribute('http.response.status_code', response.status);
+        if (!response.ok) throw new Error('Specialist unavailable');
+        const text = await response.text(); if (text.length > 48000) throw new Error('Specialist response too large');
+        const result = JSON.parse(text);
+        if (result.document_type !== request.document_type || result.study_id !== request.study_id || result.section !== request.section || !['approved', 'needs_revision', 'escalated'].includes(result.review_state)) throw new Error('Invalid specialist response');
+        return result;
+      } catch (error) { span.recordException(error); span.setStatus({ code: SpanStatusCode.ERROR }); throw error; } finally { span.end(); }
+    };
+    // This CLIENT span owns the traceparent sent on the wire; Undici skips /v1/agent, and Tempo's
+    // service graph needs a CLIENT span paired with the specialist's SERVER span to draw an edge.
+    return telemetry.tracer.startActiveSpan('POST /v1/agent', { kind: SpanKind.CLIENT, attributes: { 'http.request.method': 'POST', 'http.route': '/v1/agent', 'url.full': url, 'server.address': new URL(url).hostname } }, send);
   }
   async function run(payload) {
     const request = validateRequest(payload), began = performance.now();
