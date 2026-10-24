@@ -19,9 +19,9 @@
     "@grafana/faro-web-tracing": "2.13.0",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/auto-instrumentations-node": "0.81.2",
-    "@opentelemetry/exporter-trace-otlp-http": "0.223.0",
+    "@opentelemetry/exporter-trace-otlp-http": "0.300.0",
     "@opentelemetry/resources": "2.12.0",
-    "@opentelemetry/sdk-node": "0.223.0",
+    "@opentelemetry/sdk-node": "0.300.0",
     "@opentelemetry/sdk-trace-base": "2.12.0",
     "ioredis": "^6.0.0",
     "playwright": "1.64.1"
