@@ -1,6 +1,6 @@
 # Regulatory demo chart
 
-Version: 0.5.0 <!-- x-release-please-version -->
+Version: 0.6.0 <!-- x-release-please-version -->
 
 Fictional ICF/CSR authoring with five agents, a load generator, a scheduled experiments job and
 namespace-scoped Grafana Alloy. Review states simulate a queue; this is not human approval or
@@ -19,7 +19,7 @@ helm upgrade --install dossier ./charts/regulatory --namespace dossier --values 
 | `nameOverride` | `dossier` | Resource prefix, aligned with Terraform `regulatory_name`. |
 | `namespace` | `dossier` | Telemetry `service.namespace`, independent of the Helm release namespace. |
 | `images.registry` / `images.namePrefix` | `ghcr.io/rknightion` / `gc-agento11y-` | Regulatory image location. |
-| `images.tag` | `0.5.0` | Shared release tag. <!-- x-release-please-version --> |
+| `images.tag` | `0.6.0` | Shared release tag. <!-- x-release-please-version --> |
 | `images.digests.regulatory` | unset | Optional immutable SHA-256 pin; other digest keys are rejected. |
 | `serviceAccounts` | `dossier-{agents,loadgen,experiments}` | Separate Pod Identity agents, unprivileged loadgen and Lease experiments identities. |
 | `secrets.grafanaOtlp` | `dossier-grafana-otlp` | Existing Secret: `endpoint`, `username`, `password`. |
