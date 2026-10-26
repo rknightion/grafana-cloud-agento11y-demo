@@ -59,7 +59,7 @@ IMAGES = {
 # The agento11y release the dev-workstation image ships (AGENTO11Y_VERSION in its Dockerfile; the
 # renovate.json custom manager bumps both together). agento11y_cli_version "latest" means this one;
 # the plugin marketplace is pinned to its tag.
-AGENTO11Y_IMAGE_VERSION = "0.49.0"
+AGENTO11Y_IMAGE_VERSION = "0.51.0"
 
 # Networks. Bridge names are fixed so agent-host-firewall can match them before Docker starts;
 # keep them, the subnets and the GATEWAY_*_IP addresses in sync with agent-host/host/agent-host-firewall.

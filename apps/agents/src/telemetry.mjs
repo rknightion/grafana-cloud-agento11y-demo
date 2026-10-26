@@ -5,12 +5,12 @@
 // the in-namespace Alloy, which forwards to Grafana Cloud. The agento11y SDK uses these same
 // providers, so its generation spans and gen_ai metrics are not lost to a no-op provider.
 import { randomUUID } from 'node:crypto';
-import { context, createContextKey, metrics, propagation } from '@opentelemetry/api';
+import { context, createContextKey, metrics, propagation, trace } from '@opentelemetry/api';
+import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import { W3CTraceContextPropagator } from '@opentelemetry/core';
 import { defaultResource, resourceFromAttributes } from '@opentelemetry/resources';
 import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { BatchSpanProcessor, TracerProvider } from '@opentelemetry/sdk-trace';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { agentVersion, selfAgentName, serviceNamespace } from './config.mjs';
@@ -60,8 +60,9 @@ export function startTelemetry(role, options = {}) {
   const attributes = resourceAttributes(role);
   const serviceName = attributes['service.name'];
   const resource = defaultResource().merge(resourceFromAttributes({ ...attributes, 'service.instance.id': randomUUID() }));
-  const tracerProvider = new NodeTracerProvider({ resource, spanProcessors: [teamGenerationSpanProcessor(), new BatchSpanProcessor(options.traceExporter ?? new OTLPTraceExporter())] });
-  tracerProvider.register();
+  const tracerProvider = new TracerProvider({ resource, spanProcessors: [teamGenerationSpanProcessor(), new BatchSpanProcessor({ exporter: options.traceExporter ?? new OTLPTraceExporter() })] });
+  trace.setGlobalTracerProvider(tracerProvider);
+  context.setGlobalContextManager(new AsyncLocalStorageContextManager().enable());
   propagation.setGlobalPropagator(new W3CTraceContextPropagator());
   const exportIntervalMillis = Number(process.env.OTEL_METRIC_EXPORT_INTERVAL || 10000);
   const meterProvider = new MeterProvider({ resource, readers: [new PeriodicExportingMetricReader({ exporter: options.metricExporter ?? new OTLPMetricExporter(), exportIntervalMillis })] });

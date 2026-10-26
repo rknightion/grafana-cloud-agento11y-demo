@@ -53,7 +53,7 @@ RUN set -eu; \
 # per-architecture archive checksums to keep in step. Cross-compiled on the build platform; the
 # flags match the release's .goreleaser.yaml.
 FROM --platform=$BUILDPLATFORM golang:1.27.3-bookworm@sha256:972b4110ba0f47539a975c31e52c64765e1ff19f2d74469ae4a595c6676e80a5 AS agento11y
-ARG AGENTO11Y_VERSION=0.49.0
+ARG AGENTO11Y_VERSION=0.51.0
 ARG TARGETOS
 ARG TARGETARCH
 ENV CGO_ENABLED=0 GOWORK=off GOTOOLCHAIN=auto GOFLAGS=-trimpath
@@ -82,6 +82,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # gates the build).
 # Minimum Bookworm jq security update; changing it invalidates cached vulnerable apt layers.
 ARG JQ_MIN_VERSION=1.6-2.1+deb12u3
+# Bookworm security floors for packages pulled in as dependencies (checked only when installed).
+ARG APT_SECURITY_FLOORS="libexpat1:2.5.0-1+deb12u5 libbrotli1:1.0.9-2+deb12u1"
 # hadolint ignore=DL3005,DL3008
 RUN apt-get update \
     && apt-get upgrade -y --no-install-recommends \
@@ -89,6 +91,11 @@ RUN apt-get update \
        ca-certificates curl git gpgv jq libjq1 less openssl procps python3 python3-yaml tini tmux \
     && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' jq)" ge "$JQ_MIN_VERSION" \
     && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' libjq1)" ge "$JQ_MIN_VERSION" \
+    && for floor in $APT_SECURITY_FLOORS; do \
+         v="$(dpkg-query -W -f='${Version}' "${floor%%:*}" 2>/dev/null || true)"; \
+         [ -z "$v" ] || dpkg --compare-versions "$v" ge "${floor#*:}" \
+           || { echo "${floor%%:*} $v is below ${floor#*:}" >&2; exit 1; }; \
+       done \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=uv /uv /uvx /usr/local/bin/

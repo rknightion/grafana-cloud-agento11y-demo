@@ -24,6 +24,11 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tools/fixtures/default-use-case-plan.json"
 BASELINE = "8be4a4c82e337a9388d2070ae06c3d030a997dab"
+# release-please rewrites the module's version markers on every release (images.tag, chart
+# version and appVersion), which flow into the agent host user data and the chart digest. Pin
+# them in the temporary checkout so a release alone never reads as a default-plan change.
+RELEASE_PLACEHOLDER = "0.0.0-fixture"
+SEMVER = re.compile(r"\b\d+\.\d+\.\d+\b")
 
 # Syntax-valid values for computed fields consumed by module expressions.
 OVERRIDES = {
@@ -143,6 +148,25 @@ def mock_test(schema, module, configuration=None):
     return "\n".join(chunks)
 
 
+def pin_release_markers(checkout):
+    for path in checkout.rglob("*"):
+        if not path.is_file():
+            continue
+        try:
+            text = path.read_text()
+        except UnicodeDecodeError:
+            continue
+        chart = path.name == "Chart.yaml"
+        lines = [
+            SEMVER.sub(RELEASE_PLACEHOLDER, line)
+            if "x-release-please-version" in line or (chart and line.startswith(("version:", "appVersion:")))
+            else line
+            for line in text.splitlines(keepends=True)
+        ]
+        if "".join(lines) != text:
+            path.write_text("".join(lines))
+
+
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
@@ -215,6 +239,7 @@ def main():
         else:
             for directory in ("terraform", "agent-host", "charts"):
                 shutil.copytree(ROOT / directory, checkout / directory, ignore=shutil.ignore_patterns(".terraform", "*.tfstate*"))
+        pin_release_markers(checkout)
         actual = planned_hashes(checkout, cache, check_regulatory_digest=not args.generate_baseline)
     if args.generate_baseline:
         FIXTURE.parent.mkdir(exist_ok=True)

@@ -23,12 +23,19 @@ FROM debian:bookworm-slim@sha256:7ff6ba31527b9e336162fa061746c366c4b2032f4d2cff2
 # Install current security fixes for base packages as well as the runtime dependencies.
 # Minimum Bookworm jq security update; changing it invalidates cached vulnerable apt layers.
 ARG JQ_MIN_VERSION=1.6-2.1+deb12u3
+# Bookworm security floors for packages pulled in as dependencies (checked only when installed).
+ARG APT_SECURITY_FLOORS="libexpat1:2.5.0-1+deb12u5 libbrotli1:1.0.9-2+deb12u1"
 # hadolint ignore=DL3005,DL3008
 RUN apt-get update \
     && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends ca-certificates curl gpgv jq libjq1 tini \
     && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' jq)" ge "$JQ_MIN_VERSION" \
     && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' libjq1)" ge "$JQ_MIN_VERSION" \
+    && for floor in $APT_SECURITY_FLOORS; do \
+         v="$(dpkg-query -W -f='${Version}' "${floor%%:*}" 2>/dev/null || true)"; \
+         [ -z "$v" ] || dpkg --compare-versions "$v" ge "${floor#*:}" \
+           || { echo "${floor%%:*} $v is below ${floor#*:}" >&2; exit 1; }; \
+       done \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 10001 gateway \
     && useradd --uid 10001 --gid 10001 --home-dir /home/gateway --create-home --shell /usr/sbin/nologin gateway \

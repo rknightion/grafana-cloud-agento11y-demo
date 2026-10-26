@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createAgentService, createAgentHttpServer } from '../src/service.mjs';
 import { localGuard } from '../src/agent-client.mjs';
 import { context, trace, SpanKind } from '@opentelemetry/api';
-import { InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
+import { InMemorySpanExporter } from '@opentelemetry/sdk-trace';
 import { InMemoryMetricExporter } from '@opentelemetry/sdk-metrics';
 import { startTelemetry } from '../src/telemetry.mjs';
 const request = { document_type: 'csr', study_id: 'XQZ-301', section: 'efficacy_results' };

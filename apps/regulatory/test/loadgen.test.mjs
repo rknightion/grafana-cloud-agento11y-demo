@@ -17,14 +17,14 @@ test('deployment traffic continues beyond 100 requests until shutdown', { timeou
 });
 
 test('each request is sent under its own CLIENT span with a traceparent', async () => {
-  const { BasicTracerProvider, InMemorySpanExporter, SimpleSpanProcessor } = await import('@opentelemetry/sdk-trace-base');
+  const { TracerProvider, InMemorySpanExporter, SimpleSpanProcessor } = await import('@opentelemetry/sdk-trace');
   const { W3CTraceContextPropagator } = await import('@opentelemetry/core');
   const { AsyncLocalStorageContextManager } = await import('@opentelemetry/context-async-hooks');
   const { context, propagation, trace, SpanKind } = await import('@opentelemetry/api');
   const exporter = new InMemorySpanExporter();
   context.setGlobalContextManager(new AsyncLocalStorageContextManager().enable());
   propagation.setGlobalPropagator(new W3CTraceContextPropagator());
-  trace.setGlobalTracerProvider(new BasicTracerProvider({ spanProcessors: [new SimpleSpanProcessor(exporter)] }));
+  trace.setGlobalTracerProvider(new TracerProvider({ spanProcessors: [new SimpleSpanProcessor({ exporter: exporter })] }));
   const headers = [];
   await runLoadgen({ env: { MAX_REQUESTS: '2' }, sleepImpl: async () => {}, fetchImpl: async (_, options) => { headers.push(options.headers); return new Response('{}'); } });
   const spans = exporter.getFinishedSpans();

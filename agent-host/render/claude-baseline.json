@@ -1,7 +1,7 @@
 {
   "source_sha": "989da7c386f2c299200b5c2afc6287eb597ef8fb",
   "sha256": {
-    "compose.yaml": "19e5b8bff8ef66ad7cc62d58539ccb09e1bd67f0121f0602571bbe1944856a02",
-    "config/gateway.yaml": "763d48ba24b879ce50c69871745d0a47eb336e983ca42198d08b7e67001c42b6"
+    "compose.yaml": "5fc535a94117727b1b9c162f183e6f60eb31032c216566dbbbcadb8607eba052",
+    "config/gateway.yaml": "6026360977ac77c46d1b7c847148598f68199b7e4dda0f87286f2d9eb0cd87a2"
   }
 }

@@ -9,8 +9,7 @@ import { context, propagation } from '@opentelemetry/api';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import { W3CTraceContextPropagator } from '@opentelemetry/core';
 import { resourceFromAttributes } from '@opentelemetry/resources';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { InMemorySpanExporter, SimpleSpanProcessor, TracerProvider } from '@opentelemetry/sdk-trace';
 import { teamGenerationSpanProcessor, parseResourceAttributes, resourceAttributes, TEAM_ATTRIBUTE } from '../src/telemetry.mjs';
 import { createAgentService, createAgentHttpServer, conversationTitleFor } from '../src/service.mjs';
 import {
@@ -41,7 +40,7 @@ function fakeModel({ role, model, messages }) {
 }
 const exporter = new InMemorySpanExporter();
 function telemetry(role) {
-  const provider = new NodeTracerProvider({ resource: resourceFromAttributes({ 'service.name': `touchline-${role}`, 'service.namespace': 'touchline' }), spanProcessors: [new SimpleSpanProcessor(exporter)] });
+  const provider = new TracerProvider({ resource: resourceFromAttributes({ 'service.name': `touchline-${role}`, 'service.namespace': 'touchline' }), spanProcessors: [new SimpleSpanProcessor({ exporter: exporter })] });
   return { tracer: provider.getTracer(`touchline-${role}`), meter: { createCounter: () => ({ add() {} }), createHistogram: () => ({ record() {} }) }, async shutdown() { await provider.shutdown(); } };
 }
 async function listen(server) { server.listen(0, '127.0.0.1'); await once(server, 'listening'); return `http://127.0.0.1:${server.address().port}`; }
@@ -587,7 +586,7 @@ test('the owning team appears on server and generation spans, and bad input is a
   context.disable();
   context.setGlobalContextManager(new AsyncLocalStorageContextManager().enable());
   const localExporter = new InMemorySpanExporter();
-  const provider = new NodeTracerProvider({ resource: resourceFromAttributes({ 'service.name': 'touchline-odds' }), spanProcessors: [teamGenerationSpanProcessor(), new SimpleSpanProcessor(localExporter)] });
+  const provider = new TracerProvider({ resource: resourceFromAttributes({ 'service.name': 'touchline-odds' }), spanProcessors: [teamGenerationSpanProcessor(), new SimpleSpanProcessor({ exporter: localExporter })] });
   const t = { tracer: provider.getTracer('touchline-odds'), async shutdown() { await provider.shutdown(); } };
   const generationClient = { ...client, startGeneration: async (_start, callback) => { const span = t.tracer.startSpan('generateText test'); try { await callback({ setResult() {} }); } finally { span.end(); } } };
   const service = createAgentService({ ...common, role: 'odds', team: 'trading', telemetry: t, client: generationClient, random: () => 1 });

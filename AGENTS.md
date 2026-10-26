@@ -170,3 +170,12 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
   exit 1 and a Failed Job can mean a quality-gate failure; read the stored experiment/trial state
   before diagnosing a protocol failure. Metadata-only generations retain blank message envelopes
   and usage, so verify empty content rather than demanding absent input/output arrays.
+
+- `tools/check_use_case_plan.py` pins every release-please version marker to `0.0.0-fixture` in
+  its temporary copy, so a release never trips it. An agento11y bump in `render.py` or a provider
+  schema change does: refresh with `--accept-current "<reason>"`. An agento11y bump also changes
+  the hashes in `agent-host/render/claude-baseline.json`; update them after diffing the output.
+- The Node apps are on OpenTelemetry JS 3: `@opentelemetry/sdk-trace` replaces
+  `sdk-trace-base`/`sdk-trace-node`, there is no `register()` (set the global provider and context
+  manager yourself), and span processors take `{ exporter }`. Faro keeps nested v2 copies.
+- Local test runs inherit any `AGENTO11Y_*` variables from your shell and fail; unset them first.
