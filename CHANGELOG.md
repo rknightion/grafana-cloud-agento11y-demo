@@ -1,5 +1,69 @@
 # Changelog
 
+## [0.6.0](https://github.com/rknightion/grafana-cloud-agento11y-demo/compare/v0.5.0...v0.6.0) (2026-10-26)
+
+
+### Features
+
+* add multi-agent dashboards and consolidate shared panels ([8f13e2c](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/8f13e2cc47d3504cdb457e848fd3ca5b299e9a5a))
+* add opt-in use-case foundation for regulatory workloads ([4a4307d](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/4a4307d7b40444ede90e249f86e8fe5e38608cf1))
+* align coding-agent dashboards and support multi-team pi policies ([248f699](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/248f699772ccfb39baad8f8ecfd18cd3b2530270))
+* attribute regulatory costs and preserve evaluator evidence ([6844035](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/684403580cf0f0970ca0923d8dc6a2169ef0a1e6))
+* implement opt-in regulatory authoring demo ([3b05093](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/3b05093ff1324d1380ac83c9aef8728e20327ee6))
+
+
+### Bug Fixes
+
+* accept strictly fenced reviewer JSON without false escalation ([6f0d535](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/6f0d535c902a0f0c1567283d2a8b1f253000cfc6))
+* bound regulatory prompts and retain incomplete generation usage ([80431c4](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/80431c41ee435ad77f0aa6303b51437fa0d83aa8))
+* bound regulatory ratio axes and show sparse samples ([7530bad](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/7530badaaa684bc7690a27c090ef7ac102a27f82))
+* default all agent dashboards to three hours ([6354c02](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/6354c02f5b7a856248d5a050f1e2310dbc5fd539))
+* **deps:** update aws-sdk-js-v3 monorepo ([#102](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/102)) ([a9b76c1](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/a9b76c18852116402bd1aaf35b243f3da586a24c))
+* **deps:** update aws-sdk-js-v3 monorepo ([#129](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/129)) ([2a3756a](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/2a3756aae3698e29278263583185e1d49ed226f9))
+* **deps:** update dependency @aws-sdk/client-bedrock-runtime to v3.1154.0 ([#106](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/106)) ([4eccb7c](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/4eccb7cd5aa021a8e99a091cab3a4752d80b9d6e))
+* **deps:** update dependency @aws-sdk/client-bedrock-runtime to v3.1156.0 ([#133](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/133)) ([b8e3e9d](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/b8e3e9d73bc8b45539e7704f9711ae286874ca5c))
+* **deps:** update dependency @earendil-works/pi-coding-agent to v1.3.0 ([#90](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/90)) ([cc3088f](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/cc3088f0ec6b707043e8312859b6a8c605d023ce))
+* **deps:** update dependency @earendil-works/pi-coding-agent to v1.4.0 ([#130](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/130)) ([ede7296](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/ede72965d8773ab45f18407db7415ea86a4b3333))
+* **deps:** update dependency @mariozechner/pi-ai to v1.3.0 ([#91](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/91)) ([1c7c695](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/1c7c6955d04aa2786b8c3088c13991baeef0afc5))
+* **deps:** update dependency @mariozechner/pi-ai to v1.4.0 ([#131](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/131)) ([4bfe349](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/4bfe3499718f2512c1b33c377127b93f602ba03f))
+* **deps:** update dependency @mariozechner/pi-coding-agent to v1.3.0 ([#92](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/92)) ([36fd1e5](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/36fd1e5829312751690796bde315da25971fa96b))
+* **deps:** update dependency @mariozechner/pi-coding-agent to v1.4.0 ([#132](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/132)) ([a5404ba](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/a5404baef05e855d384c2a14cb42b9d3820e3c6c))
+* **deps:** update dependency @modelcontextprotocol/sdk to v1.32.2 ([#137](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/137)) ([533aa1e](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/533aa1e7cc093172aebf18a746f37b4150fd4da8))
+* **deps:** update dependency @opentelemetry/auto-instrumentations-node to v0.81.1 ([#93](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/93)) ([aeed7cc](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/aeed7cc5e574a2fbe0f03c137f5fcfd523bb2196))
+* **deps:** update dependency @opentelemetry/auto-instrumentations-node to v0.81.2 ([#94](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/94)) ([4858902](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/4858902725f4bce322899f0e35e7fd9c091cf0bf))
+* **deps:** update faro-web-sdk monorepo to v2.13.0 ([#134](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/134)) ([220dc27](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/220dc274cdea89a4278e53c4af2f05e1c8423f39))
+* display each agent comparison row and explicit log severity ([8ede3d9](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/8ede3d96ebffd3b28b808d45c1fc594a3957ed74))
+* link demo dashboards to Knowledge Graph catalogue ([65bf924](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/65bf924f8f0592200bd57723b906728778ce4744))
+* prepare writable developer state directories ([0608be3](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/0608be34b07d64104b8b995b5f763ae80b80145c))
+* **regulatory:** emit CLIENT spans for specialist and loadgen calls ([8078b45](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/8078b45c277c1fd5364a1a65e72ea279dc9ad1d2))
+* require patched jq packages in gateway and workstation images ([4d7381d](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/4d7381d5e9cdb8afb79fc1efc8e4aea6445d6611))
+* retain developer labels and normalize detected session severity ([5f88d64](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/5f88d644f43ef654d9153394009fcf266f611aad))
+
+
+### Documentation
+
+* accept regulatory dashboard capture-mode proof ([ae23084](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/ae230845c201ba6617bb42d335a363c6706fc3a4))
+* **backlog:** plan opt-in regulatory content-generation use case ([8be4a4c](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/8be4a4c82e337a9388d2070ae06c3d030a997dab))
+* complete regulatory live acceptance and teardown evidence ([990ec12](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/990ec12f89436410869931659bca68cf924befee))
+* keep lab deployment identifiers in private consumer records ([3dc45f1](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/3dc45f18c643fa2000f058dcf8c0cbf6cb9b45a5))
+* keep teardown record deployment-neutral ([7d8e8a2](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/7d8e8a2f9714b54dd7544ab4cfb2e865339bebe1))
+* record expanded roster validation and completed lab teardown ([e571f61](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/e571f618e966c53e4c5dc004893b40c9ea9c3d7b))
+* record regulatory delivery evidence and release boundaries ([c4ae0be](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/c4ae0bee65d7de462cc02a5fafcf88a4228a22d1))
+* record varied communications traffic and catalogue identity ([f31a883](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/f31a883732f919c4527aa7dd269320182424f688))
+* record verified communications dashboard tabs and replay follow-up ([6b41fa5](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/6b41fa54343415e1e6ed8b72a510b062d00c9e32))
+* record verified communications showcase overlay ([77c6cda](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/77c6cdaeec17c418c580226c930dbf95af14d972))
+* record verified demo teardown and S3 recovery follow-up ([e14dced](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/e14dced53ebb81df22ffdf18fac6c8171e7d05a6))
+* record verified expanded demo recreation ([2f216cc](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/2f216cc2b99685e0ccdab52840c9022f52dcc241))
+* record verified multi-agent dashboard rollout ([06b58a4](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/06b58a4e2791f440b80c4498b5236dcbef77c378))
+* record verified regulatory image publication ([31fde6e](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/31fde6ec7888f523e93dbc96de5ccdf3788ce41a))
+* track existing dashboard display gaps ([2e69b68](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/2e69b68465238c2f1a71448cd4573ef688a30c99))
+
+
+### Build & CI
+
+* omit unused optional SDK peer dependencies ([dcd18c7](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/dcd18c766fb6b42fd57c3dd88aae642bf1ce6f01))
+* scope approved braces exception to regulatory image ([eb80dd7](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/eb80dd77452b8da85cfd9bf7fb096f8dc251a0eb))
+
 ## [0.5.0](https://github.com/rknightion/grafana-cloud-agento11y-demo/compare/v0.4.3...v0.5.0) (2026-10-15)
 
 
