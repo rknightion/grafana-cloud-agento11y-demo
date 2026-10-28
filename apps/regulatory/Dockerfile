@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Build context: apps/. One image serves the five HTTP roles, loadgen and experiments.
-FROM node:24-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /app/regulatory
 COPY regulatory/package.json regulatory/package-lock.json ./
 # The optional Strands peer is not used by this app.
@@ -8,7 +8,7 @@ RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund --legacy-peer-deps \
  && find node_modules -type f \( -name '*.map' -o -name '*.d.ts' -o -name '*.d.mts' -o -name '*.d.cts' \) -delete \
  && npm cache clean --force
 
-FROM node:24-alpine
+FROM node:26-alpine
 ENV NODE_ENV=production PORT=8080
 WORKDIR /app/regulatory
 COPY --from=deps /app/regulatory/node_modules ./node_modules
