@@ -65,7 +65,7 @@ RUN GOOS="$TARGETOS" GOARCH="$TARGETARCH" go install \
     && mkdir -p /out \
     && if [ -f "$bin/${TARGETOS}_${TARGETARCH}/agento11y" ]; then cp "$bin/${TARGETOS}_${TARGETARCH}/agento11y" /out/; else cp "$bin/agento11y" /out/; fi
 
-FROM node:24-bookworm-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205
+FROM node:26-bookworm-slim@sha256:28147155d47dc31abe0a46e0d12b59b2fb3d0a2dcc5dc65fce76a074180b16fe
 
 # The installer is used only for a runtime agento11y_cli_version override (dev-entrypoint). It takes
 # the version to install as an argument and verifies that release's archive itself, so its pin is
