@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.6.1](https://github.com/rknightion/grafana-cloud-agento11y-demo/compare/v0.6.0...v0.6.1) (2026-10-31)
+
+
+### Bug Fixes
+
+* **deps:** update aws-sdk-js-v3 monorepo ([#146](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/146)) ([107b00b](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/107b00b623d1a0782af916371b50d04f5811a090))
+* **deps:** update aws-sdk-js-v3 monorepo ([#166](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/166)) ([5969a26](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/5969a26b023e601d1d6e0d753958709ab2801bc9))
+* **deps:** update dependency @aws-sdk/client-bedrock-runtime to v3.1158.0 ([#149](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/149)) ([6786492](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/678649249ef718143852aa7ab5d459d40debb0f3))
+* **deps:** update dependency @aws-sdk/client-bedrock-runtime to v3.1159.0 ([#162](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/162)) ([c692efa](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/c692efa7c6e8f12e5a61c0d0e918018061d90af1))
+* **deps:** update dependency @aws-sdk/client-bedrock-runtime to v3.1161.0 ([#169](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/169)) ([1ca8380](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/1ca838091c47d0d0215aa956f31f23757650da5b))
+* **deps:** update dependency @aws-sdk/credential-provider-node to v3.972.90 ([#161](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/161)) ([67bf80b](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/67bf80b052ac877979699e012f832c2ee50b2af6))
+* **deps:** update dependency @aws-sdk/credential-provider-node to v3.972.92 ([#168](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/168)) ([c519175](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/c519175ebde73549990d2fa525d14a843ed76f2d))
+* **deps:** update dependency @grafana/agento11y-pi to v0.26.0 ([#144](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/144)) ([436e342](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/436e3426b61a40f28a220a2e0e52fb0785edb840))
+* **deps:** update dependency @grafana/agento11y-pi to v0.27.0 ([#159](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/159)) ([40a0d61](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/40a0d618f97df88e963a9be2ee6c92a19d8a3a19))
+* **deps:** update dependency @grafana/agento11y-pi to v0.28.0 ([#167](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/167)) ([195496a](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/195496a08eae1828cab5ce02ab83bde355876e58))
+* **deps:** update dependency @smithy/signature-v4 to v5.7.5 ([#164](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/164)) ([8820f60](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/8820f6005881c3b0cc38f0684c454fb79c1cee9f))
+* restore CI and image publishing; land the pending dependency updates ([242afb7](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/242afb72d0f4fe2f0b3f3a44730f11bd96229817))
+
 ## [0.6.0](https://github.com/rknightion/grafana-cloud-agento11y-demo/compare/v0.5.0...v0.6.0) (2026-10-26)
 
 
