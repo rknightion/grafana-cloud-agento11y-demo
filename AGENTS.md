@@ -5,15 +5,18 @@ chart (`charts/touchline/`), the app images (`apps/`) and the EC2 agent host (`a
 a public repository, so nothing committed here may name a customer, an account id or a credential.
 `tools/scrub_check.py` and the private `.scrub-denylist` in pre-commit are the gate.
 
-## Task tracker
+## Tracking work
 
-Backlog.md in `backlog/`, prefix `AIO`. `backlog task list --plain --exclude-status Done` is the
-queue.
+Work is tracked in GitHub issues. A pull request says `Closes #N` with the acceptance evidence
+table, `Refs #N`, or `Task: none, <reason>` on a line of its own. A pull request that changes
+`.github/workflows/` or `.github/actions/` never carries a closing keyword. Contributors never need
+the Project or the tracker tool. The old Backlog.md board is frozen history under
+`.github/tracker/history/`: its ids (`AIO-0001`) stay valid in code, docs and commits, and
+`just issue AIO-0001` prints the issue one became. Loop facts are in `LOOP.md`.
 
-- Statuses are `To Do`, `In Progress`, `Parked`, `Done`. `Parked` means attempted and blocked,
-  with a concrete resume boundary.
-- This public board deliberately does not carry the loop protocol (doc-0001 says why). Never
-  import a copy here.
+Issues, pull requests and `.github/tracker/` are public and inside the scrub gate: no customer name,
+account id, tenant or stack id, host name, address, email or credential. Write the shape, not the
+instance.
 
 ## Task interface
 
@@ -83,30 +86,6 @@ images carry the former repository name as prefix (see CHANGELOG.md) and must st
 - New non-Claude home volumes need the `.local` parent and state directories owned by uid1000.
   Creating only `.local/bin` leaves its parent root-owned and causes a restart loop. The v0.5.0
   rollout corrected the two fresh volume parents in place; the image now creates them explicitly.
-
-<!-- BACKLOG.MD GUIDELINES START -->
-<!-- backlog.md-instructions-version: 1.53.0 -->
-<CRITICAL_INSTRUCTION>
-
-## Backlog.md Workflow
-
-This project uses Backlog.md for task and project management.
-
-**At the beginning of each conversation in this project, run `backlog instructions overview` before answering or taking action. Re-read it only if you have not read it yet in the current conversation.**
-
-Use the overview to decide whether to search, read, create, or update Backlog tasks.
-
-Before task lifecycle actions, read the matching detailed guide:
-- `backlog instructions task-creation` before creating or splitting tasks
-- `backlog instructions task-execution` before planning, changing status or assignee, adding a plan or implementation notes, or implementing task work
-- `backlog instructions task-finalization` before checking acceptance criteria, writing final summaries, or moving tasks to terminal statuses
-
-Use `backlog <command> --help` before running unfamiliar commands. Help shows options, fields, and examples.
-
-Do not edit Backlog task, draft, document, decision, or milestone markdown files directly. Use the `backlog` CLI so metadata, relationships, and history stay consistent.
-
-</CRITICAL_INSTRUCTION>
-<!-- BACKLOG.MD GUIDELINES END -->
 
 - Loki instant metric results need all-values bar-gauge rendering for multi-agent comparisons;
   retain label-based display names. Session-log panels set both `level` and `detected_level`
