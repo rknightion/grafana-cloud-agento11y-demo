@@ -1,0 +1,15 @@
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "*": hash-pin
+  self-repository:
+    disable: true
+  # agent-host/codebase/tree is the seed repository the demo agent host works on. The seed script
+  # must stay deterministic, so the fixture workflow is left as it is.
+  artipacked:
+    ignore:
+      - ci.yml:15
+  ref-version-mismatch:
+    ignore:
+      - ci.yml:16
