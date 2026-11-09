@@ -4,6 +4,8 @@ The public Touchline AI observability demo: a Terraform module (`terraform/`), t
 chart (`charts/touchline/`), the app images (`apps/`) and the EC2 agent host (`agent-host/`). It is
 a public repository, so nothing committed here may name a customer, an account id or a credential.
 `tools/scrub_check.py` and the private `.scrub-denylist` in pre-commit are the gate.
+A fresh worktree has no `.scrub-denylist` (it is untracked), so the local scrub check skips with a
+warning until the maintainer supplies one; add it before a commit.
 
 ## Tracking work
 
