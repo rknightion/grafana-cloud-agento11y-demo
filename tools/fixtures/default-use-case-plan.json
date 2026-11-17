@@ -24,6 +24,11 @@
       "git_head": "8c807a075ac92ce8cba787334b1891c9399a64f1",
       "previous_fixture_sha256": "69c4e4675b6d1e5718edc86fff01553d87c65d42a47bacd70af4e2dec41c5c68",
       "reason": "agento11y 0.51.0 in the agent-host render bundle; grafana provider 4.52.0 adds computed metadata.org_id to dashboard_v2"
+    },
+    {
+      "git_head": "d44ed9e93b8e4d98c4445a6008008944728fa766",
+      "previous_fixture_sha256": "399e8449c2248b510082041ae74da491444f3848d69c84362db8399ec577c8fe",
+      "reason": "touchline chart redis image tag bump to 8.10.3 changes the helm_release chart digest"
     }
   ],
   "resources": {
@@ -144,7 +149,7 @@
     "grafana_rule_group.recording": "d704351ec2de81e13ca64ac98442fbef0dc40058b52544d196f3912515c49bef",
     "grafana_service_account.experiments[0]": "8ca563f053c76ceeff7afcd1eb2af24ce9ab09fcc4e9478b83c929969d14045d",
     "grafana_service_account_token.experiments[0]": "ef5216343238ff0571c35587961fe7d49993e41bb8d10195b6e00ca4b7c44e3c",
-    "helm_release.this[0]": "a4db96afddca24d6c5ed9926241845881f7f1e662a1829647884b86d39f52a47",
+    "helm_release.this[0]": "902ddef35eca4485d589cd87feffcb291eb92b8e1b31ae192c237ef906839129",
     "kubernetes_namespace_v1.this[0]": "bb49bef8d8f0a06cf7d6c89b6cf5bbe2b22a65f9a9323f606d4eb79de2785822",
     "kubernetes_secret_v1.agento11y[0]": "40be4d5437e7426d7e44af1b8036d3a21d5d2299c8beed09c0e22e8ce1def87a",
     "kubernetes_secret_v1.experiments[0]": "b45f536f3403b52473f74aa6d55b103b634c02b68b1e1eb9273ec7b671209ed7",
