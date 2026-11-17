@@ -29,6 +29,11 @@
       "git_head": "d44ed9e93b8e4d98c4445a6008008944728fa766",
       "previous_fixture_sha256": "399e8449c2248b510082041ae74da491444f3848d69c84362db8399ec577c8fe",
       "reason": "touchline chart redis image tag bump to 8.10.3 changes the helm_release chart digest"
+    },
+    {
+      "git_head": "89c09d45a94ecbc62e31145aeccc05006db1b0e3",
+      "previous_fixture_sha256": "458d6bdacf92ec17bf12a1093917b9a403654e85a565b45e5d8ab39122e90392",
+      "reason": "agento11y 0.55.0 in the agent-host render bundle (render.py AGENTO11Y_IMAGE_VERSION)"
     }
   ],
   "resources": {
@@ -68,7 +73,7 @@
     "aws_iam_role_policy.agents_bedrock[0]": "321ad508694d28aee8c8f8d6a65c529998b88a49e16f4b300c74b7945c54272f",
     "aws_iam_role_policy.firehose_metrics[0]": "25675aa42a075abf77110b6b3b14695f8809096d6f709c33d9e2067c1b2a27ee",
     "aws_iam_role_policy.metric_stream[0]": "4510fd2b9a32df04697357964c02a9f2b888857a1c3128ab44969aacca9d1c5c",
-    "aws_instance.agent_host[0]": "3acc1ff30da375ce0150ef462e5cb7cce304d6b34d1801d57148f5522b754fa0",
+    "aws_instance.agent_host[0]": "50e43ec7a1312d7175b4b92e9c69f881f13d218d963a973f31cb5496063a158d",
     "aws_kinesis_firehose_delivery_stream.metrics[0]": "ba81200052f909d6fce1f6e30e7f2eee8aa87596531a3f5a8ecb02d1ad3dcbc7",
     "aws_s3_bucket.agent_host_bundle[0]": "d89981cffe02b27bed3a9250ed0be838c0a182d366a2ff6116c6a151b2b758b9",
     "aws_s3_bucket.metric_stream_fallback[0]": "b7c727a7bf11e20a2f0f86d94533e650bec69355bfc2cbd7740f925f4cdd659c",
@@ -80,7 +85,7 @@
     "aws_s3_bucket_server_side_encryption_configuration.agent_host_bundle[0]": "33dd9c6204bbf5a160de86f85731c673bf50b7cf04d99493e29144275405684f",
     "aws_s3_object.agent_host_bundle[\"/opt/agent-host/config/alloy.alloy\"]": "e7014d09510d62e7405784d2114d1fdf6ea7cfb593af0a760f1949a9be73e4f9",
     "aws_s3_object.agent_host_bundle[\"/opt/agent-host/config/postgres-bootstrap.sh\"]": "176011a2ec1e0632313044b8789087720b8c45ae72ced4b2330de5e7c9a008c3",
-    "aws_s3_object.agent_host_bundle[\"/opt/agent-host/render/render.py\"]": "880b659fe15f8abf068dcb44b419c5bec7490ab503db72aaf2b6732966bbab06",
+    "aws_s3_object.agent_host_bundle[\"/opt/agent-host/render/render.py\"]": "e10b673a9a8d228f0caeb0abcaaca1617cc90510e854ed79f2b9a0df8b1c5216",
     "aws_s3_object.agent_host_bundle[\"/usr/local/bin/agent-host-login-links\"]": "92c883c0c5554bfa1df5d9513436978be48923b82f86b5aa6b563fa113744e1e",
     "aws_s3_object.agent_host_bundle[\"/usr/local/sbin/agent-host-firewall\"]": "2a835c4c8582827e28132cd2e7e2a6bea90bcb6aa795c3e0168025542f083c1c",
     "aws_s3_object.agent_host_bundle[\"/usr/local/sbin/agent-host-install-compose\"]": "760b39717d011551c688e1bfa84bb8dbf7d436961cc6a528aa5cec03634bd025",
