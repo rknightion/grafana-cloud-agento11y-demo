@@ -96,6 +96,28 @@ scrub, Node tests), including offline use-case plans and the default compatibili
 The mock-provider checks use OpenTofu 1.13.1 or newer. `just ci` adds image builds and needs Docker. `tofu -chdir=terraform validate`
 needs `tofu -chdir=terraform init -backend=false` after a provider lock bump.
 
+## Cursor Cloud specific instructions
+
+The pinned [environment](.cursor/environment.json) runs `just cloud-bootstrap`. It uses CI's Node
+26, prepares the locked npm and Terraform dependencies, bundles the site assets and caches the
+tools needed for source checks. Terraform initialisation disables the backend and treats the
+committed lock as read-only.
+
+Before running checks, make the cached tools available in the current shell.
+
+```sh
+tool_cache="$HOME/.cache/grafana-cloud-agento11y-demo"
+export PATH="$tool_cache/bin:$tool_cache/python/bin:$PATH"
+export TF_PLUGIN_CACHE_DIR="$tool_cache/providers"
+```
+
+- Fast check `fnm exec --using=26 -- just fmt-check </dev/null`.
+- Full source gate `fnm exec --using=26 -- just check </dev/null`. CI runs the separate scrub job
+  with its configured denylist.
+
+`just ci` adds image builds and requires Docker. Live demonstrations require their own authorised
+deployment and credentials.
+
 ## Releases
 
 release-please cuts `vX.Y.Z` from conventional commits. Its PR bumps `terraform/variables.tf`
