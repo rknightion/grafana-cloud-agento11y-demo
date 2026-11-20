@@ -9,6 +9,6 @@
     "@mariozechner/pi-coding-agent": "npm:@earendil-works/pi-coding-agent@1.5.0"
   },
   "overrides": {
-    "undici": "8.12.3"
+    "undici": "8.12.4"
   }
 }
