@@ -3,7 +3,7 @@
 # GPG-signed release manifest (see claude-install.sh). Build context: apps/gateway.
 # Base images are pinned by tag and multi-arch index digest; bump both together.
 
-FROM debian:bookworm-slim@sha256:99c0b25c46d0214d5a2091092e7908907dcaecd6a962cde0ac700acee222b6f3 AS release-key
+FROM debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc AS release-key
 # Anthropic's Claude Code release signing key, fetched at build time and refused unless its
 # fingerprint matches the one published in the Claude Code setup docs.
 ARG RELEASE_SIGNER_URL=https://downloads.claude.ai/keys/claude-code.asc
@@ -19,7 +19,7 @@ RUN set -eu; \
     [ "$fpr" = "$RELEASE_SIGNER_FPR" ] || { echo "release key fingerprint $fpr != $RELEASE_SIGNER_FPR" >&2; exit 1; }; \
     gpg --dearmor < /tmp/key.asc > /claude-code-release.gpg
 
-FROM debian:bookworm-slim@sha256:99c0b25c46d0214d5a2091092e7908907dcaecd6a962cde0ac700acee222b6f3
+FROM debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc
 # Install current security fixes for base packages as well as the runtime dependencies.
 # Minimum Bookworm jq security update; changing it invalidates cached vulnerable apt layers.
 ARG JQ_MIN_VERSION=1.6-2.1+deb12u3
