@@ -1,5 +1,52 @@
 # Changelog
 
+## [0.6.1](https://github.com/rknightion/grafana-cloud-agento11y-demo/compare/v0.6.0...v0.6.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **deps:** update agento11y ([#88](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/88)) ([43aaf01](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/43aaf01a75ea5ee3efe06be1a75ef71cbe449112))
+* **deps:** update aws-sdk-js-v3 monorepo ([#146](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/146)) ([107b00b](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/107b00b623d1a0782af916371b50d04f5811a090))
+* **deps:** update aws-sdk-js-v3 monorepo ([#166](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/166)) ([5969a26](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/5969a26b023e601d1d6e0d753958709ab2801bc9))
+* **deps:** update aws-sdk-js-v3 monorepo ([#252](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/252)) ([6680b82](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/6680b82fe72be5a495b2d5d8177d8e246fb82931))
+* **deps:** update aws-sdk-js-v3 monorepo ([#278](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/278)) ([4d24821](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/4d24821a7459769c6d5e912aa362a97d1706fcd7))
+* **deps:** update dependency @aws-sdk/client-bedrock-runtime to v3.1158.0 ([#149](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/149)) ([6786492](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/678649249ef718143852aa7ab5d459d40debb0f3))
+* **deps:** update dependency @aws-sdk/client-bedrock-runtime to v3.1159.0 ([#162](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/162)) ([c692efa](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/c692efa7c6e8f12e5a61c0d0e918018061d90af1))
+* **deps:** update dependency @aws-sdk/client-bedrock-runtime to v3.1161.0 ([#169](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/169)) ([1ca8380](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/1ca838091c47d0d0215aa956f31f23757650da5b))
+* **deps:** update dependency @aws-sdk/client-bedrock-runtime to v3.1174.0 ([#272](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/272)) ([001067a](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/001067a454efeddf4af07e9a66b307599833e0d1))
+* **deps:** update dependency @aws-sdk/credential-provider-node to v3.972.90 ([#161](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/161)) ([67bf80b](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/67bf80b052ac877979699e012f832c2ee50b2af6))
+* **deps:** update dependency @aws-sdk/credential-provider-node to v3.972.92 ([#168](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/168)) ([c519175](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/c519175ebde73549990d2fa525d14a843ed76f2d))
+* **deps:** update dependency @earendil-works/pi-coding-agent to v1.5.0 ([#173](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/173)) ([ce32c0c](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/ce32c0c7fd17c40f343bec1ad944e7ffbf6a4163))
+* **deps:** update dependency @earendil-works/pi-coding-agent to v1.5.2 ([#238](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/238)) ([e817db0](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/e817db016a67d401bfad0a633e11a6c6e47c3919))
+* **deps:** update dependency @earendil-works/pi-coding-agent to v1.6.0 ([#261](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/261)) ([db3c287](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/db3c287e5ea0f2802e5d9ad02cd3db555cfa98f4))
+* **deps:** update dependency @grafana/agento11y-pi to v0.26.0 ([#144](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/144)) ([436e342](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/436e3426b61a40f28a220a2e0e52fb0785edb840))
+* **deps:** update dependency @grafana/agento11y-pi to v0.27.0 ([#159](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/159)) ([40a0d61](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/40a0d618f97df88e963a9be2ee6c92a19d8a3a19))
+* **deps:** update dependency @grafana/agento11y-pi to v0.28.0 ([#167](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/167)) ([195496a](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/195496a08eae1828cab5ce02ab83bde355876e58))
+* **deps:** update dependency @mariozechner/pi-ai to v1.5.0 ([#174](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/174)) ([0980d96](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/0980d9671a26e687ea0a71c2a10ac9670a184d42))
+* **deps:** update dependency @mariozechner/pi-ai to v1.5.2 ([#239](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/239)) ([b9a3fe0](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/b9a3fe0697a45fae0fd1cd4ef86f3c5a3638aa23))
+* **deps:** update dependency @mariozechner/pi-ai to v1.6.0 ([#262](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/262)) ([3748b06](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/3748b06deb8a3fb2ce5ef2f28f7d3a8e8810f6bb))
+* **deps:** update dependency @mariozechner/pi-coding-agent to v1.5.0 ([#175](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/175)) ([12782db](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/12782db44b522942f458284fccf376df69a8db7d))
+* **deps:** update dependency @mariozechner/pi-coding-agent to v1.5.2 ([#240](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/240)) ([444536f](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/444536f255f9c5050565dfc1babfc3f34b8eeb62))
+* **deps:** update dependency @mariozechner/pi-coding-agent to v1.6.0 ([#264](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/264)) ([f94127c](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/f94127c274597af92cf743cc3abd1da8cebb1174))
+* **deps:** update dependency @smithy/signature-v4 to v5.7.5 ([#164](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/164)) ([8820f60](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/8820f6005881c3b0cc38f0684c454fb79c1cee9f))
+* **deps:** update dependency playwright to v1.65.1 ([#254](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/254)) ([361fe29](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/361fe2981cd5c0b19d136e705b5828f095a7e43a))
+* **deps:** update faro-web-sdk monorepo to v2.14.0 ([#255](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/255)) ([73f0ab1](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/73f0ab14a6cab0d63cf6cc50e1cba4f32085d170))
+* **deps:** update opentelemetry-js monorepo ([#258](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/258)) ([970bd03](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/970bd038f2ae6386975fbca10a8ce83488c0d6cb))
+* **deps:** update opentelemetry-js-contrib monorepo ([#259](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/259)) ([27437c5](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/27437c50f78d8bda3c3088c4561a4f3946f73ef3))
+* restore CI and image publishing; land the pending dependency updates ([242afb7](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/242afb72d0f4fe2f0b3f3a44730f11bd96229817))
+
+
+### Documentation
+
+* cut over to GitHub issues for tracking ([#220](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/220)) ([1242ecd](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/1242ecda22ba83a328423456cb8a595b92af63d3))
+* record the worktree scrub denylist setup ([#222](https://github.com/rknightion/grafana-cloud-agento11y-demo/issues/222)) ([2b6c270](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/2b6c27089d2514198e188271eefdbbb46a14546c))
+
+
+### Build & CI
+
+* keep the seed repository fixture out of zizmor's findings ([8a3f65c](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/8a3f65c8cae2d6b211ffe64518a7b5f01c986b31))
+* wire the tracker tools, evidence check, privacy sweep and zizmor ([57ea8ef](https://github.com/rknightion/grafana-cloud-agento11y-demo/commit/57ea8efd62b060b367ebffe2347454e9092fed37))
+
 ## [0.6.0](https://github.com/rknightion/grafana-cloud-agento11y-demo/compare/v0.5.0...v0.6.0) (2026-10-26)
 
 
