@@ -38,15 +38,10 @@ jobs:
           - { name: agents, context: apps, dockerfile: agents/Dockerfile, trivy-ignore-file: apps/agents/.trivyignore.yaml }
           - { name: regulatory, context: apps, dockerfile: regulatory/Dockerfile, trivy-ignore-file: apps/regulatory/.trivyignore.yaml }
           - { name: site, context: apps, dockerfile: site/Dockerfile }
-          # site-browser and dev-workstation carry Playwright's/apt's debian OS packages: every
-          # remaining HIGH/CRITICAL there has no fixed version yet (verified against the live
-          # Debian bookworm-slim archive, not just the pinned digest) - see images.yml history.
-          - { name: site-browser, context: apps, dockerfile: site/Dockerfile.browser, trivy-ignore-unfixed: true }
+          - { name: site-browser, context: apps, dockerfile: site/Dockerfile.browser }
           - { name: mcp-tools, context: apps, dockerfile: mcp-tools/Dockerfile }
-          # gateway is plain debian:bookworm-slim with no application code: every HIGH/CRITICAL is
-          # an OS package with no fixed version yet upstream.
-          - { name: gateway, context: apps/gateway, dockerfile: Dockerfile, trivy-ignore-unfixed: true }
-          - { name: dev-workstation, context: ".", dockerfile: apps/dev-workstation/Dockerfile, trivy-ignore-unfixed: true }
+          - { name: gateway, context: apps/gateway, dockerfile: Dockerfile }
+          - { name: dev-workstation, context: ".", dockerfile: apps/dev-workstation/Dockerfile }
     permissions:
       contents: write
       packages: write
@@ -62,6 +57,9 @@ jobs:
       dockerfile: ${{ matrix.dockerfile }}
       # Keep failed scan findings visible in this public repository's Security tab.
       trivy-upload-sarif: true
-      trivy-ignore-unfixed: ${{ matrix.trivy-ignore-unfixed || false }}
+      # Every image ignores HIGH/CRITICAL findings that have no fixed version yet; a finding with a
+      # fix still fails the gate. Most of the unfixed ones are Debian bookworm OS packages in
+      # site-browser (Playwright's), gateway (plain debian:bookworm-slim) and dev-workstation (apt).
+      trivy-ignore-unfixed: true
       trivy-ignore-file: ${{ matrix.trivy-ignore-file || '' }}
       provenance: false
