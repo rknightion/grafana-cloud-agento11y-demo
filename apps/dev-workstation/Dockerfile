@@ -52,7 +52,7 @@ RUN set -eu; \
 # (go datasource) together with AGENTO11Y_IMAGE_VERSION in agent-host/render/render.py, with no
 # per-architecture archive checksums to keep in step. Cross-compiled on the build platform; the
 # flags match the release's .goreleaser.yaml.
-FROM --platform=$BUILDPLATFORM golang:1.27.4-bookworm@sha256:4fa7c968ba93f1635670522dbb01a2c78150443e1385746924566079f36570ea AS agento11y
+FROM --platform=$BUILDPLATFORM golang:1.27.4-bookworm@sha256:b754301872c53d3dff666ec39e3fae971dc6f5ecd5a9b01fdefabbebb0f59901 AS agento11y
 ARG AGENTO11Y_VERSION=0.57.0
 ARG TARGETOS
 ARG TARGETARCH
