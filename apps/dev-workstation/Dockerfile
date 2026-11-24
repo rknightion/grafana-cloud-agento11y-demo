@@ -11,7 +11,7 @@ FROM ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678
 
 FROM --platform=$BUILDPLATFORM ghcr.io/sigstore/cosign/cosign:v3.1.4@sha256:0f06154836d2de34f887a5c273506d52ca43edaa1d9e53e6510fa78a48f69c2d AS cosign
 
-FROM --platform=$BUILDPLATFORM debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc AS codex
+FROM --platform=$BUILDPLATFORM debian:bookworm-slim@sha256:e67eeead736ff7bbe258ef088bff683635c561b1fcfefad0806c1df4ab49ce0e AS codex
 ARG CODEX_VERSION=0.162.1
 ARG TARGETARCH
 COPY --from=cosign /ko-app/cosign /usr/local/bin/cosign
@@ -32,7 +32,7 @@ RUN set -eu; \
       --certificate-oidc-issuer https://token.actions.githubusercontent.com "$package"; \
     mkdir -p /opt/codex; tar -xzf "$package" -C /opt/codex
 
-FROM debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc AS release-key
+FROM debian:bookworm-slim@sha256:e67eeead736ff7bbe258ef088bff683635c561b1fcfefad0806c1df4ab49ce0e AS release-key
 ARG RELEASE_SIGNER_URL=https://downloads.claude.ai/keys/claude-code.asc
 ARG RELEASE_SIGNER_FPR=31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
