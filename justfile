@@ -19,26 +19,6 @@ _setup-dependencies:
     helm dependency build charts/touchline
     helm dependency build charts/regulatory
 
-# Warm locked dependencies and local build tools for Cursor Cloud
-[group('dev')]
-[script('bash')]
-cloud-bootstrap:
-    set -euo pipefail
-    cache="$HOME/.cache/grafana-cloud-agento11y-demo"
-    bash .cursor/install-cloud-tools.sh "$cache"
-    if [[ ! -x "$cache/python/bin/python3" ]]; then
-        uv venv --python /usr/bin/python3 --no-python-downloads "$cache/python"
-    fi
-    uv pip install --python "$cache/python/bin/python3" --compile-bytecode PyYAML==6.0.3
-    if ! fnm exec --using=26 -- node --version >/dev/null 2>&1; then
-        fnm install 26
-    fi
-    export PATH="$cache/bin:$cache/python/bin:$PATH"
-    export TF_PLUGIN_CACHE_DIR="$cache/providers"
-    mkdir -p "$TF_PLUGIN_CACHE_DIR"
-    TF_CLI_ARGS_init=-lockfile=readonly fnm exec --using=26 -- just _setup-dependencies
-    fnm exec --using=26 -- npm --prefix apps/site run build
-
 # Format Terraform, JSON and Node sources
 [group('check')]
 fmt:
