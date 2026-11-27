@@ -49,7 +49,7 @@ jobs:
       attestations: write
       security-events: write
     # The reusable resolves dockerfile relative to context.
-    uses: rknightion/.github/.github/workflows/container-publish.yml@3dacb3010d3967dfa9d7619c2d61dc7af14d72dc # v1.34.1
+    uses: rknightion/.github/.github/workflows/container-publish.yml@a6e7f83c8fd233841120fc14c0412124a445c306 # v1.35.0
     with:
       release-tag: ${{ inputs.release_tag }}
       image-name: gc-agento11y-${{ matrix.name }}
