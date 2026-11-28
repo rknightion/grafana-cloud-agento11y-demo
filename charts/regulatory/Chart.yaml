@@ -4,8 +4,8 @@ description: >-
   Fictional regulated-document authoring agents, synthetic traffic, experiments
   and namespace-scoped Alloy. Demo only, not validated for GxP.
 type: application
-version: 0.6.0
-appVersion: 0.6.0
+version: 0.6.1
+appVersion: 0.6.1
 keywords:
   - grafana
   - opentelemetry
